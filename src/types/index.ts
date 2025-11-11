@@ -46,4 +46,24 @@ export interface Match {
   result?: "team1" | "team2";
   date: string;
   completed: boolean;
+  createdBy: string;
+  scheduledDates?: ScheduledDate[];
+}
+
+export interface ScheduledDate {
+  id: string;
+  date: string;
+  time: string;
+}
+
+export interface Teacher {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface AppState {
+  teacher: Teacher;
+  classes: ClassRoom[];
+  matches: Match[];
 }

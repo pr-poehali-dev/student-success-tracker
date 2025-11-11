@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Icon from "@/components/ui/icon";
@@ -6,30 +6,43 @@ import { ClassesTab } from "@/components/ClassesTab";
 import { GameTab } from "@/components/GameTab";
 import { ExportTab } from "@/components/ExportTab";
 import { TeamsTab } from "@/components/TeamsTab";
-import { ClassRoom } from "@/types";
+import { TeacherProfile } from "@/components/TeacherProfile";
+import { ClassRoom, Teacher, Match, AppState } from "@/types";
+import { saveAppState, loadAppState, getDefaultTeacher } from "@/utils/storage";
 
 const Index = () => {
-  const [classes, setClasses] = useState<ClassRoom[]>([
-    {
-      id: "1",
-      name: "5-А",
-      students: [
-        { id: "1", name: "Алексей Иванов", points: 150, achievements: ["star", "trophy"] },
-        { id: "2", name: "Мария Петрова", points: 200, achievements: ["star", "medal", "trophy"] },
-        { id: "3", name: "Дмитрий Сидоров", points: 120, achievements: ["medal"] },
-      ]
-    },
-    {
-      id: "2",
-      name: "5-Б",
-      students: [
-        { id: "4", name: "Елена Смирнова", points: 180, achievements: ["star", "medal"] },
-        { id: "5", name: "Иван Козлов", points: 140, achievements: ["trophy"] },
-      ]
-    }
-  ]);
+  const [teacher, setTeacher] = useState<Teacher>(getDefaultTeacher());
+  const [classes, setClasses] = useState<ClassRoom[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [activeTab, setActiveTab] = useState("profile");
 
-  const [activeTab, setActiveTab] = useState("classes");
+  useEffect(() => {
+    const savedState = loadAppState();
+    if (savedState) {
+      setTeacher(savedState.teacher);
+      setClasses(savedState.classes);
+      setMatches(savedState.matches);
+    }
+  }, []);
+
+  useEffect(() => {
+    const state: AppState = {
+      teacher,
+      classes,
+      matches
+    };
+    saveAppState(state);
+  }, [teacher, classes, matches]);
+
+  const handleTeacherUpdate = (updatedTeacher: Teacher) => {
+    setTeacher(updatedTeacher);
+  };
+
+  const handleClearData = () => {
+    setTeacher(getDefaultTeacher());
+    setClasses([]);
+    setMatches([]);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/30">
@@ -46,7 +59,14 @@ const Index = () => {
 
         <Card className="shadow-xl border-2 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 h-16 bg-secondary/50">
+            <TabsList className="grid w-full grid-cols-5 h-16 bg-secondary/50">
+              <TabsTrigger 
+                value="profile" 
+                className="text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Icon name="User" size={20} className="mr-2" />
+                Профиль
+              </TabsTrigger>
               <TabsTrigger 
                 value="classes" 
                 className="text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -77,6 +97,20 @@ const Index = () => {
               </TabsTrigger>
             </TabsList>
 
+            <TabsContent value="profile" className="p-6">
+              <div className="space-y-6">
+                <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+                  <Icon name="User" size={28} />
+                  Личный кабинет
+                </h2>
+                <TeacherProfile 
+                  teacher={teacher}
+                  onUpdate={handleTeacherUpdate}
+                  onClearData={handleClearData}
+                />
+              </div>
+            </TabsContent>
+
             <TabsContent value="classes" className="p-6">
               <ClassesTab classes={classes} setClasses={setClasses} />
             </TabsContent>
@@ -86,7 +120,13 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="teams" className="p-6">
-              <TeamsTab classes={classes} setClasses={setClasses} />
+              <TeamsTab 
+                classes={classes} 
+                setClasses={setClasses}
+                matches={matches}
+                setMatches={setMatches}
+                teacher={teacher}
+              />
             </TabsContent>
 
             <TabsContent value="export" className="p-6">

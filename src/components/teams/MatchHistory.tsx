@@ -38,7 +38,10 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch }: MatchHisto
                     <div>
                       <p className="font-semibold">{game?.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(match.date).toLocaleString('ru-RU')}
+                        Создан: {new Date(match.date).toLocaleString('ru-RU')}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Организатор: {match.createdBy || "Не указан"}
                       </p>
                     </div>
                   </div>
@@ -50,6 +53,22 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch }: MatchHisto
                     <Icon name="Trash2" size={16} />
                   </Button>
                 </div>
+
+                {match.scheduledDates && match.scheduledDates.length > 0 && (
+                  <div className="mb-3 p-3 bg-secondary/30 rounded">
+                    <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <Icon name="Calendar" size={14} />
+                      Расписание:
+                    </p>
+                    <div className="space-y-1">
+                      {match.scheduledDates.map(schedule => (
+                        <p key={schedule.id} className="text-xs text-muted-foreground">
+                          • {new Date(schedule.date).toLocaleDateString('ru-RU')} в {schedule.time}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid md:grid-cols-2 gap-4 mb-3">
                   <div className={`p-3 rounded border-2 ${match.result === "team1" ? "border-green-500 bg-green-50" : "border-border"}`}>
