@@ -5,6 +5,7 @@ import Icon from "@/components/ui/icon";
 import { ClassesTab } from "@/components/ClassesTab";
 import { GameTab } from "@/components/GameTab";
 import { ExportTab } from "@/components/ExportTab";
+import { TeamsTab } from "@/components/TeamsTab";
 import { ClassRoom } from "@/types";
 
 const Index = () => {
@@ -45,7 +46,7 @@ const Index = () => {
 
         <Card className="shadow-xl border-2 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 h-16 bg-secondary/50">
+            <TabsList className="grid w-full grid-cols-4 h-16 bg-secondary/50">
               <TabsTrigger 
                 value="classes" 
                 className="text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -59,6 +60,13 @@ const Index = () => {
               >
                 <Icon name="Trophy" size={20} className="mr-2" />
                 Игра
+              </TabsTrigger>
+              <TabsTrigger 
+                value="teams" 
+                className="text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Icon name="Users" size={20} className="mr-2" />
+                Команды
               </TabsTrigger>
               <TabsTrigger 
                 value="export" 
@@ -75,6 +83,10 @@ const Index = () => {
 
             <TabsContent value="game" className="p-6">
               <GameTab classes={classes} setClasses={setClasses} />
+            </TabsContent>
+
+            <TabsContent value="teams" className="p-6">
+              <TeamsTab classes={classes} setClasses={setClasses} />
             </TabsContent>
 
             <TabsContent value="export" className="p-6">
