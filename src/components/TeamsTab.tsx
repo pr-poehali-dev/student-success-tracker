@@ -2,25 +2,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
-import { ClassRoom, Match, Team, TeamMember } from "@/types";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { ClassRoom, Match, TeamMember } from "@/types";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
+import { GameSelector } from "./teams/GameSelector";
+import { TeamBuilder } from "./teams/TeamBuilder";
+import { MatchHistory } from "./teams/MatchHistory";
 
 interface TeamsTabProps {
   classes: ClassRoom[];
   setClasses: (classes: ClassRoom[]) => void;
 }
-
-const GAME_TYPES = [
-  { id: "valheim", name: "Вальхейм", icon: "Swords", color: "bg-green-100 text-green-700" },
-  { id: "civilization", name: "Цивилизация", icon: "Castle", color: "bg-amber-100 text-amber-700" },
-  { id: "factorio", name: "Факторио", icon: "Factory", color: "bg-slate-100 text-slate-700" },
-  { id: "sport", name: "Спорт", icon: "Trophy", color: "bg-orange-100 text-orange-700" },
-  { id: "robo", name: "Робо", icon: "Bot", color: "bg-blue-100 text-blue-700" },
-];
 
 export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -101,28 +92,28 @@ export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
     toast.success(`${student.name} добавлен в Команду 2`);
   };
 
-  const toggleRole = (teamNumber: 1 | 2, studentId: string) => {
-    if (teamNumber === 1) {
-      setTeam1Members(team1Members.map(member =>
-        member.studentId === studentId
-          ? { ...member, role: member.role === "player" ? "captain" : "player" }
-          : member
-      ));
-    } else {
-      setTeam2Members(team2Members.map(member =>
-        member.studentId === studentId
-          ? { ...member, role: member.role === "captain" ? "player" : "captain" }
-          : member
-      ));
-    }
+  const toggleRoleTeam1 = (studentId: string) => {
+    setTeam1Members(team1Members.map(member =>
+      member.studentId === studentId
+        ? { ...member, role: member.role === "player" ? "captain" : "player" }
+        : member
+    ));
   };
 
-  const removeFromTeam = (teamNumber: 1 | 2, studentId: string) => {
-    if (teamNumber === 1) {
-      setTeam1Members(team1Members.filter(m => m.studentId !== studentId));
-    } else {
-      setTeam2Members(team2Members.filter(m => m.studentId !== studentId));
-    }
+  const toggleRoleTeam2 = (studentId: string) => {
+    setTeam2Members(team2Members.map(member =>
+      member.studentId === studentId
+        ? { ...member, role: member.role === "captain" ? "player" : "captain" }
+        : member
+    ));
+  };
+
+  const removeFromTeam1 = (studentId: string) => {
+    setTeam1Members(team1Members.filter(m => m.studentId !== studentId));
+  };
+
+  const removeFromTeam2 = (studentId: string) => {
+    setTeam2Members(team2Members.filter(m => m.studentId !== studentId));
   };
 
   const createMatch = () => {
@@ -223,185 +214,44 @@ export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
         </h3>
 
         <div className="space-y-4">
-          <div>
-            <Label>Выберите игру</Label>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-2">
-              {GAME_TYPES.map(game => (
-                <button
-                  key={game.id}
-                  className={`p-4 rounded-lg border-2 transition-all hover:scale-105 ${
-                    selectedGame === game.id 
-                      ? 'border-primary bg-primary/10 shadow-lg' 
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                  onClick={() => setSelectedGame(game.id)}
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <div className={`p-3 rounded-full ${game.color}`}>
-                      <Icon name={game.icon as any} size={24} />
-                    </div>
-                    <span className="text-sm font-medium">{game.name}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
+          <GameSelector 
+            selectedGame={selectedGame}
+            onSelectGame={setSelectedGame}
+          />
 
           {selectedGame && (
             <div className="grid md:grid-cols-2 gap-6 mt-6">
-              <Card className="p-4 border-2 border-blue-200">
-                <div className="mb-3">
-                  <Label>Название команды 1</Label>
-                  <Input 
-                    value={team1Name} 
-                    onChange={(e) => setTeam1Name(e.target.value)}
-                    placeholder="Команда 1"
-                  />
-                </div>
+              <TeamBuilder
+                teamNumber={1}
+                teamName={team1Name}
+                teamMembers={team1Members}
+                selectedStudent={selectedStudentForTeam1}
+                filterClass={filterClassTeam1}
+                availableStudents={availableStudentsTeam1}
+                classes={classes}
+                onTeamNameChange={setTeam1Name}
+                onFilterClassChange={setFilterClassTeam1}
+                onStudentSelect={setSelectedStudentForTeam1}
+                onAddStudent={addToTeam1}
+                onToggleRole={toggleRoleTeam1}
+                onRemoveStudent={removeFromTeam1}
+              />
 
-                <div className="mb-3">
-                  <Label>Фильтр по классу</Label>
-                  <Select value={filterClassTeam1} onValueChange={setFilterClassTeam1}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Все классы" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Все классы</SelectItem>
-                      {classes.map(cls => (
-                        <SelectItem key={cls.id} value={cls.name}>
-                          {cls.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="mb-3">
-                  <Label>Добавить ученика</Label>
-                  <div className="flex gap-2">
-                    <Select value={selectedStudentForTeam1} onValueChange={setSelectedStudentForTeam1}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Выберите ученика" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableStudentsTeam1.map(student => (
-                          <SelectItem key={student.id} value={student.id}>
-                            {student.name} ({student.className})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button onClick={addToTeam1} size="sm">
-                      <Icon name="Plus" size={16} />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Состав ({team1Members.length}/15):</p>
-                  {team1Members.map(member => (
-                    <div key={member.studentId} className="flex items-center justify-between p-2 bg-secondary/30 rounded">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{member.studentName}</span>
-                        <Badge variant="outline" className="text-xs">{member.className}</Badge>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant={member.role === "captain" ? "default" : "outline"}
-                          onClick={() => toggleRole(1, member.studentId)}
-                        >
-                          {member.role === "captain" ? "Капитан" : "Игрок"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => removeFromTeam(1, member.studentId)}
-                        >
-                          <Icon name="X" size={16} />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-
-              <Card className="p-4 border-2 border-red-200">
-                <div className="mb-3">
-                  <Label>Название команды 2</Label>
-                  <Input 
-                    value={team2Name} 
-                    onChange={(e) => setTeam2Name(e.target.value)}
-                    placeholder="Команда 2"
-                  />
-                </div>
-
-                <div className="mb-3">
-                  <Label>Фильтр по классу</Label>
-                  <Select value={filterClassTeam2} onValueChange={setFilterClassTeam2}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Все классы" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Все классы</SelectItem>
-                      {classes.map(cls => (
-                        <SelectItem key={cls.id} value={cls.name}>
-                          {cls.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="mb-3">
-                  <Label>Добавить ученика</Label>
-                  <div className="flex gap-2">
-                    <Select value={selectedStudentForTeam2} onValueChange={setSelectedStudentForTeam2}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Выберите ученика" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableStudentsTeam2.map(student => (
-                          <SelectItem key={student.id} value={student.id}>
-                            {student.name} ({student.className})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button onClick={addToTeam2} size="sm">
-                      <Icon name="Plus" size={16} />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Состав ({team2Members.length}/15):</p>
-                  {team2Members.map(member => (
-                    <div key={member.studentId} className="flex items-center justify-between p-2 bg-secondary/30 rounded">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{member.studentName}</span>
-                        <Badge variant="outline" className="text-xs">{member.className}</Badge>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant={member.role === "captain" ? "default" : "outline"}
-                          onClick={() => toggleRole(2, member.studentId)}
-                        >
-                          {member.role === "captain" ? "Капитан" : "Игрок"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => removeFromTeam(2, member.studentId)}
-                        >
-                          <Icon name="X" size={16} />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
+              <TeamBuilder
+                teamNumber={2}
+                teamName={team2Name}
+                teamMembers={team2Members}
+                selectedStudent={selectedStudentForTeam2}
+                filterClass={filterClassTeam2}
+                availableStudents={availableStudentsTeam2}
+                classes={classes}
+                onTeamNameChange={setTeam2Name}
+                onFilterClassChange={setFilterClassTeam2}
+                onStudentSelect={setSelectedStudentForTeam2}
+                onAddStudent={addToTeam2}
+                onToggleRole={toggleRoleTeam2}
+                onRemoveStudent={removeFromTeam2}
+              />
             </div>
           )}
 
@@ -414,106 +264,11 @@ export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
         </div>
       </Card>
 
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Icon name="History" size={20} className="text-primary" />
-          История матчей
-        </h3>
-
-        {matches.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Icon name="CalendarOff" size={32} className="mx-auto mb-2" />
-            <p>Пока нет матчей</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {matches.map(match => {
-              const game = GAME_TYPES.find(g => g.id === match.gameType);
-              return (
-                <Card key={match.id} className="p-4 border-2">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className={`p-2 rounded ${game?.color}`}>
-                        <Icon name={game?.icon as any} size={20} />
-                      </div>
-                      <div>
-                        <p className="font-semibold">{game?.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(match.date).toLocaleString('ru-RU')}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => deleteMatch(match.id)}
-                    >
-                      <Icon name="Trash2" size={16} />
-                    </Button>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4 mb-3">
-                    <div className={`p-3 rounded border-2 ${match.result === "team1" ? "border-green-500 bg-green-50" : "border-border"}`}>
-                      <p className="font-medium mb-2">{match.team1.name}</p>
-                      <div className="space-y-1">
-                        {match.team1.members.map(member => (
-                          <div key={member.studentId} className="text-sm flex items-center gap-2">
-                            <span>{member.studentName}</span>
-                            {member.role === "captain" && (
-                              <Badge variant="secondary" className="text-xs">Капитан</Badge>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className={`p-3 rounded border-2 ${match.result === "team2" ? "border-green-500 bg-green-50" : "border-border"}`}>
-                      <p className="font-medium mb-2">{match.team2.name}</p>
-                      <div className="space-y-1">
-                        {match.team2.members.map(member => (
-                          <div key={member.studentId} className="text-sm flex items-center gap-2">
-                            <span>{member.studentName}</span>
-                            {member.role === "captain" && (
-                              <Badge variant="secondary" className="text-xs">Капитан</Badge>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {!match.completed && (
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => setMatchResult(match.id, "team1")}
-                        className="flex-1"
-                        variant="outline"
-                      >
-                        Победа {match.team1.name}
-                      </Button>
-                      <Button
-                        onClick={() => setMatchResult(match.id, "team2")}
-                        className="flex-1"
-                        variant="outline"
-                      >
-                        Победа {match.team2.name}
-                      </Button>
-                    </div>
-                  )}
-
-                  {match.completed && (
-                    <div className="text-center p-2 bg-green-100 rounded">
-                      <p className="text-sm font-medium text-green-700">
-                        ✓ Результаты сохранены
-                      </p>
-                    </div>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </Card>
+      <MatchHistory 
+        matches={matches}
+        onSetResult={setMatchResult}
+        onDeleteMatch={deleteMatch}
+      />
     </div>
   );
 };
