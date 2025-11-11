@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
 import { ClassRoom, Match, TeamMember, Teacher, ScheduledDate } from "@/types";
 import { toast } from "sonner";
-import { GameSelector } from "./teams/GameSelector";
+import { GameSelector, GAME_TYPES } from "./teams/GameSelector";
 import { TeamBuilder } from "./teams/TeamBuilder";
 import { MatchHistory } from "./teams/MatchHistory";
 import { MatchScheduler } from "./teams/MatchScheduler";
 import { TeamImport } from "./teams/TeamImport";
+import { MatchFilters } from "./teams/MatchFilters";
 import { createMatchWithValidation } from "./teams/MatchCreator";
 
 interface TeamsTabProps {
@@ -32,6 +33,9 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher }: 
   const [scheduledDates, setScheduledDates] = useState<ScheduledDate[]>([]);
   const [newDate, setNewDate] = useState<string>("");
   const [newTime, setNewTime] = useState<string>("");
+  
+  const [filterMatchCreator, setFilterMatchCreator] = useState<string>("all");
+  const [filterMatchGame, setFilterMatchGame] = useState<string>("all");
 
   const allStudents = classes.flatMap(cls => 
     cls.students.map(student => ({
@@ -241,6 +245,24 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher }: 
     setScheduledDates(data.scheduledDates);
   };
 
+  const uniqueCreators = useMemo(() => {
+    const creators = matches.map(m => m.createdBy).filter(Boolean);
+    return Array.from(new Set(creators));
+  }, [matches]);
+
+  const filteredMatches = useMemo(() => {
+    return matches.filter(match => {
+      const creatorMatch = filterMatchCreator === "all" || match.createdBy === filterMatchCreator;
+      const gameMatch = filterMatchGame === "all" || match.gameType === filterMatchGame;
+      return creatorMatch && gameMatch;
+    });
+  }, [matches, filterMatchCreator, filterMatchGame]);
+
+  const handleResetFilters = () => {
+    setFilterMatchCreator("all");
+    setFilterMatchGame("all");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -329,11 +351,28 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher }: 
         </div>
       </Card>
 
-      <MatchHistory 
-        matches={matches}
-        onSetResult={setMatchResult}
-        onDeleteMatch={deleteMatch}
-      />
+      <Card className="p-6">
+        <h3 className="text-xl font-semibold text-foreground flex items-center gap-2 mb-4">
+          <Icon name="History" size={24} />
+          История матчей
+        </h3>
+
+        <MatchFilters 
+          filterCreator={filterMatchCreator}
+          filterGame={filterMatchGame}
+          creators={uniqueCreators}
+          games={GAME_TYPES}
+          onFilterCreatorChange={setFilterMatchCreator}
+          onFilterGameChange={setFilterMatchGame}
+          onReset={handleResetFilters}
+        />
+
+        <MatchHistory 
+          matches={filteredMatches}
+          onSetResult={setMatchResult}
+          onDeleteMatch={deleteMatch}
+        />
+      </Card>
     </div>
   );
 };

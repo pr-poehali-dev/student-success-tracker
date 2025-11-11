@@ -13,17 +13,14 @@ interface MatchHistoryProps {
 
 export const MatchHistory = ({ matches, onSetResult, onDeleteMatch }: MatchHistoryProps) => {
   return (
-    <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <Icon name="History" size={20} className="text-primary" />
-        История матчей
-      </h3>
-
+    <>
       {matches.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          <Icon name="CalendarOff" size={32} className="mx-auto mb-2" />
-          <p>Пока нет матчей</p>
-        </div>
+        <Card className="p-8 border-dashed">
+          <div className="text-center text-muted-foreground">
+            <Icon name="CalendarOff" size={32} className="mx-auto mb-2" />
+            <p>Нет матчей по выбранным фильтрам</p>
+          </div>
+        </Card>
       ) : (
         <div className="space-y-4">
           {matches.map(match => {
@@ -131,6 +128,6 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch }: MatchHisto
           })}
         </div>
       )}
-    </Card>
+    </>
   );
 };
