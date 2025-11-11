@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
@@ -7,9 +7,9 @@ import { toast } from "sonner";
 import { GameSelector } from "./teams/GameSelector";
 import { TeamBuilder } from "./teams/TeamBuilder";
 import { MatchHistory } from "./teams/MatchHistory";
-import * as XLSX from "xlsx";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { MatchScheduler } from "./teams/MatchScheduler";
+import { TeamImport } from "./teams/TeamImport";
+import { createMatchWithValidation } from "./teams/MatchCreator";
 
 interface TeamsTabProps {
   classes: ClassRoom[];
@@ -32,7 +32,6 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher }: 
   const [scheduledDates, setScheduledDates] = useState<ScheduledDate[]>([]);
   const [newDate, setNewDate] = useState<string>("");
   const [newTime, setNewTime] = useState<string>("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const allStudents = classes.flatMap(cls => 
     cls.students.map(student => ({
@@ -148,81 +147,27 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher }: 
   };
 
   const createMatch = () => {
-    if (!selectedGame) {
-      toast.error("Выберите игру");
-      return;
+    const newMatch = createMatchWithValidation({
+      selectedGame,
+      team1Members,
+      team2Members,
+      team1Name,
+      team2Name,
+      scheduledDates,
+      matches,
+      allStudents,
+      teacher
+    });
+
+    if (newMatch) {
+      setMatches([...matches, newMatch]);
+      setTeam1Members([]);
+      setTeam2Members([]);
+      setTeam1Name("Команда 1");
+      setTeam2Name("Команда 2");
+      setSelectedGame("");
+      setScheduledDates([]);
     }
-    if (team1Members.length === 0 || team2Members.length === 0) {
-      toast.error("Обе команды должны содержать хотя бы одного ученика");
-      return;
-    }
-    if (scheduledDates.length === 0) {
-      toast.error("Добавьте хотя бы одну дату проведения матча");
-      return;
-    }
-
-    const allStudentIds = [
-      ...team1Members.map(m => m.studentId),
-      ...team2Members.map(m => m.studentId)
-    ];
-
-    for (const scheduleDate of scheduledDates) {
-      for (const existingMatch of matches) {
-        if (!existingMatch.scheduledDates) continue;
-
-        for (const existingDate of existingMatch.scheduledDates) {
-          if (existingDate.date === scheduleDate.date && existingDate.time === scheduleDate.time) {
-            const existingStudentIds = [
-              ...existingMatch.team1.members.map(m => m.studentId),
-              ...existingMatch.team2.members.map(m => m.studentId)
-            ];
-
-            const conflicts = allStudentIds.filter(id => existingStudentIds.includes(id));
-            
-            if (conflicts.length > 0) {
-              const conflictNames = conflicts
-                .map(id => allStudents.find(s => s.id === id)?.name || "")
-                .filter(n => n)
-                .join(", ");
-              
-              toast.error(
-                `Конфликт расписания! Ученики ${conflictNames} заняты в матче "${existingMatch.team1.name} vs ${existingMatch.team2.name}" (${existingDate.date} ${existingDate.time}). Создатель матча: ${existingMatch.createdBy}`,
-                { duration: 8000 }
-              );
-              return;
-            }
-          }
-        }
-      }
-    }
-
-    const newMatch: Match = {
-      id: Date.now().toString(),
-      gameType: selectedGame as any,
-      team1: {
-        id: Date.now().toString() + "-team1",
-        name: team1Name,
-        members: team1Members
-      },
-      team2: {
-        id: Date.now().toString() + "-team2",
-        name: team2Name,
-        members: team2Members
-      },
-      date: new Date().toISOString(),
-      completed: false,
-      createdBy: teacher.name,
-      scheduledDates: [...scheduledDates]
-    };
-
-    setMatches([...matches, newMatch]);
-    setTeam1Members([]);
-    setTeam2Members([]);
-    setTeam1Name("Команда 1");
-    setTeam2Name("Команда 2");
-    setSelectedGame("");
-    setScheduledDates([]);
-    toast.success("Матч создан! Теперь можно назначить результат");
   };
 
   const setMatchResult = (matchId: string, winner: "team1" | "team2") => {
@@ -280,100 +225,20 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher }: 
     toast.success("Матч удалён");
   };
 
-  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        
-        const matchesSheet = workbook.Sheets['Матчи'];
-        
-        if (!matchesSheet) {
-          toast.error("Файл должен содержать лист 'Матчи'");
-          return;
-        }
-
-        const matchesData = XLSX.utils.sheet_to_json<{
-          'Тип игры': string;
-          'Команда 1': string;
-          'Команда 2': string;
-          'Участники команды 1': string;
-          'Участники команды 2': string;
-          'Даты проведения': string;
-          'Время проведения': string;
-        }>(matchesSheet);
-
-        matchesData.forEach(row => {
-          if (!row['Тип игры'] || !row['Команда 1'] || !row['Команда 2']) return;
-
-          const team1MembersNames = row['Участники команды 1']?.split(',').map(s => s.trim()) || [];
-          const team2MembersNames = row['Участники команды 2']?.split(',').map(s => s.trim()) || [];
-
-          const team1MembersList: TeamMember[] = team1MembersNames
-            .map(name => {
-              const student = allStudents.find(s => s.name === name);
-              if (!student) return null;
-              return {
-                studentId: student.id,
-                studentName: student.name,
-                className: student.className,
-                role: "player" as const
-              };
-            })
-            .filter(m => m !== null) as TeamMember[];
-
-          const team2MembersList: TeamMember[] = team2MembersNames
-            .map(name => {
-              const student = allStudents.find(s => s.name === name);
-              if (!student) return null;
-              return {
-                studentId: student.id,
-                studentName: student.name,
-                className: student.className,
-                role: "player" as const
-              };
-            })
-            .filter(m => m !== null) as TeamMember[];
-
-          if (team1MembersList.length === 0 || team2MembersList.length === 0) return;
-
-          const dates = row['Даты проведения']?.split(',').map(s => s.trim()) || [];
-          const times = row['Время проведения']?.split(',').map(s => s.trim()) || [];
-          
-          const importedSchedules: ScheduledDate[] = [];
-          for (let i = 0; i < Math.max(dates.length, times.length); i++) {
-            if (dates[i] && times[i]) {
-              importedSchedules.push({
-                id: Date.now().toString() + i,
-                date: dates[i],
-                time: times[i]
-              });
-            }
-          }
-
-          setTeam1Members(team1MembersList);
-          setTeam2Members(team2MembersList);
-          setTeam1Name(row['Команда 1']);
-          setTeam2Name(row['Команда 2']);
-          setSelectedGame(row['Тип игры'].toLowerCase());
-          setScheduledDates(importedSchedules);
-        });
-
-        toast.success("Команды и расписание загружены! Теперь создайте матч");
-      } catch (error) {
-        console.error(error);
-        toast.error("Ошибка при импорте файла");
-      }
-    };
-    reader.readAsArrayBuffer(file);
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const handleImportComplete = (data: {
+    team1Members: TeamMember[];
+    team2Members: TeamMember[];
+    team1Name: string;
+    team2Name: string;
+    selectedGame: string;
+    scheduledDates: ScheduledDate[];
+  }) => {
+    setTeam1Members(data.team1Members);
+    setTeam2Members(data.team2Members);
+    setTeam1Name(data.team1Name);
+    setTeam2Name(data.team2Name);
+    setSelectedGame(data.selectedGame);
+    setScheduledDates(data.scheduledDates);
   };
 
   return (
@@ -384,22 +249,10 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher }: 
           Управление командами
         </h2>
         
-        <div className="flex gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={handleFileImport}
-            style={{ display: 'none' }}
-          />
-          <Button 
-            onClick={() => fileInputRef.current?.click()}
-            variant="outline"
-          >
-            <Icon name="Upload" size={20} className="mr-2" />
-            Импорт команд
-          </Button>
-        </div>
+        <TeamImport 
+          allStudents={allStudents}
+          onImportComplete={handleImportComplete}
+        />
       </div>
 
       <Card className="p-6">
@@ -452,66 +305,15 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher }: 
 
           {selectedGame && team1Members.length > 0 && team2Members.length > 0 && (
             <>
-              <Card className="p-4 border-2 border-primary/30">
-                <h4 className="font-semibold mb-3 flex items-center gap-2">
-                  <Icon name="Calendar" size={18} className="text-primary" />
-                  Расписание проведения матча
-                </h4>
-                
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label>Дата</Label>
-                      <Input 
-                        type="date"
-                        value={newDate}
-                        onChange={(e) => setNewDate(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>Время</Label>
-                      <Input 
-                        type="time"
-                        value={newTime}
-                        onChange={(e) => setNewTime(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    onClick={addScheduledDate} 
-                    variant="outline" 
-                    className="w-full"
-                    size="sm"
-                  >
-                    <Icon name="Plus" size={16} className="mr-2" />
-                    Добавить дату
-                  </Button>
-
-                  {scheduledDates.length > 0 && (
-                    <div className="space-y-2 mt-4">
-                      <p className="text-sm font-medium">Запланированные даты:</p>
-                      {scheduledDates.map(schedule => (
-                        <div 
-                          key={schedule.id} 
-                          className="flex items-center justify-between p-2 bg-secondary/30 rounded"
-                        >
-                          <span className="text-sm">
-                            {new Date(schedule.date).toLocaleDateString('ru-RU')} в {schedule.time}
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => removeScheduledDate(schedule.id)}
-                          >
-                            <Icon name="X" size={16} />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </Card>
+              <MatchScheduler 
+                scheduledDates={scheduledDates}
+                newDate={newDate}
+                newTime={newTime}
+                onNewDateChange={setNewDate}
+                onNewTimeChange={setNewTime}
+                onAddScheduledDate={addScheduledDate}
+                onRemoveScheduledDate={removeScheduledDate}
+              />
 
               <Button 
                 onClick={createMatch} 
