@@ -14,11 +14,9 @@ interface GameTabProps {
 }
 
 const ACHIEVEMENTS = [
-  { id: "star", name: "Звезда", icon: "Star", color: "bg-yellow-100 text-yellow-700" },
-  { id: "trophy", name: "Кубок", icon: "Trophy", color: "bg-orange-100 text-orange-700" },
-  { id: "medal", name: "Медаль", icon: "Medal", color: "bg-purple-100 text-purple-700" },
-  { id: "award", name: "Награда", icon: "Award", color: "bg-blue-100 text-blue-700" },
-  { id: "flame", name: "Огонь", icon: "Flame", color: "bg-red-100 text-red-700" },
+  { id: "lumosity", name: "Люмосити", icon: "Brain", color: "bg-purple-100 text-purple-700" },
+  { id: "robo", name: "Робо", icon: "Bot", color: "bg-blue-100 text-blue-700" },
+  { id: "sport", name: "Спорт", icon: "Trophy", color: "bg-orange-100 text-orange-700" },
 ];
 
 export const GameTab = ({ classes, setClasses }: GameTabProps) => {
@@ -86,7 +84,7 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
     ));
 
     const achievement = ACHIEVEMENTS.find(a => a.id === achievementId);
-    toast.success(`Выдано достижение "${achievement?.name}" для ${selectedStudent?.name}`);
+    toast.success(`Выбрано направление "${achievement?.name}" для ${selectedStudent?.name}`);
   };
 
   return (
@@ -162,7 +160,7 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Icon name="Award" size={20} className="text-primary" />
-            Выдать достижение
+            Выбор направления
           </h3>
           
           {!selectedStudentId ? (
@@ -176,7 +174,7 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
                 <div className="mb-4 p-3 bg-secondary/30 rounded-lg">
                   <p className="font-medium">{selectedStudent.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    Достижений: {selectedStudent.achievements.length}
+                    Направлений: {selectedStudent.achievements.length}
                   </p>
                 </div>
               )}
@@ -192,7 +190,7 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
                   <Icon name={achievement.icon as any} size={20} className="mr-3" />
                   <span>{achievement.name}</span>
                   {selectedStudent?.achievements.includes(achievement.id) && (
-                    <Badge variant="secondary" className="ml-auto">Есть</Badge>
+                    <Badge variant="secondary" className="ml-auto">Выбрано</Badge>
                   )}
                 </Button>
               ))}
