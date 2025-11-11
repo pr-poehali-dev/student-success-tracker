@@ -1,5 +1,5 @@
 export interface ActivityRecord {
-  type: "lumosity" | "robo" | "sport";
+  type: "lumosity" | "robo" | "sport" | "valheim" | "civilization" | "simcity" | "factorio" | "pe3d";
   date: string;
   points?: number;
   time?: number;

@@ -19,6 +19,11 @@ const ACHIEVEMENTS = [
   { id: "lumosity", name: "Люмосити", icon: "Brain", color: "bg-purple-100 text-purple-700" },
   { id: "robo", name: "Робо", icon: "Bot", color: "bg-blue-100 text-blue-700" },
   { id: "sport", name: "Спорт", icon: "Trophy", color: "bg-orange-100 text-orange-700" },
+  { id: "valheim", name: "Вальхейм", icon: "Swords", color: "bg-green-100 text-green-700" },
+  { id: "civilization", name: "Цивилизация", icon: "Castle", color: "bg-amber-100 text-amber-700" },
+  { id: "simcity", name: "Симсити", icon: "Building2", color: "bg-cyan-100 text-cyan-700" },
+  { id: "factorio", name: "Факторио", icon: "Factory", color: "bg-slate-100 text-slate-700" },
+  { id: "pe3d", name: "3D Физкультура", icon: "Dumbbell", color: "bg-red-100 text-red-700" },
 ];
 
 export const GameTab = ({ classes, setClasses }: GameTabProps) => {
@@ -108,6 +113,12 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
         role: sportRole
       };
       pointsToAdd = 0;
+    } else if (["valheim", "civilization", "simcity", "factorio", "pe3d"].includes(selectedDirection)) {
+      activity = {
+        type: selectedDirection as any,
+        date: new Date().toISOString()
+      };
+      pointsToAdd = 0;
     } else {
       return;
     }
@@ -133,8 +144,10 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
       toast.success(`Добавлено! +${pointsToAdd} баллов`);
     } else if (selectedDirection === "robo") {
       toast.success(`Время ${roboTime} мин записано`);
-    } else {
+    } else if (selectedDirection === "sport") {
       toast.success(`Результат записан`);
+    } else {
+      toast.success(`Активность записана`);
     }
   };
 
@@ -208,7 +221,7 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
               <p>Сначала выберите ученика</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {selectedStudent && (
                 <div className="mb-4 p-3 bg-secondary/30 rounded-lg">
                   <p className="font-medium">{selectedStudent.name}</p>
@@ -218,20 +231,29 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
                 </div>
               )}
               
-              {ACHIEVEMENTS.map(achievement => (
-                <Button
-                  key={achievement.id}
-                  variant={selectedDirection === achievement.id ? "default" : "outline"}
-                  className="w-full justify-start h-auto py-3"
-                  onClick={() => giveAchievement(achievement.id)}
-                >
-                  <Icon name={achievement.icon as any} size={20} className="mr-3" />
-                  <span>{achievement.name}</span>
-                  {selectedStudent?.achievements.includes(achievement.id) && (
-                    <Badge variant="secondary" className="ml-auto">Выбрано</Badge>
-                  )}
-                </Button>
-              ))}
+              <div className="grid grid-cols-2 gap-3">
+                {ACHIEVEMENTS.map(achievement => (
+                  <button
+                    key={achievement.id}
+                    className={`relative p-4 rounded-lg border-2 transition-all hover:scale-105 ${
+                      selectedDirection === achievement.id 
+                        ? 'border-primary bg-primary/10 shadow-lg' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => giveAchievement(achievement.id)}
+                  >
+                    <div className="flex flex-col items-center gap-2 text-center">
+                      <div className={`p-3 rounded-full ${achievement.color}`}>
+                        <Icon name={achievement.icon as any} size={24} />
+                      </div>
+                      <span className="text-sm font-medium">{achievement.name}</span>
+                      {selectedStudent?.achievements.includes(achievement.id) && (
+                        <Badge variant="secondary" className="text-xs">✓</Badge>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </Card>
@@ -244,6 +266,11 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
             {selectedDirection === "lumosity" && "Люмосити - Баллы"}
             {selectedDirection === "robo" && "Робо - Время"}
             {selectedDirection === "sport" && "Спорт - Результат"}
+            {selectedDirection === "valheim" && "Вальхейм - Активность"}
+            {selectedDirection === "civilization" && "Цивилизация - Активность"}
+            {selectedDirection === "simcity" && "Симсити - Активность"}
+            {selectedDirection === "factorio" && "Факторио - Активность"}
+            {selectedDirection === "pe3d" && "3D Физкультура - Активность"}
           </h3>
 
           {selectedDirection === "lumosity" && (
@@ -326,6 +353,23 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
               <Button onClick={addActivity} className="w-full" size="lg">
                 <Icon name="Plus" size={18} className="mr-2" />
                 Добавить результат
+              </Button>
+            </div>
+          )}
+
+          {(selectedDirection === "valheim" || selectedDirection === "civilization" || 
+            selectedDirection === "simcity" || selectedDirection === "factorio" || 
+            selectedDirection === "pe3d") && (
+            <div className="space-y-4">
+              <div className="p-4 bg-secondary/30 rounded-lg text-center">
+                <Icon name="CheckCircle" size={32} className="mx-auto mb-2 text-primary" />
+                <p className="text-sm text-muted-foreground">
+                  Направление выбрано и сохранено для ученика
+                </p>
+              </div>
+              <Button onClick={addActivity} className="w-full" size="lg">
+                <Icon name="Plus" size={18} className="mr-2" />
+                Отметить активность
               </Button>
             </div>
           )}

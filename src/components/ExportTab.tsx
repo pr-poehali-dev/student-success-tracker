@@ -101,6 +101,86 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
       XLSX.utils.book_append_sheet(workbook, sportSheet, "Спорт");
     }
 
+    const valheimData = classes.flatMap(cls =>
+      cls.students.flatMap(student =>
+        (student.activities || [])
+          .filter(a => a.type === "valheim")
+          .map(activity => ({
+            "ФИО": student.name,
+            "Класс": cls.name,
+            "Дата": new Date(activity.date).toLocaleString('ru-RU')
+          }))
+      )
+    );
+    if (valheimData.length > 0) {
+      const valheimSheet = XLSX.utils.json_to_sheet(valheimData);
+      XLSX.utils.book_append_sheet(workbook, valheimSheet, "Вальхейм");
+    }
+
+    const civilizationData = classes.flatMap(cls =>
+      cls.students.flatMap(student =>
+        (student.activities || [])
+          .filter(a => a.type === "civilization")
+          .map(activity => ({
+            "ФИО": student.name,
+            "Класс": cls.name,
+            "Дата": new Date(activity.date).toLocaleString('ru-RU')
+          }))
+      )
+    );
+    if (civilizationData.length > 0) {
+      const civilizationSheet = XLSX.utils.json_to_sheet(civilizationData);
+      XLSX.utils.book_append_sheet(workbook, civilizationSheet, "Цивилизация");
+    }
+
+    const simcityData = classes.flatMap(cls =>
+      cls.students.flatMap(student =>
+        (student.activities || [])
+          .filter(a => a.type === "simcity")
+          .map(activity => ({
+            "ФИО": student.name,
+            "Класс": cls.name,
+            "Дата": new Date(activity.date).toLocaleString('ru-RU')
+          }))
+      )
+    );
+    if (simcityData.length > 0) {
+      const simcitySheet = XLSX.utils.json_to_sheet(simcityData);
+      XLSX.utils.book_append_sheet(workbook, simcitySheet, "Симсити");
+    }
+
+    const factorioData = classes.flatMap(cls =>
+      cls.students.flatMap(student =>
+        (student.activities || [])
+          .filter(a => a.type === "factorio")
+          .map(activity => ({
+            "ФИО": student.name,
+            "Класс": cls.name,
+            "Дата": new Date(activity.date).toLocaleString('ru-RU')
+          }))
+      )
+    );
+    if (factorioData.length > 0) {
+      const factorioSheet = XLSX.utils.json_to_sheet(factorioData);
+      XLSX.utils.book_append_sheet(workbook, factorioSheet, "Факторио");
+    }
+
+    const pe3dData = classes.flatMap(cls =>
+      cls.students.flatMap(student =>
+        (student.activities || [])
+          .filter(a => a.type === "pe3d")
+          .map(activity => ({
+            "ФИО": student.name,
+            "Класс": cls.name,
+            "Дата": new Date(activity.date).toLocaleString('ru-RU')
+          }))
+      )
+    );
+    if (pe3dData.length > 0) {
+      const pe3dSheet = XLSX.utils.json_to_sheet(pe3dData);
+      XLSX.utils.book_append_sheet(workbook, pe3dSheet, "3D Физкультура");
+    }
+
     const date = new Date().toISOString().split('T')[0];
     XLSX.writeFile(workbook, `Успехи_учеников_${date}.xlsx`);
     
@@ -188,6 +268,76 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
     if (sportData.length > 0) {
       const sportSheet = XLSX.utils.json_to_sheet(sportData);
       XLSX.utils.book_append_sheet(workbook, sportSheet, "Спорт");
+    }
+
+    const valheimData = classRoom.students.flatMap(student =>
+      (student.activities || [])
+        .filter(a => a.type === "valheim")
+        .map(activity => ({
+          "ФИО": student.name,
+          "Класс": classRoom.name,
+          "Дата": new Date(activity.date).toLocaleString('ru-RU')
+        }))
+    );
+    if (valheimData.length > 0) {
+      const valheimSheet = XLSX.utils.json_to_sheet(valheimData);
+      XLSX.utils.book_append_sheet(workbook, valheimSheet, "Вальхейм");
+    }
+
+    const civilizationData = classRoom.students.flatMap(student =>
+      (student.activities || [])
+        .filter(a => a.type === "civilization")
+        .map(activity => ({
+          "ФИО": student.name,
+          "Класс": classRoom.name,
+          "Дата": new Date(activity.date).toLocaleString('ru-RU')
+        }))
+    );
+    if (civilizationData.length > 0) {
+      const civilizationSheet = XLSX.utils.json_to_sheet(civilizationData);
+      XLSX.utils.book_append_sheet(workbook, civilizationSheet, "Цивилизация");
+    }
+
+    const simcityData = classRoom.students.flatMap(student =>
+      (student.activities || [])
+        .filter(a => a.type === "simcity")
+        .map(activity => ({
+          "ФИО": student.name,
+          "Класс": classRoom.name,
+          "Дата": new Date(activity.date).toLocaleString('ru-RU')
+        }))
+    );
+    if (simcityData.length > 0) {
+      const simcitySheet = XLSX.utils.json_to_sheet(simcityData);
+      XLSX.utils.book_append_sheet(workbook, simcitySheet, "Симсити");
+    }
+
+    const factorioData = classRoom.students.flatMap(student =>
+      (student.activities || [])
+        .filter(a => a.type === "factorio")
+        .map(activity => ({
+          "ФИО": student.name,
+          "Класс": classRoom.name,
+          "Дата": new Date(activity.date).toLocaleString('ru-RU')
+        }))
+    );
+    if (factorioData.length > 0) {
+      const factorioSheet = XLSX.utils.json_to_sheet(factorioData);
+      XLSX.utils.book_append_sheet(workbook, factorioSheet, "Факторио");
+    }
+
+    const pe3dData = classRoom.students.flatMap(student =>
+      (student.activities || [])
+        .filter(a => a.type === "pe3d")
+        .map(activity => ({
+          "ФИО": student.name,
+          "Класс": classRoom.name,
+          "Дата": new Date(activity.date).toLocaleString('ru-RU')
+        }))
+    );
+    if (pe3dData.length > 0) {
+      const pe3dSheet = XLSX.utils.json_to_sheet(pe3dData);
+      XLSX.utils.book_append_sheet(workbook, pe3dSheet, "3D Физкультура");
     }
 
     const date = new Date().toISOString().split('T')[0];
