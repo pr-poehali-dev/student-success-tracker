@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
-import { ClassRoom } from "@/types";
+import { ClassRoom, ActivityRecord } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface GameTabProps {
   classes: ClassRoom[];
@@ -22,7 +24,12 @@ const ACHIEVEMENTS = [
 export const GameTab = ({ classes, setClasses }: GameTabProps) => {
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
-  const [pointsToAdd, setPointsToAdd] = useState<string>("10");
+  const [selectedDirection, setSelectedDirection] = useState<string>("");
+  
+  const [lumosityPoints, setLumosityPoints] = useState<string>("10");
+  const [roboTime, setRoboTime] = useState<string>("30");
+  const [sportResult, setSportResult] = useState<"win" | "loss">("win");
+  const [sportRole, setSportRole] = useState<"captain" | "player">("player");
 
   const allStudents = classes.flatMap(cls => 
     cls.students.map(student => ({ ...student, className: cls.name, classId: cls.id }))
@@ -30,34 +37,6 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
 
   const selectedClass = classes.find(c => c.id === selectedClassId);
   const selectedStudent = selectedClass?.students.find(s => s.id === selectedStudentId);
-
-  const addPoints = () => {
-    const points = parseInt(pointsToAdd);
-    if (isNaN(points) || points <= 0) {
-      toast.error("Введите корректное число баллов");
-      return;
-    }
-
-    if (!selectedClassId || !selectedStudentId) {
-      toast.error("Выберите класс и ученика");
-      return;
-    }
-
-    setClasses(classes.map(cls => 
-      cls.id === selectedClassId 
-        ? {
-            ...cls,
-            students: cls.students.map(student =>
-              student.id === selectedStudentId
-                ? { ...student, points: student.points + points }
-                : student
-            )
-          }
-        : cls
-    ));
-
-    toast.success(`+${points} баллов для ${selectedStudent?.name}`);
-  };
 
   const giveAchievement = (achievementId: string) => {
     if (!selectedClassId || !selectedStudentId) {
@@ -84,7 +63,75 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
     ));
 
     const achievement = ACHIEVEMENTS.find(a => a.id === achievementId);
+    setSelectedDirection(achievementId);
     toast.success(`Выбрано направление "${achievement?.name}" для ${selectedStudent?.name}`);
+  };
+
+  const addActivity = () => {
+    if (!selectedClassId || !selectedStudentId || !selectedDirection) {
+      toast.error("Выберите класс, ученика и направление");
+      return;
+    }
+
+    let activity: ActivityRecord;
+    let pointsToAdd = 0;
+
+    if (selectedDirection === "lumosity") {
+      const points = parseInt(lumosityPoints);
+      if (isNaN(points) || points <= 0) {
+        toast.error("Введите корректное количество баллов");
+        return;
+      }
+      activity = {
+        type: "lumosity",
+        date: new Date().toISOString(),
+        points
+      };
+      pointsToAdd = points;
+    } else if (selectedDirection === "robo") {
+      const time = parseInt(roboTime);
+      if (isNaN(time) || time <= 0) {
+        toast.error("Введите корректное время");
+        return;
+      }
+      activity = {
+        type: "robo",
+        date: new Date().toISOString(),
+        time
+      };
+      pointsToAdd = Math.floor(time / 5);
+    } else if (selectedDirection === "sport") {
+      activity = {
+        type: "sport",
+        date: new Date().toISOString(),
+        result: sportResult,
+        role: sportRole
+      };
+      pointsToAdd = sportResult === "win" 
+        ? (sportRole === "captain" ? 20 : 10)
+        : (sportRole === "captain" ? 5 : 2);
+    } else {
+      return;
+    }
+
+    setClasses(classes.map(cls => 
+      cls.id === selectedClassId 
+        ? {
+            ...cls,
+            students: cls.students.map(student =>
+              student.id === selectedStudentId
+                ? { 
+                    ...student, 
+                    points: student.points + pointsToAdd,
+                    activities: [...(student.activities || []), activity]
+                  }
+                : student
+            )
+          }
+        : cls
+    ));
+
+    toast.success(`Добавлено! +${pointsToAdd} баллов`);
   };
 
   return (
@@ -97,14 +144,18 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Icon name="Zap" size={20} className="text-primary" />
-            Добавить баллы
+            <Icon name="Users" size={20} className="text-primary" />
+            Выбор ученика
           </h3>
           
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Класс</label>
-              <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+              <Select value={selectedClassId} onValueChange={(value) => {
+                setSelectedClassId(value);
+                setSelectedStudentId("");
+                setSelectedDirection("");
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите класс" />
                 </SelectTrigger>
@@ -121,7 +172,10 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
             {selectedClassId && (
               <div>
                 <label className="text-sm font-medium mb-2 block">Ученик</label>
-                <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
+                <Select value={selectedStudentId} onValueChange={(value) => {
+                  setSelectedStudentId(value);
+                  setSelectedDirection("");
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Выберите ученика" />
                   </SelectTrigger>
@@ -135,25 +189,6 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
                 </Select>
               </div>
             )}
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Количество баллов</label>
-              <Input
-                type="number"
-                value={pointsToAdd}
-                onChange={(e) => setPointsToAdd(e.target.value)}
-                min="1"
-              />
-            </div>
-
-            <Button 
-              onClick={addPoints} 
-              className="w-full"
-              disabled={!selectedStudentId}
-            >
-              <Icon name="Plus" size={18} className="mr-2" />
-              Добавить баллы
-            </Button>
           </div>
         </Card>
 
@@ -182,10 +217,9 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
               {ACHIEVEMENTS.map(achievement => (
                 <Button
                   key={achievement.id}
-                  variant="outline"
+                  variant={selectedDirection === achievement.id ? "default" : "outline"}
                   className="w-full justify-start h-auto py-3"
                   onClick={() => giveAchievement(achievement.id)}
-                  disabled={selectedStudent?.achievements.includes(achievement.id)}
                 >
                   <Icon name={achievement.icon as any} size={20} className="mr-3" />
                   <span>{achievement.name}</span>
@@ -198,6 +232,103 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
           )}
         </Card>
       </div>
+
+      {selectedDirection && (
+        <Card className="p-6 border-2 border-primary/30">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Icon name="Pencil" size={20} className="text-primary" />
+            {selectedDirection === "lumosity" && "Люмосити - Баллы"}
+            {selectedDirection === "robo" && "Робо - Время"}
+            {selectedDirection === "sport" && "Спорт - Результат"}
+          </h3>
+
+          {selectedDirection === "lumosity" && (
+            <div className="space-y-4">
+              <div>
+                <Label>Количество баллов</Label>
+                <Input
+                  type="number"
+                  value={lumosityPoints}
+                  onChange={(e) => setLumosityPoints(e.target.value)}
+                  min="1"
+                  placeholder="Введите баллы"
+                />
+              </div>
+              <Button onClick={addActivity} className="w-full" size="lg">
+                <Icon name="Plus" size={18} className="mr-2" />
+                Добавить баллы
+              </Button>
+            </div>
+          )}
+
+          {selectedDirection === "robo" && (
+            <div className="space-y-4">
+              <div>
+                <Label>Время (в минутах)</Label>
+                <Input
+                  type="number"
+                  value={roboTime}
+                  onChange={(e) => setRoboTime(e.target.value)}
+                  min="1"
+                  placeholder="Введите время"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                1 балл за каждые 5 минут
+              </p>
+              <Button onClick={addActivity} className="w-full" size="lg">
+                <Icon name="Plus" size={18} className="mr-2" />
+                Добавить время
+              </Button>
+            </div>
+          )}
+
+          {selectedDirection === "sport" && (
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-3 block">Результат</Label>
+                <RadioGroup value={sportResult} onValueChange={(value) => setSportResult(value as "win" | "loss")}>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <RadioGroupItem value="win" id="win" />
+                    <Label htmlFor="win" className="cursor-pointer">Победа</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="loss" id="loss" />
+                    <Label htmlFor="loss" className="cursor-pointer">Проигрыш</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div>
+                <Label className="mb-3 block">Роль</Label>
+                <RadioGroup value={sportRole} onValueChange={(value) => setSportRole(value as "captain" | "player")}>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <RadioGroupItem value="captain" id="captain" />
+                    <Label htmlFor="captain" className="cursor-pointer">Капитан</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="player" id="player" />
+                    <Label htmlFor="player" className="cursor-pointer">Игрок</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="p-3 bg-secondary/30 rounded-lg text-sm">
+                <p className="font-medium mb-1">Начисление баллов:</p>
+                <p>• Победа (Капитан): 20 баллов</p>
+                <p>• Победа (Игрок): 10 баллов</p>
+                <p>• Проигрыш (Капитан): 5 баллов</p>
+                <p>• Проигрыш (Игрок): 2 балла</p>
+              </div>
+
+              <Button onClick={addActivity} className="w-full" size="lg">
+                <Icon name="Plus" size={18} className="mr-2" />
+                Добавить результат
+              </Button>
+            </div>
+          )}
+        </Card>
+      )}
 
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
