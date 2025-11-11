@@ -16,19 +16,71 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
       return;
     }
 
-    const data = classes.flatMap(cls =>
+    const workbook = XLSX.utils.book_new();
+
+    const summaryData = classes.flatMap(cls =>
       cls.students.map(student => ({
         "Класс": cls.name,
         "Имя ученика": student.name,
-        "Баллы": student.points,
-        "Достижения": student.achievements.join(", "),
-        "Количество достижений": student.achievements.length
+        "Баллы (Люмосити)": student.points,
+        "Направления": student.achievements.join(", "),
+        "Всего активностей": student.activities?.length || 0
       }))
     );
+    const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, "Общая сводка");
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Ученики");
+    const lumosityData = classes.flatMap(cls =>
+      cls.students.flatMap(student =>
+        (student.activities || [])
+          .filter(a => a.type === "lumosity")
+          .map(activity => ({
+            "Класс": cls.name,
+            "Имя ученика": student.name,
+            "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+            "Баллы": activity.points || 0
+          }))
+      )
+    );
+    if (lumosityData.length > 0) {
+      const lumositySheet = XLSX.utils.json_to_sheet(lumosityData);
+      XLSX.utils.book_append_sheet(workbook, lumositySheet, "Люмосити");
+    }
+
+    const roboData = classes.flatMap(cls =>
+      cls.students.flatMap(student =>
+        (student.activities || [])
+          .filter(a => a.type === "robo")
+          .map(activity => ({
+            "Класс": cls.name,
+            "Имя ученика": student.name,
+            "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+            "Время (мин)": activity.time || 0
+          }))
+      )
+    );
+    if (roboData.length > 0) {
+      const roboSheet = XLSX.utils.json_to_sheet(roboData);
+      XLSX.utils.book_append_sheet(workbook, roboSheet, "Робо");
+    }
+
+    const sportData = classes.flatMap(cls =>
+      cls.students.flatMap(student =>
+        (student.activities || [])
+          .filter(a => a.type === "sport")
+          .map(activity => ({
+            "Класс": cls.name,
+            "Имя ученика": student.name,
+            "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+            "Результат": activity.result === "win" ? "Победа" : "Проигрыш",
+            "Роль": activity.role === "captain" ? "Капитан" : "Игрок"
+          }))
+      )
+    );
+    if (sportData.length > 0) {
+      const sportSheet = XLSX.utils.json_to_sheet(sportData);
+      XLSX.utils.book_append_sheet(workbook, sportSheet, "Спорт");
+    }
 
     const date = new Date().toISOString().split('T')[0];
     XLSX.writeFile(workbook, `Успехи_учеников_${date}.xlsx`);
@@ -42,16 +94,59 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
       return;
     }
 
-    const data = classRoom.students.map(student => ({
-      "Имя ученика": student.name,
-      "Баллы": student.points,
-      "Достижения": student.achievements.join(", "),
-      "Количество достижений": student.achievements.length
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, classRoom.name);
+
+    const summaryData = classRoom.students.map(student => ({
+      "Имя ученика": student.name,
+      "Баллы (Люмосити)": student.points,
+      "Направления": student.achievements.join(", "),
+      "Всего активностей": student.activities?.length || 0
+    }));
+    const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, "Сводка");
+
+    const lumosityData = classRoom.students.flatMap(student =>
+      (student.activities || [])
+        .filter(a => a.type === "lumosity")
+        .map(activity => ({
+          "Имя ученика": student.name,
+          "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+          "Баллы": activity.points || 0
+        }))
+    );
+    if (lumosityData.length > 0) {
+      const lumositySheet = XLSX.utils.json_to_sheet(lumosityData);
+      XLSX.utils.book_append_sheet(workbook, lumositySheet, "Люмосити");
+    }
+
+    const roboData = classRoom.students.flatMap(student =>
+      (student.activities || [])
+        .filter(a => a.type === "robo")
+        .map(activity => ({
+          "Имя ученика": student.name,
+          "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+          "Время (мин)": activity.time || 0
+        }))
+    );
+    if (roboData.length > 0) {
+      const roboSheet = XLSX.utils.json_to_sheet(roboData);
+      XLSX.utils.book_append_sheet(workbook, roboSheet, "Робо");
+    }
+
+    const sportData = classRoom.students.flatMap(student =>
+      (student.activities || [])
+        .filter(a => a.type === "sport")
+        .map(activity => ({
+          "Имя ученика": student.name,
+          "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+          "Результат": activity.result === "win" ? "Победа" : "Проигрыш",
+          "Роль": activity.role === "captain" ? "Капитан" : "Игрок"
+        }))
+    );
+    if (sportData.length > 0) {
+      const sportSheet = XLSX.utils.json_to_sheet(sportData);
+      XLSX.utils.book_append_sheet(workbook, sportSheet, "Спорт");
+    }
 
     const date = new Date().toISOString().split('T')[0];
     XLSX.writeFile(workbook, `Класс_${classRoom.name}_${date}.xlsx`);

@@ -99,7 +99,7 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
         date: new Date().toISOString(),
         time
       };
-      pointsToAdd = Math.floor(time / 5);
+      pointsToAdd = 0;
     } else if (selectedDirection === "sport") {
       activity = {
         type: "sport",
@@ -107,9 +107,7 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
         result: sportResult,
         role: sportRole
       };
-      pointsToAdd = sportResult === "win" 
-        ? (sportRole === "captain" ? 20 : 10)
-        : (sportRole === "captain" ? 5 : 2);
+      pointsToAdd = 0;
     } else {
       return;
     }
@@ -131,7 +129,13 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
         : cls
     ));
 
-    toast.success(`Добавлено! +${pointsToAdd} баллов`);
+    if (selectedDirection === "lumosity") {
+      toast.success(`Добавлено! +${pointsToAdd} баллов`);
+    } else if (selectedDirection === "robo") {
+      toast.success(`Время ${roboTime} мин записано`);
+    } else {
+      toast.success(`Результат записан`);
+    }
   };
 
   return (
@@ -274,7 +278,7 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
                 />
               </div>
               <p className="text-sm text-muted-foreground">
-                1 балл за каждые 5 минут
+                Время будет сохранено в Excel файл
               </p>
               <Button onClick={addActivity} className="w-full" size="lg">
                 <Icon name="Plus" size={18} className="mr-2" />
@@ -314,11 +318,9 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
               </div>
 
               <div className="p-3 bg-secondary/30 rounded-lg text-sm">
-                <p className="font-medium mb-1">Начисление баллов:</p>
-                <p>• Победа (Капитан): 20 баллов</p>
-                <p>• Победа (Игрок): 10 баллов</p>
-                <p>• Проигрыш (Капитан): 5 баллов</p>
-                <p>• Проигрыш (Игрок): 2 балла</p>
+                <p className="text-muted-foreground">
+                  Результаты будут сохранены в Excel файл
+                </p>
               </div>
 
               <Button onClick={addActivity} className="w-full" size="lg">
