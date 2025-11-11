@@ -19,13 +19,32 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
     const workbook = XLSX.utils.book_new();
 
     const summaryData = classes.flatMap(cls =>
-      cls.students.map(student => ({
-        "Класс": cls.name,
-        "Имя ученика": student.name,
-        "Баллы (Люмосити)": student.points,
-        "Направления": student.achievements.join(", "),
-        "Всего активностей": student.activities?.length || 0
-      }))
+      cls.students.map(student => {
+        const lumosityTotal = (student.activities || [])
+          .filter(a => a.type === "lumosity")
+          .reduce((sum, a) => sum + (a.points || 0), 0);
+        
+        const roboTotal = (student.activities || [])
+          .filter(a => a.type === "robo")
+          .reduce((sum, a) => sum + (a.time || 0), 0);
+        
+        const sportActivities = (student.activities || []).filter(a => a.type === "sport");
+        const sportWins = sportActivities.filter(a => a.result === "win").length;
+        const sportLosses = sportActivities.filter(a => a.result === "loss").length;
+        const sportCaptain = sportActivities.filter(a => a.role === "captain").length;
+        const sportPlayer = sportActivities.filter(a => a.role === "player").length;
+
+        return {
+          "ФИО": student.name,
+          "Класс": cls.name,
+          "Люмосити (баллы)": lumosityTotal,
+          "Робо (время мин)": roboTotal,
+          "Спорт Побед": sportWins,
+          "Спорт Проигрышей": sportLosses,
+          "Спорт Капитаном": sportCaptain,
+          "Спорт Игроком": sportPlayer
+        };
+      })
     );
     const summarySheet = XLSX.utils.json_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(workbook, summarySheet, "Общая сводка");
@@ -35,8 +54,8 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
         (student.activities || [])
           .filter(a => a.type === "lumosity")
           .map(activity => ({
+            "ФИО": student.name,
             "Класс": cls.name,
-            "Имя ученика": student.name,
             "Дата": new Date(activity.date).toLocaleString('ru-RU'),
             "Баллы": activity.points || 0
           }))
@@ -52,8 +71,8 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
         (student.activities || [])
           .filter(a => a.type === "robo")
           .map(activity => ({
+            "ФИО": student.name,
             "Класс": cls.name,
-            "Имя ученика": student.name,
             "Дата": new Date(activity.date).toLocaleString('ru-RU'),
             "Время (мин)": activity.time || 0
           }))
@@ -69,8 +88,8 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
         (student.activities || [])
           .filter(a => a.type === "sport")
           .map(activity => ({
+            "ФИО": student.name,
             "Класс": cls.name,
-            "Имя ученика": student.name,
             "Дата": new Date(activity.date).toLocaleString('ru-RU'),
             "Результат": activity.result === "win" ? "Победа" : "Проигрыш",
             "Роль": activity.role === "captain" ? "Капитан" : "Игрок"
@@ -96,12 +115,32 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
 
     const workbook = XLSX.utils.book_new();
 
-    const summaryData = classRoom.students.map(student => ({
-      "Имя ученика": student.name,
-      "Баллы (Люмосити)": student.points,
-      "Направления": student.achievements.join(", "),
-      "Всего активностей": student.activities?.length || 0
-    }));
+    const summaryData = classRoom.students.map(student => {
+      const lumosityTotal = (student.activities || [])
+        .filter(a => a.type === "lumosity")
+        .reduce((sum, a) => sum + (a.points || 0), 0);
+      
+      const roboTotal = (student.activities || [])
+        .filter(a => a.type === "robo")
+        .reduce((sum, a) => sum + (a.time || 0), 0);
+      
+      const sportActivities = (student.activities || []).filter(a => a.type === "sport");
+      const sportWins = sportActivities.filter(a => a.result === "win").length;
+      const sportLosses = sportActivities.filter(a => a.result === "loss").length;
+      const sportCaptain = sportActivities.filter(a => a.role === "captain").length;
+      const sportPlayer = sportActivities.filter(a => a.role === "player").length;
+
+      return {
+        "ФИО": student.name,
+        "Класс": classRoom.name,
+        "Люмосити (баллы)": lumosityTotal,
+        "Робо (время мин)": roboTotal,
+        "Спорт Побед": sportWins,
+        "Спорт Проигрышей": sportLosses,
+        "Спорт Капитаном": sportCaptain,
+        "Спорт Игроком": sportPlayer
+      };
+    });
     const summarySheet = XLSX.utils.json_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(workbook, summarySheet, "Сводка");
 
@@ -109,7 +148,8 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
       (student.activities || [])
         .filter(a => a.type === "lumosity")
         .map(activity => ({
-          "Имя ученика": student.name,
+          "ФИО": student.name,
+          "Класс": classRoom.name,
           "Дата": new Date(activity.date).toLocaleString('ru-RU'),
           "Баллы": activity.points || 0
         }))
@@ -123,7 +163,8 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
       (student.activities || [])
         .filter(a => a.type === "robo")
         .map(activity => ({
-          "Имя ученика": student.name,
+          "ФИО": student.name,
+          "Класс": classRoom.name,
           "Дата": new Date(activity.date).toLocaleString('ru-RU'),
           "Время (мин)": activity.time || 0
         }))
@@ -137,7 +178,8 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
       (student.activities || [])
         .filter(a => a.type === "sport")
         .map(activity => ({
-          "Имя ученика": student.name,
+          "ФИО": student.name,
+          "Класс": classRoom.name,
           "Дата": new Date(activity.date).toLocaleString('ru-RU'),
           "Результат": activity.result === "win" ? "Победа" : "Проигрыш",
           "Роль": activity.role === "captain" ? "Капитан" : "Игрок"
