@@ -9,6 +9,15 @@ export interface ActivityRecord {
   matchName?: string;
   teamName?: string;
   opponentTeamName?: string;
+  civilizationYear?: number;
+  civilizationDefenseYear?: number;
+  civilizationProduction1?: string;
+  civilizationProduction2?: string;
+  civilizationProduction3?: string;
+  simcityCitizens?: number;
+  simcityHappiness?: number;
+  simcityProduction?: string;
+  factorioFlasks?: number;
 }
 
 export interface Student {

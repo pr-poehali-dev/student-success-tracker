@@ -140,7 +140,12 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
             "Противник": activity.opponentTeamName || "-",
             "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
             "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
-            "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
+            "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-",
+            "Год объявления": activity.civilizationYear || "-",
+            "Год защиты": activity.civilizationDefenseYear || "-",
+            "Производство 1": activity.civilizationProduction1 || "-",
+            "Производство 2": activity.civilizationProduction2 || "-",
+            "Производство 3": activity.civilizationProduction3 || "-"
           }))
       )
     );
@@ -156,7 +161,10 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
           .map(activity => ({
             "ФИО": student.name,
             "Класс": cls.name,
-            "Дата": new Date(activity.date).toLocaleString('ru-RU')
+            "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+            "Количество граждан": activity.simcityCitizens || "-",
+            "Уровень счастья": activity.simcityHappiness || "-",
+            "Производство": activity.simcityProduction || "-"
           }))
       )
     );
@@ -178,7 +186,8 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
             "Противник": activity.opponentTeamName || "-",
             "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
             "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
-            "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
+            "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-",
+            "Количество колб": activity.factorioFlasks || "-"
           }))
       )
     );
@@ -328,7 +337,12 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
           "Противник": activity.opponentTeamName || "-",
           "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
           "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
-          "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
+          "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-",
+          "Год объявления": activity.civilizationYear || "-",
+          "Год защиты": activity.civilizationDefenseYear || "-",
+          "Производство 1": activity.civilizationProduction1 || "-",
+          "Производство 2": activity.civilizationProduction2 || "-",
+          "Производство 3": activity.civilizationProduction3 || "-"
         }))
     );
     if (civilizationData.length > 0) {
@@ -342,7 +356,10 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
         .map(activity => ({
           "ФИО": student.name,
           "Класс": classRoom.name,
-          "Дата": new Date(activity.date).toLocaleString('ru-RU')
+          "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+          "Количество граждан": activity.simcityCitizens || "-",
+          "Уровень счастья": activity.simcityHappiness || "-",
+          "Производство": activity.simcityProduction || "-"
         }))
     );
     if (simcityData.length > 0) {
@@ -362,7 +379,8 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
           "Противник": activity.opponentTeamName || "-",
           "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
           "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
-          "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
+          "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-",
+          "Количество колб": activity.factorioFlasks || "-"
         }))
     );
     if (factorioData.length > 0) {

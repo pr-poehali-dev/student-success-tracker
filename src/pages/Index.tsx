@@ -7,42 +7,63 @@ import { GameTab } from "@/components/GameTab";
 import { ExportTab } from "@/components/ExportTab";
 import { TeamsTab } from "@/components/TeamsTab";
 import { TeacherProfile } from "@/components/TeacherProfile";
+import { Login } from "@/components/Login";
 import { ClassRoom, Teacher, Match, AppState } from "@/types";
-import { saveAppState, loadAppState, getDefaultTeacher } from "@/utils/storage";
+import { saveAppState, loadAppState, getDefaultTeacher, clearAppState } from "@/utils/storage";
 
 const Index = () => {
-  const [teacher, setTeacher] = useState<Teacher>(getDefaultTeacher());
+  const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [classes, setClasses] = useState<ClassRoom[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [activeTab, setActiveTab] = useState("profile");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const savedState = loadAppState();
-    if (savedState) {
+    if (savedState && savedState.teacher.name !== "Учитель") {
       setTeacher(savedState.teacher);
       setClasses(savedState.classes);
       setMatches(savedState.matches);
+      setIsLoggedIn(true);
     }
   }, []);
 
   useEffect(() => {
-    const state: AppState = {
-      teacher,
-      classes,
-      matches
-    };
-    saveAppState(state);
-  }, [teacher, classes, matches]);
+    if (teacher && isLoggedIn) {
+      const state: AppState = {
+        teacher,
+        classes,
+        matches
+      };
+      saveAppState(state);
+    }
+  }, [teacher, classes, matches, isLoggedIn]);
+
+  const handleLogin = (loggedInTeacher: Teacher) => {
+    setTeacher(loggedInTeacher);
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    if (confirm("Вы уверены, что хотите выйти? Данные сохранены.")) {
+      setIsLoggedIn(false);
+      setTeacher(null);
+    }
+  };
 
   const handleTeacherUpdate = (updatedTeacher: Teacher) => {
     setTeacher(updatedTeacher);
   };
 
   const handleClearData = () => {
-    setTeacher(getDefaultTeacher());
+    clearAppState();
     setClasses([]);
     setMatches([]);
   };
+
+  if (!isLoggedIn || !teacher) {
+    return <Login onLogin={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/30">
@@ -107,6 +128,7 @@ const Index = () => {
                   teacher={teacher}
                   onUpdate={handleTeacherUpdate}
                   onClearData={handleClearData}
+                  onLogout={handleLogout}
                 />
               </div>
             </TabsContent>

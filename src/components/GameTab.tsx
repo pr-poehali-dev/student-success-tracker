@@ -35,6 +35,21 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
   const [roboTime, setRoboTime] = useState<string>("30");
   const [sportResult, setSportResult] = useState<"win" | "loss">("win");
   const [sportRole, setSportRole] = useState<"captain" | "player">("player");
+  
+  const [valheimResult, setValheimResult] = useState<"win" | "loss">("win");
+  const [valheimRole, setValheimRole] = useState<"captain" | "player">("player");
+  
+  const [civYear, setCivYear] = useState<string>("");
+  const [civDefenseYear, setCivDefenseYear] = useState<string>("");
+  const [civProd1, setCivProd1] = useState<string>("");
+  const [civProd2, setCivProd2] = useState<string>("");
+  const [civProd3, setCivProd3] = useState<string>("");
+  
+  const [simcityCitizens, setSimcityCitizens] = useState<string>("");
+  const [simcityHappiness, setSimcityHappiness] = useState<string>("");
+  const [simcityProduction, setSimcityProduction] = useState<string>("");
+  
+  const [factorioFlasks, setFactorioFlasks] = useState<string>("");
 
   const allStudents = classes.flatMap(cls => 
     cls.students.map(student => ({ ...student, className: cls.name, classId: cls.id }))
@@ -113,9 +128,61 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
         role: sportRole
       };
       pointsToAdd = 0;
-    } else if (["valheim", "civilization", "simcity", "factorio", "pe3d"].includes(selectedDirection)) {
+    } else if (selectedDirection === "valheim") {
       activity = {
-        type: selectedDirection as any,
+        type: "valheim",
+        date: new Date().toISOString(),
+        result: valheimResult,
+        role: valheimRole
+      };
+      pointsToAdd = 0;
+    } else if (selectedDirection === "civilization") {
+      const year = parseInt(civYear);
+      const defenseYear = parseInt(civDefenseYear);
+      if (isNaN(year) || isNaN(defenseYear)) {
+        toast.error("Введите год объявления и год защиты");
+        return;
+      }
+      activity = {
+        type: "civilization",
+        date: new Date().toISOString(),
+        civilizationYear: year,
+        civilizationDefenseYear: defenseYear,
+        civilizationProduction1: civProd1,
+        civilizationProduction2: civProd2,
+        civilizationProduction3: civProd3
+      };
+      pointsToAdd = 0;
+    } else if (selectedDirection === "simcity") {
+      const citizens = parseInt(simcityCitizens);
+      const happiness = parseInt(simcityHappiness);
+      if (isNaN(citizens) || isNaN(happiness)) {
+        toast.error("Введите количество граждан и уровень счастья");
+        return;
+      }
+      activity = {
+        type: "simcity",
+        date: new Date().toISOString(),
+        simcityCitizens: citizens,
+        simcityHappiness: happiness,
+        simcityProduction: simcityProduction
+      };
+      pointsToAdd = 0;
+    } else if (selectedDirection === "factorio") {
+      const flasks = parseInt(factorioFlasks);
+      if (isNaN(flasks) || flasks <= 0) {
+        toast.error("Введите количество колб");
+        return;
+      }
+      activity = {
+        type: "factorio",
+        date: new Date().toISOString(),
+        factorioFlasks: flasks
+      };
+      pointsToAdd = 0;
+    } else if (selectedDirection === "pe3d") {
+      activity = {
+        type: "pe3d",
         date: new Date().toISOString()
       };
       pointsToAdd = 0;
@@ -357,9 +424,152 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
             </div>
           )}
 
-          {(selectedDirection === "valheim" || selectedDirection === "civilization" || 
-            selectedDirection === "simcity" || selectedDirection === "factorio" || 
-            selectedDirection === "pe3d") && (
+          {selectedDirection === "valheim" && (
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-3 block">Результат</Label>
+                <RadioGroup value={valheimResult} onValueChange={(value) => setValheimResult(value as "win" | "loss")}>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <RadioGroupItem value="win" id="valheim-win" />
+                    <Label htmlFor="valheim-win" className="cursor-pointer">Победа</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="loss" id="valheim-loss" />
+                    <Label htmlFor="valheim-loss" className="cursor-pointer">Поражение</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div>
+                <Label className="mb-3 block">Роль</Label>
+                <RadioGroup value={valheimRole} onValueChange={(value) => setValheimRole(value as "captain" | "player")}>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <RadioGroupItem value="captain" id="valheim-captain" />
+                    <Label htmlFor="valheim-captain" className="cursor-pointer">Капитан</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="player" id="valheim-player" />
+                    <Label htmlFor="valheim-player" className="cursor-pointer">Игрок</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <Button onClick={addActivity} className="w-full" size="lg">
+                <Icon name="Plus" size={18} className="mr-2" />
+                Добавить результат
+              </Button>
+            </div>
+          )}
+
+          {selectedDirection === "civilization" && (
+            <div className="space-y-4">
+              <div>
+                <Label>Год объявления</Label>
+                <Input
+                  type="number"
+                  value={civYear}
+                  onChange={(e) => setCivYear(e.target.value)}
+                  placeholder="Например: 2024"
+                />
+              </div>
+              <div>
+                <Label>Год защиты</Label>
+                <Input
+                  type="number"
+                  value={civDefenseYear}
+                  onChange={(e) => setCivDefenseYear(e.target.value)}
+                  placeholder="Например: 2025"
+                />
+              </div>
+              
+              <div className="border-t pt-4">
+                <Label className="mb-3 block font-semibold">Производства (необязательно)</Label>
+                <div className="space-y-3">
+                  <Input
+                    value={civProd1}
+                    onChange={(e) => setCivProd1(e.target.value)}
+                    placeholder="Производство 1"
+                  />
+                  <Input
+                    value={civProd2}
+                    onChange={(e) => setCivProd2(e.target.value)}
+                    placeholder="Производство 2"
+                  />
+                  <Input
+                    value={civProd3}
+                    onChange={(e) => setCivProd3(e.target.value)}
+                    placeholder="Производство 3"
+                  />
+                </div>
+              </div>
+
+              <Button onClick={addActivity} className="w-full" size="lg">
+                <Icon name="Plus" size={18} className="mr-2" />
+                Добавить данные
+              </Button>
+            </div>
+          )}
+
+          {selectedDirection === "simcity" && (
+            <div className="space-y-4">
+              <div>
+                <Label>Количество граждан</Label>
+                <Input
+                  type="number"
+                  value={simcityCitizens}
+                  onChange={(e) => setSimcityCitizens(e.target.value)}
+                  placeholder="Введите количество"
+                  min="0"
+                />
+              </div>
+              <div>
+                <Label>Уровень счастья (%)</Label>
+                <Input
+                  type="number"
+                  value={simcityHappiness}
+                  onChange={(e) => setSimcityHappiness(e.target.value)}
+                  placeholder="От 0 до 100"
+                  min="0"
+                  max="100"
+                />
+              </div>
+              <div>
+                <Label>Производство (необязательно)</Label>
+                <Input
+                  value={simcityProduction}
+                  onChange={(e) => setSimcityProduction(e.target.value)}
+                  placeholder="Укажите производство"
+                />
+              </div>
+
+              <Button onClick={addActivity} className="w-full" size="lg">
+                <Icon name="Plus" size={18} className="mr-2" />
+                Добавить данные
+              </Button>
+            </div>
+          )}
+
+          {selectedDirection === "factorio" && (
+            <div className="space-y-4">
+              <div>
+                <Label>Количество производимых колб</Label>
+                <Input
+                  type="number"
+                  value={factorioFlasks}
+                  onChange={(e) => setFactorioFlasks(e.target.value)}
+                  placeholder="Введите количество"
+                  min="0"
+                />
+              </div>
+
+              <Button onClick={addActivity} className="w-full" size="lg">
+                <Icon name="Plus" size={18} className="mr-2" />
+                Добавить данные
+              </Button>
+            </div>
+          )}
+
+          {selectedDirection === "pe3d" && (
             <div className="space-y-4">
               <div className="p-4 bg-secondary/30 rounded-lg text-center">
                 <Icon name="CheckCircle" size={32} className="mx-auto mb-2 text-primary" />

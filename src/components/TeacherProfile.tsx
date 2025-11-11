@@ -12,9 +12,10 @@ interface TeacherProfileProps {
   teacher: Teacher;
   onUpdate: (teacher: Teacher) => void;
   onClearData: () => void;
+  onLogout: () => void;
 }
 
-export const TeacherProfile = ({ teacher, onUpdate, onClearData }: TeacherProfileProps) => {
+export const TeacherProfile = ({ teacher, onUpdate, onClearData, onLogout }: TeacherProfileProps) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editName, setEditName] = useState(teacher.name);
   const [editEmail, setEditEmail] = useState(teacher.email);
@@ -93,18 +94,28 @@ export const TeacherProfile = ({ teacher, onUpdate, onClearData }: TeacherProfil
         </Dialog>
       </div>
 
-      <div className="pt-4 border-t">
-        <p className="text-sm text-muted-foreground mb-3">
+      <div className="pt-4 border-t space-y-3">
+        <p className="text-sm text-muted-foreground">
           Все ваши данные сохраняются локально в браузере
         </p>
-        <Button 
-          onClick={handleClearData}
-          variant="destructive"
-          size="sm"
-        >
-          <Icon name="Trash2" size={16} className="mr-2" />
-          Очистить все данные
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={onLogout}
+            variant="outline"
+            size="sm"
+          >
+            <Icon name="LogOut" size={16} className="mr-2" />
+            Выйти
+          </Button>
+          <Button 
+            onClick={handleClearData}
+            variant="destructive"
+            size="sm"
+          >
+            <Icon name="Trash2" size={16} className="mr-2" />
+            Очистить все данные
+          </Button>
+        </div>
       </div>
     </Card>
   );
