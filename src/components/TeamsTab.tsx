@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { GameSelector } from "./teams/GameSelector";
 import { TeamBuilder } from "./teams/TeamBuilder";
 import { MatchHistory } from "./teams/MatchHistory";
+import * as XLSX from "xlsx";
 
 interface TeamsTabProps {
   classes: ClassRoom[];
@@ -24,6 +25,7 @@ export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
   const [selectedStudentForTeam2, setSelectedStudentForTeam2] = useState<string>("");
   const [filterClassTeam1, setFilterClassTeam1] = useState<string>("all");
   const [filterClassTeam2, setFilterClassTeam2] = useState<string>("all");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const allStudents = classes.flatMap(cls => 
     cls.students.map(student => ({
@@ -171,12 +173,19 @@ export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
           ? winningTeam.members.find(m => m.studentId === student.id)
           : losingTeam.members.find(m => m.studentId === student.id);
 
+        const playerTeam = isWinner ? winningTeam : losingTeam;
+        const opponentTeam = isWinner ? losingTeam : winningTeam;
+        const matchName = `${match.team1.name} vs ${match.team2.name}`;
+
         const newActivity = {
           type: match.gameType,
           date: match.date,
           result: isWinner ? "win" : "loss",
           role: teamMember?.role || "player",
-          gameStatus: "finished" as const
+          gameStatus: "finished" as const,
+          matchName,
+          teamName: playerTeam.name,
+          opponentTeamName: opponentTeam.name
         };
 
         return {
@@ -200,12 +209,110 @@ export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
     toast.success("Матч удалён");
   };
 
+  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        const matchesSheet = workbook.Sheets['Матчи'];
+        
+        if (!matchesSheet) {
+          toast.error("Файл должен содержать лист 'Матчи'");
+          return;
+        }
+
+        const matchesData = XLSX.utils.sheet_to_json<{
+          'Тип игры': string;
+          'Команда 1': string;
+          'Команда 2': string;
+          'Участники команды 1': string;
+          'Участники команды 2': string;
+        }>(matchesSheet);
+
+        matchesData.forEach(row => {
+          if (!row['Тип игры'] || !row['Команда 1'] || !row['Команда 2']) return;
+
+          const team1MembersNames = row['Участники команды 1']?.split(',').map(s => s.trim()) || [];
+          const team2MembersNames = row['Участники команды 2']?.split(',').map(s => s.trim()) || [];
+
+          const team1MembersList: TeamMember[] = team1MembersNames
+            .map(name => {
+              const student = allStudents.find(s => s.name === name);
+              if (!student) return null;
+              return {
+                studentId: student.id,
+                studentName: student.name,
+                className: student.className,
+                role: "player" as const
+              };
+            })
+            .filter(m => m !== null) as TeamMember[];
+
+          const team2MembersList: TeamMember[] = team2MembersNames
+            .map(name => {
+              const student = allStudents.find(s => s.name === name);
+              if (!student) return null;
+              return {
+                studentId: student.id,
+                studentName: student.name,
+                className: student.className,
+                role: "player" as const
+              };
+            })
+            .filter(m => m !== null) as TeamMember[];
+
+          if (team1MembersList.length === 0 || team2MembersList.length === 0) return;
+
+          setTeam1Members(team1MembersList);
+          setTeam2Members(team2MembersList);
+          setTeam1Name(row['Команда 1']);
+          setTeam2Name(row['Команда 2']);
+          setSelectedGame(row['Тип игры'].toLowerCase());
+        });
+
+        toast.success("Команды загружены! Теперь создайте матч");
+      } catch (error) {
+        console.error(error);
+        toast.error("Ошибка при импорте файла");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
-        <Icon name="Users" size={28} />
-        Управление командами
-      </h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+          <Icon name="Users" size={28} />
+          Управление командами
+        </h2>
+        
+        <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileImport}
+            style={{ display: 'none' }}
+          />
+          <Button 
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+          >
+            <Icon name="Upload" size={20} className="mr-2" />
+            Импорт команд
+          </Button>
+        </div>
+      </div>
 
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">

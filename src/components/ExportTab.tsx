@@ -91,6 +91,9 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
             "ФИО": student.name,
             "Класс": cls.name,
             "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+            "Название матча": activity.matchName || "-",
+            "Команда": activity.teamName || "-",
+            "Противник": activity.opponentTeamName || "-",
             "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
             "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
             "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
@@ -110,6 +113,9 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
             "ФИО": student.name,
             "Класс": cls.name,
             "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+            "Название матча": activity.matchName || "-",
+            "Команда": activity.teamName || "-",
+            "Противник": activity.opponentTeamName || "-",
             "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
             "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
             "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
@@ -129,6 +135,9 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
             "ФИО": student.name,
             "Класс": cls.name,
             "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+            "Название матча": activity.matchName || "-",
+            "Команда": activity.teamName || "-",
+            "Противник": activity.opponentTeamName || "-",
             "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
             "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
             "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
@@ -164,6 +173,9 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
             "ФИО": student.name,
             "Класс": cls.name,
             "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+            "Название матча": activity.matchName || "-",
+            "Команда": activity.teamName || "-",
+            "Противник": activity.opponentTeamName || "-",
             "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
             "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
             "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
@@ -271,6 +283,9 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
           "ФИО": student.name,
           "Класс": classRoom.name,
           "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+          "Название матча": activity.matchName || "-",
+          "Команда": activity.teamName || "-",
+          "Противник": activity.opponentTeamName || "-",
           "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
           "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
           "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
@@ -288,6 +303,9 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
           "ФИО": student.name,
           "Класс": classRoom.name,
           "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+          "Название матча": activity.matchName || "-",
+          "Команда": activity.teamName || "-",
+          "Противник": activity.opponentTeamName || "-",
           "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
           "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
           "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
@@ -305,6 +323,9 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
           "ФИО": student.name,
           "Класс": classRoom.name,
           "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+          "Название матча": activity.matchName || "-",
+          "Команда": activity.teamName || "-",
+          "Противник": activity.opponentTeamName || "-",
           "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
           "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
           "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
@@ -336,6 +357,9 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
           "ФИО": student.name,
           "Класс": classRoom.name,
           "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+          "Название матча": activity.matchName || "-",
+          "Команда": activity.teamName || "-",
+          "Противник": activity.opponentTeamName || "-",
           "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
           "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
           "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"

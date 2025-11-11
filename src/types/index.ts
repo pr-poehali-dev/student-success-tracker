@@ -6,6 +6,9 @@ export interface ActivityRecord {
   result?: "win" | "loss";
   role?: "captain" | "player";
   gameStatus?: "ongoing" | "finished";
+  matchName?: string;
+  teamName?: string;
+  opponentTeamName?: string;
 }
 
 export interface Student {
