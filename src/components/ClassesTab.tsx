@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { ClassRoom, Student } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 interface ClassesTabProps {
   classes: ClassRoom[];
@@ -19,6 +20,7 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [isAddClassOpen, setIsAddClassOpen] = useState(false);
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addClass = () => {
     if (!newClassName.trim()) {
@@ -82,6 +84,84 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
     toast.success("Ученик удален");
   };
 
+  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        const classesSheet = workbook.Sheets['Классы'];
+        const studentsSheet = workbook.Sheets['Ученики'];
+        
+        if (!classesSheet && !studentsSheet) {
+          toast.error("Файл должен содержать листы 'Классы' и/или 'Ученики'");
+          return;
+        }
+
+        const importedClasses: ClassRoom[] = [...classes];
+        
+        if (classesSheet) {
+          const classesData = XLSX.utils.sheet_to_json<{ Название: string }>(classesSheet);
+          classesData.forEach(row => {
+            if (row.Название && !importedClasses.find(c => c.name === row.Название)) {
+              importedClasses.push({
+                id: Date.now().toString() + Math.random(),
+                name: row.Название,
+                students: []
+              });
+            }
+          });
+        }
+
+        if (studentsSheet) {
+          const studentsData = XLSX.utils.sheet_to_json<{ 
+            ФИО: string; 
+            Класс: string;
+            Баллы?: number;
+          }>(studentsSheet);
+          
+          studentsData.forEach(row => {
+            if (!row.ФИО || !row.Класс) return;
+            
+            let targetClass = importedClasses.find(c => c.name === row.Класс);
+            if (!targetClass) {
+              targetClass = {
+                id: Date.now().toString() + Math.random(),
+                name: row.Класс,
+                students: []
+              };
+              importedClasses.push(targetClass);
+            }
+
+            if (!targetClass.students.find(s => s.name === row.ФИО)) {
+              targetClass.students.push({
+                id: Date.now().toString() + Math.random(),
+                name: row.ФИО,
+                points: row.Баллы || 0,
+                achievements: []
+              });
+            }
+          });
+        }
+
+        setClasses(importedClasses);
+        toast.success("Данные успешно импортированы!");
+      } catch (error) {
+        console.error(error);
+        toast.error("Ошибка при импорте файла");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -90,33 +170,50 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
           Управление классами
         </h2>
         
-        <Dialog open={isAddClassOpen} onOpenChange={setIsAddClassOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90">
-              <Icon name="Plus" size={20} className="mr-2" />
-              Добавить класс
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Новый класс</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div>
-                <Label>Название класса</Label>
-                <Input
-                  value={newClassName}
-                  onChange={(e) => setNewClassName(e.target.value)}
-                  placeholder="Например: 5-А"
-                  onKeyPress={(e) => e.key === 'Enter' && addClass()}
-                />
-              </div>
-              <Button onClick={addClass} className="w-full">
-                Создать класс
+        <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileImport}
+            style={{ display: 'none' }}
+          />
+          <Button 
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+          >
+            <Icon name="Upload" size={20} className="mr-2" />
+            Импорт из Excel
+          </Button>
+          
+          <Dialog open={isAddClassOpen} onOpenChange={setIsAddClassOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90">
+                <Icon name="Plus" size={20} className="mr-2" />
+                Добавить класс
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Новый класс</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label>Название класса</Label>
+                  <Input
+                    value={newClassName}
+                    onChange={(e) => setNewClassName(e.target.value)}
+                    placeholder="Например: 5-А"
+                    onKeyPress={(e) => e.key === 'Enter' && addClass()}
+                  />
+                </div>
+                <Button onClick={addClass} className="w-full">
+                  Создать класс
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {classes.length === 0 ? (

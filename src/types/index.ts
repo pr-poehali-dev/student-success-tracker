@@ -5,6 +5,7 @@ export interface ActivityRecord {
   time?: number;
   result?: "win" | "loss";
   role?: "captain" | "player";
+  gameStatus?: "ongoing" | "finished";
 }
 
 export interface Student {

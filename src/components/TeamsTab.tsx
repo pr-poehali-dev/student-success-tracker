@@ -31,6 +31,8 @@ export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
   const [team2Name, setTeam2Name] = useState<string>("Команда 2");
   const [selectedStudentForTeam1, setSelectedStudentForTeam1] = useState<string>("");
   const [selectedStudentForTeam2, setSelectedStudentForTeam2] = useState<string>("");
+  const [filterClassTeam1, setFilterClassTeam1] = useState<string>("all");
+  const [filterClassTeam2, setFilterClassTeam2] = useState<string>("all");
 
   const allStudents = classes.flatMap(cls => 
     cls.students.map(student => ({
@@ -45,6 +47,14 @@ export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
     student => 
       !team1Members.some(m => m.studentId === student.id) &&
       !team2Members.some(m => m.studentId === student.id)
+  );
+
+  const availableStudentsTeam1 = availableStudents.filter(
+    student => filterClassTeam1 === "all" || student.className === filterClassTeam1
+  );
+
+  const availableStudentsTeam2 = availableStudents.filter(
+    student => filterClassTeam2 === "all" || student.className === filterClassTeam2
   );
 
   const addToTeam1 = () => {
@@ -174,7 +184,8 @@ export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
           type: match.gameType,
           date: match.date,
           result: isWinner ? "win" : "loss",
-          role: teamMember?.role || "player"
+          role: teamMember?.role || "player",
+          gameStatus: "finished" as const
         };
 
         return {
@@ -249,6 +260,23 @@ export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
                 </div>
 
                 <div className="mb-3">
+                  <Label>Фильтр по классу</Label>
+                  <Select value={filterClassTeam1} onValueChange={setFilterClassTeam1}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Все классы" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все классы</SelectItem>
+                      {classes.map(cls => (
+                        <SelectItem key={cls.id} value={cls.name}>
+                          {cls.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="mb-3">
                   <Label>Добавить ученика</Label>
                   <div className="flex gap-2">
                     <Select value={selectedStudentForTeam1} onValueChange={setSelectedStudentForTeam1}>
@@ -256,7 +284,7 @@ export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
                         <SelectValue placeholder="Выберите ученика" />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableStudents.map(student => (
+                        {availableStudentsTeam1.map(student => (
                           <SelectItem key={student.id} value={student.id}>
                             {student.name} ({student.className})
                           </SelectItem>
@@ -309,6 +337,23 @@ export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
                 </div>
 
                 <div className="mb-3">
+                  <Label>Фильтр по классу</Label>
+                  <Select value={filterClassTeam2} onValueChange={setFilterClassTeam2}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Все классы" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все классы</SelectItem>
+                      {classes.map(cls => (
+                        <SelectItem key={cls.id} value={cls.name}>
+                          {cls.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="mb-3">
                   <Label>Добавить ученика</Label>
                   <div className="flex gap-2">
                     <Select value={selectedStudentForTeam2} onValueChange={setSelectedStudentForTeam2}>
@@ -316,7 +361,7 @@ export const TeamsTab = ({ classes, setClasses }: TeamsTabProps) => {
                         <SelectValue placeholder="Выберите ученика" />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableStudents.map(student => (
+                        {availableStudentsTeam2.map(student => (
                           <SelectItem key={student.id} value={student.id}>
                             {student.name} ({student.className})
                           </SelectItem>

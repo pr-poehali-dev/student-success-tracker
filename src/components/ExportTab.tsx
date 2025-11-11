@@ -91,8 +91,9 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
             "ФИО": student.name,
             "Класс": cls.name,
             "Дата": new Date(activity.date).toLocaleString('ru-RU'),
-            "Результат": activity.result === "win" ? "Победа" : "Проигрыш",
-            "Роль": activity.role === "captain" ? "Капитан" : "Игрок"
+            "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
+            "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
+            "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
           }))
       )
     );
@@ -108,7 +109,10 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
           .map(activity => ({
             "ФИО": student.name,
             "Класс": cls.name,
-            "Дата": new Date(activity.date).toLocaleString('ru-RU')
+            "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+            "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
+            "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
+            "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
           }))
       )
     );
@@ -124,7 +128,10 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
           .map(activity => ({
             "ФИО": student.name,
             "Класс": cls.name,
-            "Дата": new Date(activity.date).toLocaleString('ru-RU')
+            "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+            "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
+            "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
+            "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
           }))
       )
     );
@@ -156,7 +163,10 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
           .map(activity => ({
             "ФИО": student.name,
             "Класс": cls.name,
-            "Дата": new Date(activity.date).toLocaleString('ru-RU')
+            "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+            "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
+            "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
+            "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
           }))
       )
     );
@@ -261,8 +271,9 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
           "ФИО": student.name,
           "Класс": classRoom.name,
           "Дата": new Date(activity.date).toLocaleString('ru-RU'),
-          "Результат": activity.result === "win" ? "Победа" : "Проигрыш",
-          "Роль": activity.role === "captain" ? "Капитан" : "Игрок"
+          "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
+          "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
+          "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
         }))
     );
     if (sportData.length > 0) {
@@ -276,7 +287,10 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
         .map(activity => ({
           "ФИО": student.name,
           "Класс": classRoom.name,
-          "Дата": new Date(activity.date).toLocaleString('ru-RU')
+          "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+          "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
+          "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
+          "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
         }))
     );
     if (valheimData.length > 0) {
@@ -290,7 +304,10 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
         .map(activity => ({
           "ФИО": student.name,
           "Класс": classRoom.name,
-          "Дата": new Date(activity.date).toLocaleString('ru-RU')
+          "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+          "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
+          "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
+          "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
         }))
     );
     if (civilizationData.length > 0) {
@@ -318,7 +335,10 @@ export const ExportTab = ({ classes }: ExportTabProps) => {
         .map(activity => ({
           "ФИО": student.name,
           "Класс": classRoom.name,
-          "Дата": new Date(activity.date).toLocaleString('ru-RU')
+          "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+          "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
+          "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
+          "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
         }))
     );
     if (factorioData.length > 0) {
