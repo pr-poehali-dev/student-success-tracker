@@ -231,65 +231,170 @@ export const SoftSkillsTab = ({ classes, matches, teacherName, onUpdateStudent }
       </Card>
 
       {selectedStudent && (
-        <Card>
-          <CardHeader>
-            <CardTitle>История оценок: {selectedStudent.name}</CardTitle>
-            <CardDescription>
-              {selectedStudent.softSkills?.length || 0} оценок
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {selectedStudent.softSkills && selectedStudent.softSkills.length > 0 ? (
-              <div className="space-y-4">
-                <div className="p-4 bg-secondary/20 rounded-lg">
-                  <h4 className="font-semibold mb-3">Средние значения</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                    {Object.entries(getAverageRatings(selectedStudent)!).map(([key, value]) => (
-                      <div key={key} className="flex items-center gap-2">
-                        <Icon name="Star" size={16} className="fill-yellow-400 text-yellow-400" />
-                        <span className="capitalize">
-                          {key === 'leadership' && 'Лидерство'}
-                          {key === 'selfControl' && 'Самоконтроль'}
-                          {key === 'communication' && 'Коммуникация'}
-                          {key === 'selfReflection' && 'Саморефлексия'}
-                          {key === 'criticalThinking' && 'Критическое мышление'}
-                        </span>
-                        <span className="font-bold">{value}</span>
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Участие в матчах: {selectedStudent.name}</CardTitle>
+              <CardDescription>
+                Матчи и игры учащегося
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const studentMatches = matches.filter(match => 
+                  match.team1.members.some(m => m.studentId === selectedStudent.id) ||
+                  match.team2.members.some(m => m.studentId === selectedStudent.id)
+                );
+
+                const classRoom = classes.find(c => c.id === selectedClassId);
+                const classGames = classRoom?.games || [];
+
+                if (studentMatches.length === 0 && classGames.length === 0) {
+                  return <p className="text-muted-foreground text-center py-8">Нет матчей или игр</p>;
+                }
+
+                return (
+                  <div className="space-y-4">
+                    {classGames.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          <Icon name="Gamepad2" size={18} />
+                          Игры класса
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {classGames.map(game => {
+                            const gameLabels: Record<string, string> = {
+                              valheim: "Valheim",
+                              civilization: "Civilization",
+                              factorio: "Factorio",
+                              sport: "Спорт",
+                              robo: "Робототехника"
+                            };
+                            return (
+                              <span key={game} className="bg-secondary px-3 py-1 rounded-full text-sm">
+                                {gameLabels[game]}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {studentMatches.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          <Icon name="Trophy" size={18} />
+                          Матчи ({studentMatches.length})
+                        </h4>
+                        <div className="space-y-2">
+                          {studentMatches.map(match => {
+                            const isInTeam1 = match.team1.members.some(m => m.studentId === selectedStudent.id);
+                            const studentTeam = isInTeam1 ? match.team1 : match.team2;
+                            const member = studentTeam.members.find(m => m.studentId === selectedStudent.id);
+                            const gameLabels: Record<string, string> = {
+                              valheim: "Valheim",
+                              civilization: "Civilization",
+                              factorio: "Factorio",
+                              sport: "Спорт",
+                              robo: "Робототехника"
+                            };
+
+                            return (
+                              <div key={match.id} className="border p-3 rounded-lg">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <p className="font-medium">
+                                      {match.team1.name} vs {match.team2.name}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {gameLabels[match.gameType]} • {new Date(match.date).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                      {member?.role === "captain" ? "Капитан" : "Игрок"}
+                                    </span>
+                                    {match.completed && match.result && (
+                                      <p className="text-xs mt-1">
+                                        {(match.result === "team1" && isInTeam1) || (match.result === "team2" && !isInTeam1) 
+                                          ? "✅ Победа" 
+                                          : "❌ Поражение"}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>История оценок: {selectedStudent.name}</CardTitle>
+              <CardDescription>
+                {selectedStudent.softSkills?.length || 0} оценок
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {selectedStudent.softSkills && selectedStudent.softSkills.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-secondary/20 rounded-lg">
+                    <h4 className="font-semibold mb-3">Средние значения</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                      {Object.entries(getAverageRatings(selectedStudent)!).map(([key, value]) => (
+                        <div key={key} className="flex items-center gap-2">
+                          <Icon name="Star" size={16} className="fill-yellow-400 text-yellow-400" />
+                          <span className="capitalize">
+                            {key === 'leadership' && 'Лидерство'}
+                            {key === 'selfControl' && 'Самоконтроль'}
+                            {key === 'communication' && 'Коммуникация'}
+                            {key === 'selfReflection' && 'Саморефлексия'}
+                            {key === 'criticalThinking' && 'Критическое мышление'}
+                          </span>
+                          <span className="font-bold">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {selectedStudent.softSkills.map((rating, index) => (
+                      <div key={index} className="p-3 border rounded-lg space-y-2">
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>{new Date(rating.date).toLocaleString()}</span>
+                          <span>Оценил: {rating.ratedBy}</span>
+                        </div>
+                        {rating.matchId && (
+                          <div className="text-sm text-muted-foreground">
+                            Матч: {matches.find(m => m.id === rating.matchId)?.team1.name || 'N/A'}
+                          </div>
+                        )}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                          <div>Лидерство: {rating.leadership}★</div>
+                          <div>Самоконтроль: {rating.selfControl}★</div>
+                          <div>Коммуникация: {rating.communication}★</div>
+                          <div>Саморефлексия: {rating.selfReflection}★</div>
+                          <div>Критическое мышление: {rating.criticalThinking}★</div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
-
-                <div className="space-y-3">
-                  {selectedStudent.softSkills.map((rating, index) => (
-                    <div key={index} className="p-3 border rounded-lg space-y-2">
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>{new Date(rating.date).toLocaleString()}</span>
-                        <span>Оценил: {rating.ratedBy}</span>
-                      </div>
-                      {rating.matchId && (
-                        <div className="text-sm text-muted-foreground">
-                          Матч: {matches.find(m => m.id === rating.matchId)?.team1.name || 'N/A'}
-                        </div>
-                      )}
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-                        <div>Лидерство: {rating.leadership}★</div>
-                        <div>Самоконтроль: {rating.selfControl}★</div>
-                        <div>Коммуникация: {rating.communication}★</div>
-                        <div>Саморефлексия: {rating.selfReflection}★</div>
-                        <div>Критическое мышление: {rating.criticalThinking}★</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-center py-8">
-                Пока нет оценок для этого учащегося
-              </p>
-            )}
-          </CardContent>
-        </Card>
+              ) : (
+                <p className="text-muted-foreground text-center py-8">
+                  Пока нет оценок для этого учащегося
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </>
       )}
 
       <Card>

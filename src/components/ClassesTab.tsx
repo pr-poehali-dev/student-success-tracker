@@ -20,7 +20,24 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [isAddClassOpen, setIsAddClassOpen] = useState(false);
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
+  const [selectedGames, setSelectedGames] = useState<("valheim" | "civilization" | "factorio" | "sport" | "robo")[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const gameOptions: { value: "valheim" | "civilization" | "factorio" | "sport" | "robo"; label: string; icon: string }[] = [
+    { value: "valheim", label: "Valheim", icon: "Swords" },
+    { value: "civilization", label: "Civilization", icon: "Globe" },
+    { value: "factorio", label: "Factorio", icon: "Factory" },
+    { value: "sport", label: "Спорт", icon: "Trophy" },
+    { value: "robo", label: "Робототехника", icon: "Bot" }
+  ];
+
+  const toggleGame = (game: "valheim" | "civilization" | "factorio" | "sport" | "robo") => {
+    setSelectedGames(prev => 
+      prev.includes(game) 
+        ? prev.filter(g => g !== game)
+        : [...prev, game]
+    );
+  };
 
   const addClass = () => {
     if (!newClassName.trim()) {
@@ -31,11 +48,13 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
     const newClass: ClassRoom = {
       id: Date.now().toString(),
       name: newClassName,
-      students: []
+      students: [],
+      games: selectedGames.length > 0 ? selectedGames : undefined
     };
     
     setClasses([...classes, newClass]);
     setNewClassName("");
+    setSelectedGames([]);
     setIsAddClassOpen(false);
     toast.success(`Класс "${newClassName}" добавлен`);
   };
@@ -206,6 +225,23 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
                     placeholder="Например: 5-А"
                     onKeyPress={(e) => e.key === 'Enter' && addClass()}
                   />
+                </div>
+                <div>
+                  <Label>Игры класса (опционально)</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {gameOptions.map(game => (
+                      <Button
+                        key={game.value}
+                        type="button"
+                        variant={selectedGames.includes(game.value) ? "default" : "outline"}
+                        onClick={() => toggleGame(game.value)}
+                        className="justify-start"
+                      >
+                        <Icon name={game.icon} size={18} className="mr-2" />
+                        {game.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
                 <Button onClick={addClass} className="w-full">
                   Создать класс

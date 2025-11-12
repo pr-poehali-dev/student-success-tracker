@@ -45,6 +45,7 @@ export interface ClassRoom {
   name: string;
   students: Student[];
   responsibleTeacherId?: string;
+  games?: ("valheim" | "civilization" | "factorio" | "sport" | "robo")[];
 }
 
 export interface TeamMember {
