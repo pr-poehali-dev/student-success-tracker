@@ -76,8 +76,13 @@ export const Login = ({ onLogin }: LoginProps) => {
           return;
         }
 
+        if (!user.password) {
+          toast.error("Пароль не установлен. Обратитесь к администратору");
+          setLoading(false);
+          return;
+        }
+
         if (user.password !== password.trim()) {
-          console.log("Password mismatch:", { stored: user.password, entered: password.trim() });
           toast.error("Неверный пароль");
           setLoading(false);
           return;

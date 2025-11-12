@@ -90,7 +90,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 def get_all_teachers(cursor) -> List[Dict[str, Any]]:
     cursor.execute('''
-        SELECT id, name, email, role, username, created_at
+        SELECT id, name, email, role, username, created_at, password
         FROM teachers
         ORDER BY created_at DESC
     ''')
@@ -103,7 +103,8 @@ def get_all_teachers(cursor) -> List[Dict[str, Any]]:
             'email': row[2] or '',
             'role': row[3],
             'username': row[4],
-            'createdAt': row[5].isoformat() if row[5] else ''
+            'createdAt': row[5].isoformat() if row[5] else '',
+            'password': row[6] or ''
         })
     
     return teachers
@@ -252,19 +253,21 @@ def get_team_data(cursor, team_id: str) -> Dict[str, Any]:
 
 def save_teacher(cursor, teacher: Dict[str, Any]) -> None:
     cursor.execute('''
-        INSERT INTO teachers (id, name, email, role, username, created_at)
-        VALUES (%s, %s, %s, %s, %s, NOW())
+        INSERT INTO teachers (id, name, email, role, username, created_at, password)
+        VALUES (%s, %s, %s, %s, %s, NOW(), %s)
         ON CONFLICT (id) DO UPDATE SET
             name = EXCLUDED.name,
             email = EXCLUDED.email,
             role = EXCLUDED.role,
-            username = EXCLUDED.username
+            username = EXCLUDED.username,
+            password = EXCLUDED.password
     ''', (
         teacher['id'],
         teacher['name'],
         teacher.get('email', ''),
         teacher['role'],
-        teacher.get('username')
+        teacher.get('username'),
+        teacher.get('password', '')
     ))
 
 
