@@ -1,7 +1,6 @@
-import { AppState, Teacher, ClassRoom, Match, GlobalData } from "@/types";
+import { AppState, Teacher } from "@/types";
 
 const STORAGE_KEY = "poehali_teacher_app_state";
-const GLOBAL_DATA_KEY = "poehali_global_data";
 
 export const saveAppState = (state: AppState): void => {
   try {
@@ -37,32 +36,3 @@ export const getDefaultTeacher = (): Teacher => ({
   role: "teacher",
   createdAt: new Date().toISOString()
 });
-
-export const saveGlobalData = (data: GlobalData): void => {
-  try {
-    localStorage.setItem(GLOBAL_DATA_KEY, JSON.stringify(data));
-  } catch (error) {
-    console.error("Error saving global data:", error);
-  }
-};
-
-export const loadGlobalData = (): GlobalData => {
-  try {
-    const saved = localStorage.getItem(GLOBAL_DATA_KEY);
-    if (!saved) {
-      return { teachers: [], classes: [], matches: [] };
-    }
-    return JSON.parse(saved);
-  } catch (error) {
-    console.error("Error loading global data:", error);
-    return { teachers: [], classes: [], matches: [] };
-  }
-};
-
-export const clearGlobalData = (): void => {
-  try {
-    localStorage.removeItem(GLOBAL_DATA_KEY);
-  } catch (error) {
-    console.error("Error clearing global data:", error);
-  }
-};

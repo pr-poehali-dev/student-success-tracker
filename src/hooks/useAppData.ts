@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ClassRoom, Teacher, Match, AppState, GlobalData } from "@/types";
-import { saveAppState, loadAppState, clearAppState, saveGlobalData, loadGlobalData } from "@/utils/storage";
+import { saveAppState, loadAppState, clearAppState } from "@/utils/storage";
 import { syncFromServer, syncToServer, deleteTeacherFromServer } from "@/utils/sync";
 import { toast } from "sonner";
 
@@ -21,8 +21,6 @@ export const useAppData = () => {
       
       try {
         const serverData = await syncFromServer();
-        
-        saveGlobalData(serverData);
         setGlobalData(serverData);
         
         const savedState = loadAppState();
@@ -30,9 +28,22 @@ export const useAppData = () => {
           const teacherStillExists = serverData.teachers.find(t => t.id === savedState.teacher.id);
           
           if (teacherStillExists) {
+            let loginClasses: ClassRoom[] = [];
+            let loginMatches: Match[] = [];
+            
+            if (savedState.teacher.role === "admin" || savedState.teacher.role === "teacher") {
+              loginClasses = serverData.classes;
+              loginMatches = serverData.matches;
+            } else if (savedState.teacher.role === "junior") {
+              loginClasses = serverData.classes.filter(
+                cls => cls.responsibleTeacherId === savedState.teacher.id
+              );
+              loginMatches = serverData.matches.filter(m => m.createdBy === savedState.teacher.name);
+            }
+            
             setTeacher(savedState.teacher);
-            setClasses(savedState.classes);
-            setMatches(savedState.matches);
+            setClasses(loginClasses);
+            setMatches(loginMatches);
             setIsLoggedIn(true);
             
             if (savedState.currentView === 'admin') {
@@ -51,29 +62,8 @@ export const useAppData = () => {
         }
       } catch (error) {
         console.error("Failed to sync from server on load", error);
-        
-        const loadedGlobalData = loadGlobalData();
-        setGlobalData(loadedGlobalData);
-        
-        const savedState = loadAppState();
-        if (savedState?.teacher?.id) {
-          setTeacher(savedState.teacher);
-          setClasses(savedState.classes);
-          setMatches(savedState.matches);
-          setIsLoggedIn(true);
-          
-          if (savedState.currentView === 'admin') {
-            setShowAdmin(true);
-          } else if (savedState.currentView === 'profile') {
-            setShowProfile(true);
-          }
-          
-          if (savedState.activeTab) {
-            setActiveTab(savedState.activeTab);
-          }
-        }
-        
-        toast.error("Не удалось синхронизироваться с сервером. Работа в оффлайн режиме");
+        clearAppState();
+        toast.error("Не удалось подключиться к серверу. Попробуйте позже");
       } finally {
         setIsSyncing(false);
       }
@@ -133,9 +123,15 @@ export const useAppData = () => {
 
     if (hasChanges) {
       setGlobalData(newGlobalData);
-      saveGlobalData(newGlobalData);
+      
+      syncToServer({
+        classes: updatedGlobalClasses,
+        matches: updatedGlobalMatches
+      }).catch(error => {
+        console.error("Failed to auto-sync to server", error);
+      });
     }
-  }, [teacher, classes, matches, isLoggedIn, isSyncing]);
+  }, [teacher, classes, matches, isLoggedIn, isSyncing, globalData]);
 
   const handleLogin = async (loggedInTeacher: Teacher) => {
     setTeacher(loggedInTeacher);
@@ -143,7 +139,6 @@ export const useAppData = () => {
 
     try {
       const serverData = await syncFromServer();
-      saveGlobalData(serverData);
       setGlobalData(serverData);
       
       let loginClasses: ClassRoom[] = [];
@@ -169,35 +164,12 @@ export const useAppData = () => {
       };
       saveAppState(state);
       
-      toast.success("Данные синхронизированы с сервером");
+      toast.success("Вход выполнен успешно");
     } catch (error) {
       console.error("Failed to sync on login", error);
-      
-      const loadedGlobalData = loadGlobalData();
-      let loginClasses: ClassRoom[] = [];
-      let loginMatches: Match[] = [];
-      
-      if (loggedInTeacher.role === "admin" || loggedInTeacher.role === "teacher") {
-        loginClasses = loadedGlobalData.classes;
-        loginMatches = loadedGlobalData.matches;
-      } else if (loggedInTeacher.role === "junior") {
-        loginClasses = loadedGlobalData.classes.filter(
-          cls => cls.responsibleTeacherId === loggedInTeacher.id
-        );
-        loginMatches = loadedGlobalData.matches.filter(m => m.createdBy === loggedInTeacher.name);
-      }
-      
-      setClasses(loginClasses);
-      setMatches(loginMatches);
-      
-      const state: AppState = {
-        teacher: loggedInTeacher,
-        classes: loginClasses,
-        matches: loginMatches
-      };
-      saveAppState(state);
-      
-      toast.warning("Работа в оффлайн режиме");
+      setIsLoggedIn(false);
+      setTeacher(null);
+      toast.error("Не удалось подключиться к серверу");
     }
   };
 
@@ -224,7 +196,6 @@ export const useAppData = () => {
     );
     const newGlobalData = { ...globalData, teachers: updatedTeachers };
     setGlobalData(newGlobalData);
-    saveGlobalData(newGlobalData);
     
     if (teacher?.id === updatedTeacher.id) {
       setTeacher(updatedTeacher);
@@ -249,7 +220,6 @@ export const useAppData = () => {
     const updatedTeachers = globalData.teachers.filter(t => t.id !== teacherId);
     const newGlobalData = { ...globalData, teachers: updatedTeachers };
     setGlobalData(newGlobalData);
-    saveGlobalData(newGlobalData);
     
     try {
       await deleteTeacherFromServer(teacherId);
@@ -264,7 +234,6 @@ export const useAppData = () => {
     const updatedClasses = globalData.classes.filter(c => c.id !== classId);
     const newGlobalData = { ...globalData, classes: updatedClasses };
     setGlobalData(newGlobalData);
-    saveGlobalData(newGlobalData);
     setClasses(updatedClasses);
     
     try {
@@ -280,7 +249,6 @@ export const useAppData = () => {
     const updatedMatches = globalData.matches.filter(m => m.id !== matchId);
     const newGlobalData = { ...globalData, matches: updatedMatches };
     setGlobalData(newGlobalData);
-    saveGlobalData(newGlobalData);
     setMatches(updatedMatches);
     
     try {
@@ -298,7 +266,6 @@ export const useAppData = () => {
     );
     const newGlobalData = { ...globalData, classes: updatedClasses };
     setGlobalData(newGlobalData);
-    saveGlobalData(newGlobalData);
     setClasses(updatedClasses);
     
     try {
@@ -314,7 +281,6 @@ export const useAppData = () => {
     const updatedTeachers = [...globalData.teachers, newTeacher];
     const newGlobalData = { ...globalData, teachers: updatedTeachers };
     setGlobalData(newGlobalData);
-    saveGlobalData(newGlobalData);
     
     try {
       await syncToServer({ teacher: newTeacher });
@@ -328,7 +294,6 @@ export const useAppData = () => {
     try {
       toast.info("Синхронизация...");
       const serverData = await syncFromServer();
-      saveGlobalData(serverData);
       setGlobalData(serverData);
       
       let loginClasses: ClassRoom[] = [];
