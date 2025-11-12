@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Icon from "@/components/ui/icon";
 import { Teacher } from "@/types";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { validateTeacher, ROLE_LABELS } from "@/utils/validation";
+import { ValidatedInput } from "@/components/ui/validated-input";
 
 interface TeacherProfileProps {
   teacher: Teacher;
@@ -20,8 +20,11 @@ export const TeacherProfile = ({ teacher, onUpdate, onClearData, onLogout }: Tea
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editName, setEditName] = useState(teacher.name);
   const [editEmail, setEditEmail] = useState(teacher.email);
+  const [showValidation, setShowValidation] = useState(false);
 
   const handleSave = () => {
+    setShowValidation(true);
+    
     const updatedTeacher = {
       ...teacher,
       name: editName,
@@ -36,6 +39,7 @@ export const TeacherProfile = ({ teacher, onUpdate, onClearData, onLogout }: Tea
 
     onUpdate(updatedTeacher);
     setIsEditOpen(false);
+    setShowValidation(false);
     toast.success("Профиль обновлён");
   };
 
@@ -78,19 +82,23 @@ export const TeacherProfile = ({ teacher, onUpdate, onClearData, onLogout }: Tea
             <div className="space-y-4 py-4">
               <div>
                 <Label>ФИО</Label>
-                <Input
+                <ValidatedInput
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   placeholder="Введите ФИО"
+                  error={!editName.trim() ? "Имя обязательно" : editName.trim().length < 2 ? "Минимум 2 символа" : undefined}
+                  showError={showValidation}
                 />
               </div>
               <div>
                 <Label>Email (необязательно)</Label>
-                <Input
+                <ValidatedInput
                   type="email"
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
                   placeholder="Введите email"
+                  error={editEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail.trim()) ? "Некорректный email" : undefined}
+                  showError={showValidation}
                 />
               </div>
               <Button onClick={handleSave} className="w-full">

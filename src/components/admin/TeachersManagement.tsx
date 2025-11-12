@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { validateTeacher, ROLE_LABELS, VALID_ROLES } from "@/utils/validation";
+import { ValidatedInput } from "@/components/ui/validated-input";
 import {
   Dialog,
   DialogContent,
@@ -37,11 +38,13 @@ export const TeachersManagement = ({
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState<"admin" | "teacher" | "junior">("teacher");
   const [editPassword, setEditPassword] = useState("");
+  const [showEditValidation, setShowEditValidation] = useState(false);
   const [isCreatingTeacher, setIsCreatingTeacher] = useState(false);
   const [newTeacherName, setNewTeacherName] = useState("");
   const [newTeacherEmail, setNewTeacherEmail] = useState("");
   const [newTeacherRole, setNewTeacherRole] = useState<"admin" | "teacher" | "junior">("junior");
   const [newTeacherPassword, setNewTeacherPassword] = useState("");
+  const [showValidation, setShowValidation] = useState(false);
 
   const handleEditTeacher = (teacher: Teacher) => {
     setEditingTeacher(teacher);
@@ -49,9 +52,12 @@ export const TeachersManagement = ({
     setEditEmail(teacher.email);
     setEditRole(teacher.role);
     setEditPassword(teacher.password || "");
+    setShowEditValidation(false);
   };
 
   const handleSaveTeacher = () => {
+    setShowEditValidation(true);
+    
     if (!editingTeacher) return;
 
     const updatedTeacher: Teacher = {
@@ -70,6 +76,7 @@ export const TeachersManagement = ({
 
     onUpdateTeacher(updatedTeacher);
     setEditingTeacher(null);
+    setShowEditValidation(false);
     toast.success("Учитель обновлён");
   };
 
@@ -101,6 +108,8 @@ export const TeachersManagement = ({
   };
 
   const handleCreateTeacher = () => {
+    setShowValidation(true);
+    
     if (!newTeacherPassword.trim()) {
       toast.error("Сгенерируйте пароль");
       return;
@@ -132,6 +141,7 @@ export const TeachersManagement = ({
     setNewTeacherEmail("");
     setNewTeacherRole("junior");
     setNewTeacherPassword("");
+    setShowValidation(false);
     toast.success("Учитель создан");
   };
 
@@ -186,19 +196,23 @@ export const TeachersManagement = ({
             <div className="space-y-4 mt-4">
               <div>
                 <Label>ФИО *</Label>
-                <Input
+                <ValidatedInput
                   value={newTeacherName}
                   onChange={(e) => setNewTeacherName(e.target.value)}
                   placeholder="Введите ФИО"
+                  error={!newTeacherName.trim() ? "Имя обязательно" : newTeacherName.trim().length < 2 ? "Минимум 2 символа" : undefined}
+                  showError={showValidation}
                 />
               </div>
               <div>
                 <Label>Email</Label>
-                <Input
+                <ValidatedInput
                   type="email"
                   value={newTeacherEmail}
                   onChange={(e) => setNewTeacherEmail(e.target.value)}
                   placeholder="Введите email"
+                  error={newTeacherEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newTeacherEmail.trim()) ? "Некорректный email" : undefined}
+                  showError={showValidation}
                 />
               </div>
               <div>
@@ -296,19 +310,23 @@ export const TeachersManagement = ({
                           <div className="space-y-4 mt-4">
                             <div>
                               <Label>ФИО</Label>
-                              <Input
+                              <ValidatedInput
                                 value={editName}
                                 onChange={(e) => setEditName(e.target.value)}
                                 placeholder="Введите ФИО"
+                                error={!editName.trim() ? "Имя обязательно" : editName.trim().length < 2 ? "Минимум 2 символа" : undefined}
+                                showError={showEditValidation}
                               />
                             </div>
                             <div>
                               <Label>Email</Label>
-                              <Input
+                              <ValidatedInput
                                 type="email"
                                 value={editEmail}
                                 onChange={(e) => setEditEmail(e.target.value)}
                                 placeholder="Введите email"
+                                error={editEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail.trim()) ? "Некорректный email" : undefined}
+                                showError={showEditValidation}
                               />
                             </div>
                             <div>
