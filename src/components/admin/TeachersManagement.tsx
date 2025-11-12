@@ -232,6 +232,7 @@ export const TeachersManagement = ({
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {teachers.length === 0 ? (
