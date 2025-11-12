@@ -92,6 +92,8 @@ export const SoftSkillsTab = ({ classes, matches, teacherName, onUpdateStudent }
       criticalThinking: 0,
     });
     setSelectedMatchId("");
+    setSelectedStudentId("");
+    setSelectedClassId("");
 
     toast.success("Оценка сохранена");
   };
@@ -170,12 +172,12 @@ export const SoftSkillsTab = ({ classes, matches, teacherName, onUpdateStudent }
 
           <div className="space-y-2">
             <Label>Матч (необязательно)</Label>
-            <Select value={selectedMatchId} onValueChange={setSelectedMatchId}>
+            <Select value={selectedMatchId || "none"} onValueChange={(value) => setSelectedMatchId(value === "none" ? "" : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Общая оценка (без привязки к матчу)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Общая оценка</SelectItem>
+                <SelectItem value="none">Общая оценка</SelectItem>
                 {matches.map((match) => (
                   <SelectItem key={match.id} value={match.id}>
                     {match.team1.name} vs {match.team2.name} ({new Date(match.date).toLocaleDateString()})
