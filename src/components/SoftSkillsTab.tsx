@@ -45,13 +45,21 @@ export const SoftSkillsTab = ({ classes, matches, teacherName, onUpdateStudent }
           <button
             key={star}
             type="button"
-            onClick={() => onChange(star)}
-            className="focus:outline-none transition-transform hover:scale-110"
+            onClick={(e) => {
+              e.preventDefault();
+              onChange(star);
+            }}
+            className="focus:outline-none transition-all hover:scale-110 cursor-pointer"
           >
             <Icon
               name="Star"
-              size={28}
-              className={star <= value ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}
+              size={32}
+              style={{
+                fill: star <= value ? '#facc15' : 'transparent',
+                color: star <= value ? '#facc15' : '#d1d5db',
+                stroke: star <= value ? '#facc15' : '#d1d5db',
+                strokeWidth: '1px'
+              }}
             />
           </button>
         ))}

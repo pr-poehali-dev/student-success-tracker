@@ -198,6 +198,58 @@ export const createExcelWorkbook = (classes: ClassRoom[]) => {
     XLSX.utils.book_append_sheet(workbook, pe3dSheet, "3D Физкультура");
   }
 
+  const softSkillsData = classes.flatMap(cls =>
+    cls.students.flatMap(student =>
+      (student.softSkills || []).map(rating => ({
+        "ФИО": student.name,
+        "Класс": cls.name,
+        "Дата оценки": new Date(rating.date).toLocaleString('ru-RU'),
+        "Оценил": rating.ratedBy,
+        "Контекст": rating.matchId ? "В матче" : "Общая оценка",
+        "Лидерство": rating.leadership,
+        "Самоконтроль": rating.selfControl,
+        "Коммуникация": rating.communication,
+        "Саморефлексия": rating.selfReflection,
+        "Критическое мышление": rating.criticalThinking,
+        "Средний балл": ((rating.leadership + rating.selfControl + rating.communication + rating.selfReflection + rating.criticalThinking) / 5).toFixed(2)
+      }))
+    )
+  );
+  if (softSkillsData.length > 0) {
+    const softSkillsSheet = XLSX.utils.json_to_sheet(softSkillsData);
+    XLSX.utils.book_append_sheet(workbook, softSkillsSheet, "Soft Skills");
+  }
+
+  const softSkillsAverage = classes.flatMap(cls =>
+    cls.students
+      .filter(student => student.softSkills && student.softSkills.length > 0)
+      .map(student => {
+        const ratings = student.softSkills!;
+        const avgLeadership = ratings.reduce((sum, r) => sum + r.leadership, 0) / ratings.length;
+        const avgSelfControl = ratings.reduce((sum, r) => sum + r.selfControl, 0) / ratings.length;
+        const avgCommunication = ratings.reduce((sum, r) => sum + r.communication, 0) / ratings.length;
+        const avgSelfReflection = ratings.reduce((sum, r) => sum + r.selfReflection, 0) / ratings.length;
+        const avgCriticalThinking = ratings.reduce((sum, r) => sum + r.criticalThinking, 0) / ratings.length;
+        const totalAvg = (avgLeadership + avgSelfControl + avgCommunication + avgSelfReflection + avgCriticalThinking) / 5;
+
+        return {
+          "ФИО": student.name,
+          "Класс": cls.name,
+          "Количество оценок": ratings.length,
+          "Лидерство (ср)": avgLeadership.toFixed(2),
+          "Самоконтроль (ср)": avgSelfControl.toFixed(2),
+          "Коммуникация (ср)": avgCommunication.toFixed(2),
+          "Саморефлексия (ср)": avgSelfReflection.toFixed(2),
+          "Крит. мышление (ср)": avgCriticalThinking.toFixed(2),
+          "Общий балл": totalAvg.toFixed(2)
+        };
+      })
+  );
+  if (softSkillsAverage.length > 0) {
+    const softSkillsAvgSheet = XLSX.utils.json_to_sheet(softSkillsAverage);
+    XLSX.utils.book_append_sheet(workbook, softSkillsAvgSheet, "Soft Skills Средние");
+  }
+
   return workbook;
 };
 
@@ -378,6 +430,52 @@ export const createClassExcelWorkbook = (classRoom: ClassRoom) => {
   if (pe3dData.length > 0) {
     const pe3dSheet = XLSX.utils.json_to_sheet(pe3dData);
     XLSX.utils.book_append_sheet(workbook, pe3dSheet, "3D Физкультура");
+  }
+
+  const softSkillsData = classRoom.students.flatMap(student =>
+    (student.softSkills || []).map(rating => ({
+      "ФИО": student.name,
+      "Дата оценки": new Date(rating.date).toLocaleString('ru-RU'),
+      "Оценил": rating.ratedBy,
+      "Контекст": rating.matchId ? "В матче" : "Общая оценка",
+      "Лидерство": rating.leadership,
+      "Самоконтроль": rating.selfControl,
+      "Коммуникация": rating.communication,
+      "Саморефлексия": rating.selfReflection,
+      "Критическое мышление": rating.criticalThinking,
+      "Средний балл": ((rating.leadership + rating.selfControl + rating.communication + rating.selfReflection + rating.criticalThinking) / 5).toFixed(2)
+    }))
+  );
+  if (softSkillsData.length > 0) {
+    const softSkillsSheet = XLSX.utils.json_to_sheet(softSkillsData);
+    XLSX.utils.book_append_sheet(workbook, softSkillsSheet, "Soft Skills");
+  }
+
+  const softSkillsAverage = classRoom.students
+    .filter(student => student.softSkills && student.softSkills.length > 0)
+    .map(student => {
+      const ratings = student.softSkills!;
+      const avgLeadership = ratings.reduce((sum, r) => sum + r.leadership, 0) / ratings.length;
+      const avgSelfControl = ratings.reduce((sum, r) => sum + r.selfControl, 0) / ratings.length;
+      const avgCommunication = ratings.reduce((sum, r) => sum + r.communication, 0) / ratings.length;
+      const avgSelfReflection = ratings.reduce((sum, r) => sum + r.selfReflection, 0) / ratings.length;
+      const avgCriticalThinking = ratings.reduce((sum, r) => sum + r.criticalThinking, 0) / ratings.length;
+      const totalAvg = (avgLeadership + avgSelfControl + avgCommunication + avgSelfReflection + avgCriticalThinking) / 5;
+
+      return {
+        "ФИО": student.name,
+        "Количество оценок": ratings.length,
+        "Лидерство (ср)": avgLeadership.toFixed(2),
+        "Самоконтроль (ср)": avgSelfControl.toFixed(2),
+        "Коммуникация (ср)": avgCommunication.toFixed(2),
+        "Саморефлексия (ср)": avgSelfReflection.toFixed(2),
+        "Крит. мышление (ср)": avgCriticalThinking.toFixed(2),
+        "Общий балл": totalAvg.toFixed(2)
+      };
+    });
+  if (softSkillsAverage.length > 0) {
+    const softSkillsAvgSheet = XLSX.utils.json_to_sheet(softSkillsAverage);
+    XLSX.utils.book_append_sheet(workbook, softSkillsAvgSheet, "Soft Skills Средние");
   }
 
   return workbook;
