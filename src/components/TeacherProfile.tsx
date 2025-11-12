@@ -7,6 +7,7 @@ import Icon from "@/components/ui/icon";
 import { Teacher } from "@/types";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { validateTeacher, ROLE_LABELS } from "@/utils/validation";
 
 interface TeacherProfileProps {
   teacher: Teacher;
@@ -21,16 +22,19 @@ export const TeacherProfile = ({ teacher, onUpdate, onClearData, onLogout }: Tea
   const [editEmail, setEditEmail] = useState(teacher.email);
 
   const handleSave = () => {
-    if (!editName.trim()) {
-      toast.error("Введите ФИО");
-      return;
-    }
-
-    onUpdate({
+    const updatedTeacher = {
       ...teacher,
       name: editName,
       email: editEmail
-    });
+    };
+
+    const validation = validateTeacher(updatedTeacher);
+    if (!validation.valid) {
+      validation.errors.forEach(error => toast.error(error));
+      return;
+    }
+
+    onUpdate(updatedTeacher);
     setIsEditOpen(false);
     toast.success("Профиль обновлён");
   };
@@ -52,7 +56,7 @@ export const TeacherProfile = ({ teacher, onUpdate, onClearData, onLogout }: Tea
           <div>
             <h3 className="text-xl font-semibold">{teacher.name}</h3>
             <p className="text-sm text-muted-foreground">
-              {teacher.role === "admin" ? "Администратор" : teacher.role === "teacher" ? "Учитель" : "Младший научный сотрудник"}
+              {ROLE_LABELS[teacher.role] || teacher.role}
             </p>
             {teacher.email && (
               <p className="text-xs text-muted-foreground mt-1">{teacher.email}</p>

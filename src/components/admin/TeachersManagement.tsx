@@ -6,6 +6,7 @@ import { Teacher } from "@/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { validateTeacher, ROLE_LABELS, VALID_ROLES } from "@/utils/validation";
 import {
   Dialog,
   DialogContent,
@@ -51,10 +52,7 @@ export const TeachersManagement = ({
   };
 
   const handleSaveTeacher = () => {
-    if (!editingTeacher || !editName.trim()) {
-      toast.error("Введите имя учителя");
-      return;
-    }
+    if (!editingTeacher) return;
 
     const updatedTeacher: Teacher = {
       ...editingTeacher,
@@ -63,6 +61,12 @@ export const TeachersManagement = ({
       role: editRole,
       password: editPassword.trim() || editingTeacher.password
     };
+
+    const validation = validateTeacher(updatedTeacher);
+    if (!validation.valid) {
+      validation.errors.forEach(error => toast.error(error));
+      return;
+    }
 
     onUpdateTeacher(updatedTeacher);
     setEditingTeacher(null);
@@ -97,11 +101,6 @@ export const TeachersManagement = ({
   };
 
   const handleCreateTeacher = () => {
-    if (!newTeacherName.trim()) {
-      toast.error("Введите имя учителя");
-      return;
-    }
-
     if (!newTeacherPassword.trim()) {
       toast.error("Сгенерируйте пароль");
       return;
@@ -115,6 +114,12 @@ export const TeachersManagement = ({
       password: newTeacherPassword.trim(),
       createdAt: new Date().toISOString()
     };
+
+    const validation = validateTeacher(newTeacher);
+    if (!validation.valid) {
+      validation.errors.forEach(error => toast.error(error));
+      return;
+    }
 
     if (onCreateTeacher) {
       onCreateTeacher(newTeacher);
@@ -260,7 +265,7 @@ export const TeachersManagement = ({
                   <TableCell>{teacher.email || "-"}</TableCell>
                   <TableCell>
                     <Badge variant={teacher.role === "admin" ? "default" : "secondary"}>
-                      {teacher.role === "admin" ? "Администратор" : teacher.role === "teacher" ? "Учитель" : "МНС"}
+                      {ROLE_LABELS[teacher.role] || teacher.role}
                     </Badge>
                   </TableCell>
                   <TableCell>

@@ -8,6 +8,7 @@ import Icon from "@/components/ui/icon";
 import { Teacher } from "@/types";
 import { toast } from "sonner";
 import { syncFromServer } from "@/utils/sync";
+import { isValidRole, VALID_ROLES } from "@/utils/validation";
 
 interface LoginProps {
   onLogin: (teacher: Teacher) => void;
@@ -26,7 +27,13 @@ export const Login = ({ onLogin }: LoginProps) => {
       setLoading(true);
       try {
         const data = await syncFromServer();
-        const activeTeachers = data.teachers.filter(t => t.role === "teacher" || t.role === "junior");
+        const activeTeachers = data.teachers.filter(t => {
+          if (!isValidRole(t.role)) {
+            console.warn(`Пропущен учитель с недопустимой ролью: ${t.name} (${t.role}). Разрешены: ${VALID_ROLES.join(', ')}`);
+            return false;
+          }
+          return t.role === "teacher" || t.role === "junior";
+        });
         setAllUsers(activeTeachers);
         console.log("Loaded teachers from server:", activeTeachers.length);
       } catch (error) {
