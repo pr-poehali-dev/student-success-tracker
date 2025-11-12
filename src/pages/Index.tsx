@@ -412,7 +412,7 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="export" className="p-6">
-              <ExportTab classes={classes} />
+              <ExportTab classes={classes} matches={matches} />
             </TabsContent>
           </Tabs>
         </Card>

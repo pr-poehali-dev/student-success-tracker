@@ -1,7 +1,25 @@
-import { ClassRoom } from "@/types";
+import { ClassRoom, Match } from "@/types";
 import * as XLSX from "xlsx";
 
-export const createExcelWorkbook = (classes: ClassRoom[]) => {
+const getMatchName = (matchId: string | undefined, matches: Match[]): string => {
+  if (!matchId) return "-";
+  const match = matches.find(m => m.id === matchId);
+  if (!match) return "-";
+  return `${match.team1.name} vs ${match.team2.name}`;
+};
+
+const getGameTypeName = (gameType: string | undefined): string => {
+  const gameLabels: Record<string, string> = {
+    valheim: "Valheim",
+    civilization: "Civilization",
+    factorio: "Factorio",
+    sport: "Спорт",
+    robo: "Робототехника"
+  };
+  return gameType ? gameLabels[gameType] || "-" : "-";
+};
+
+export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = []) => {
   const workbook = XLSX.utils.book_new();
 
   const summaryData = classes.flatMap(cls =>
@@ -205,7 +223,8 @@ export const createExcelWorkbook = (classes: ClassRoom[]) => {
         "Класс": cls.name,
         "Дата оценки": new Date(rating.date).toLocaleString('ru-RU'),
         "Оценил": rating.ratedBy,
-        "Контекст": rating.matchId ? "В матче" : "Общая оценка",
+        "Игра": getGameTypeName(rating.gameType),
+        "Матч": getMatchName(rating.matchId, matches),
         "Лидерство": rating.leadership,
         "Самоконтроль": rating.selfControl,
         "Коммуникация": rating.communication,
@@ -253,7 +272,7 @@ export const createExcelWorkbook = (classes: ClassRoom[]) => {
   return workbook;
 };
 
-export const createClassExcelWorkbook = (classRoom: ClassRoom) => {
+export const createClassExcelWorkbook = (classRoom: ClassRoom, matches: Match[] = []) => {
   const workbook = XLSX.utils.book_new();
 
   const summaryData = classRoom.students.map(student => {
@@ -437,7 +456,8 @@ export const createClassExcelWorkbook = (classRoom: ClassRoom) => {
       "ФИО": student.name,
       "Дата оценки": new Date(rating.date).toLocaleString('ru-RU'),
       "Оценил": rating.ratedBy,
-      "Контекст": rating.matchId ? "В матче" : "Общая оценка",
+      "Игра": getGameTypeName(rating.gameType),
+      "Матч": getMatchName(rating.matchId, matches),
       "Лидерство": rating.leadership,
       "Самоконтроль": rating.selfControl,
       "Коммуникация": rating.communication,

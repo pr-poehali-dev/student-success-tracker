@@ -27,6 +27,7 @@ export interface SoftSkillRating {
   selfReflection: number;
   criticalThinking: number;
   matchId?: string;
+  gameType?: "valheim" | "civilization" | "factorio" | "sport" | "robo";
   date: string;
   ratedBy: string;
 }
