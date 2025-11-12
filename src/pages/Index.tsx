@@ -37,17 +37,25 @@ const Index = () => {
         
         const savedState = loadAppState();
         if (savedState && savedState.teacher.name !== "Учитель") {
-          setTeacher(savedState.teacher);
+          const updatedTeacher = serverData.teachers.find(t => t.id === savedState.teacher.id) || savedState.teacher;
+          setTeacher(updatedTeacher);
           setIsLoggedIn(true);
           
-          if (savedState.teacher.role === "admin" || savedState.teacher.role === "teacher") {
+          const state: AppState = {
+            teacher: updatedTeacher,
+            classes: savedState.classes,
+            matches: savedState.matches
+          };
+          saveAppState(state);
+          
+          if (updatedTeacher.role === "admin" || updatedTeacher.role === "teacher") {
             setClasses(serverData.classes);
             setMatches(serverData.matches);
-          } else if (savedState.teacher.role === "junior") {
+          } else if (updatedTeacher.role === "junior") {
             const myClasses = serverData.classes.filter(
-              cls => cls.responsibleTeacherId === savedState.teacher.id
+              cls => cls.responsibleTeacherId === updatedTeacher.id
             );
-            const myMatches = serverData.matches.filter(m => m.createdBy === savedState.teacher.name);
+            const myMatches = serverData.matches.filter(m => m.createdBy === updatedTeacher.name);
             setClasses(myClasses);
             setMatches(myMatches);
           }
