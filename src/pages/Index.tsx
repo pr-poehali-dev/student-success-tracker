@@ -154,29 +154,64 @@ const Index = () => {
     setTeacher(loggedInTeacher);
     setIsLoggedIn(true);
 
-    const loadedGlobalData = loadGlobalData();
-    let loginClasses: ClassRoom[] = [];
-    let loginMatches: Match[] = [];
-    
-    if (loggedInTeacher.role === "admin" || loggedInTeacher.role === "teacher") {
-      loginClasses = loadedGlobalData.classes;
-      loginMatches = loadedGlobalData.matches;
-    } else if (loggedInTeacher.role === "junior") {
-      loginClasses = loadedGlobalData.classes.filter(
-        cls => cls.responsibleTeacherId === loggedInTeacher.id
-      );
-      loginMatches = loadedGlobalData.matches.filter(m => m.createdBy === loggedInTeacher.name);
+    try {
+      const serverData = await syncFromServer();
+      saveGlobalData(serverData);
+      setGlobalData(serverData);
+      
+      let loginClasses: ClassRoom[] = [];
+      let loginMatches: Match[] = [];
+      
+      if (loggedInTeacher.role === "admin" || loggedInTeacher.role === "teacher") {
+        loginClasses = serverData.classes;
+        loginMatches = serverData.matches;
+      } else if (loggedInTeacher.role === "junior") {
+        loginClasses = serverData.classes.filter(
+          cls => cls.responsibleTeacherId === loggedInTeacher.id
+        );
+        loginMatches = serverData.matches.filter(m => m.createdBy === loggedInTeacher.name);
+      }
+      
+      setClasses(loginClasses);
+      setMatches(loginMatches);
+      
+      const state: AppState = {
+        teacher: loggedInTeacher,
+        classes: loginClasses,
+        matches: loginMatches
+      };
+      saveAppState(state);
+      
+      toast.success("Данные синхронизированы с сервером");
+    } catch (error) {
+      console.error("Failed to sync on login", error);
+      
+      const loadedGlobalData = loadGlobalData();
+      let loginClasses: ClassRoom[] = [];
+      let loginMatches: Match[] = [];
+      
+      if (loggedInTeacher.role === "admin" || loggedInTeacher.role === "teacher") {
+        loginClasses = loadedGlobalData.classes;
+        loginMatches = loadedGlobalData.matches;
+      } else if (loggedInTeacher.role === "junior") {
+        loginClasses = loadedGlobalData.classes.filter(
+          cls => cls.responsibleTeacherId === loggedInTeacher.id
+        );
+        loginMatches = loadedGlobalData.matches.filter(m => m.createdBy === loggedInTeacher.name);
+      }
+      
+      setClasses(loginClasses);
+      setMatches(loginMatches);
+      
+      const state: AppState = {
+        teacher: loggedInTeacher,
+        classes: loginClasses,
+        matches: loginMatches
+      };
+      saveAppState(state);
+      
+      toast.warning("Работа в оффлайн режиме");
     }
-    
-    setClasses(loginClasses);
-    setMatches(loginMatches);
-    
-    const state: AppState = {
-      teacher: loggedInTeacher,
-      classes: loginClasses,
-      matches: loginMatches
-    };
-    saveAppState(state);
   };
 
   const handleLogout = () => {
@@ -238,23 +273,39 @@ const Index = () => {
     }
   };
 
-  const handleDeleteClass = (classId: string) => {
+  const handleDeleteClass = async (classId: string) => {
     const updatedClasses = globalData.classes.filter(c => c.id !== classId);
     const newGlobalData = { ...globalData, classes: updatedClasses };
     setGlobalData(newGlobalData);
     saveGlobalData(newGlobalData);
     setClasses(updatedClasses);
+    
+    try {
+      await syncToServer({ classes: updatedClasses });
+      toast.success("Класс удалён и синхронизирован");
+    } catch (error) {
+      console.error("Failed to sync class deletion to server", error);
+      toast.error("Ошибка синхронизации с сервером");
+    }
   };
 
-  const handleDeleteMatch = (matchId: string) => {
+  const handleDeleteMatch = async (matchId: string) => {
     const updatedMatches = globalData.matches.filter(m => m.id !== matchId);
     const newGlobalData = { ...globalData, matches: updatedMatches };
     setGlobalData(newGlobalData);
     saveGlobalData(newGlobalData);
     setMatches(updatedMatches);
+    
+    try {
+      await syncToServer({ matches: updatedMatches });
+      toast.success("Матч удалён и синхронизирован");
+    } catch (error) {
+      console.error("Failed to sync match deletion to server", error);
+      toast.error("Ошибка синхронизации с сервером");
+    }
   };
 
-  const handleUpdateClass = (updatedClass: ClassRoom) => {
+  const handleUpdateClass = async (updatedClass: ClassRoom) => {
     const updatedClasses = globalData.classes.map(c => 
       c.id === updatedClass.id ? updatedClass : c
     );
@@ -262,6 +313,14 @@ const Index = () => {
     setGlobalData(newGlobalData);
     saveGlobalData(newGlobalData);
     setClasses(updatedClasses);
+    
+    try {
+      await syncToServer({ classes: updatedClasses });
+      toast.success("Класс обновлён и синхронизирован");
+    } catch (error) {
+      console.error("Failed to sync class update to server", error);
+      toast.error("Ошибка синхронизации с сервером");
+    }
   };
 
   const handleCreateTeacher = async (newTeacher: Teacher) => {
@@ -275,6 +334,43 @@ const Index = () => {
     } catch (error) {
       console.error("Failed to sync new teacher to server", error);
       toast.error("Не удалось синхронизировать нового учителя");
+    }
+  };
+
+  const handleForceSync = async () => {
+    try {
+      toast.info("Синхронизация...");
+      const serverData = await syncFromServer();
+      saveGlobalData(serverData);
+      setGlobalData(serverData);
+      
+      let loginClasses: ClassRoom[] = [];
+      let loginMatches: Match[] = [];
+      
+      if (teacher?.role === "admin" || teacher?.role === "teacher") {
+        loginClasses = serverData.classes;
+        loginMatches = serverData.matches;
+      } else if (teacher?.role === "junior") {
+        loginClasses = serverData.classes.filter(
+          cls => cls.responsibleTeacherId === teacher.id
+        );
+        loginMatches = serverData.matches.filter(m => m.createdBy === teacher.name);
+      }
+      
+      setClasses(loginClasses);
+      setMatches(loginMatches);
+      
+      const state: AppState = {
+        teacher: teacher!,
+        classes: loginClasses,
+        matches: loginMatches
+      };
+      saveAppState(state);
+      
+      toast.success("Данные успешно синхронизированы");
+    } catch (error) {
+      console.error("Failed to force sync", error);
+      toast.error("Ошибка синхронизации с сервером");
     }
   };
 
@@ -319,6 +415,10 @@ const Index = () => {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleForceSync}>
+                <Icon name="RefreshCw" size={16} className="mr-2" />
+                Синхронизировать
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
                 <Icon name="LogOut" size={16} className="mr-2" />
                 Выйти
