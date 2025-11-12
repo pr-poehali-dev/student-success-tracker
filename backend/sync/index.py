@@ -276,6 +276,9 @@ def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[st
                 cursor.execute(f'''
                     INSERT INTO t_p91106428_student_success_trac.students (id, name, class_id)
                     VALUES ({sid}, {sname}, {cid})
+                    ON CONFLICT (id) DO UPDATE SET
+                        name = EXCLUDED.name,
+                        class_id = EXCLUDED.class_id
                 ''')
 
 
@@ -332,6 +335,10 @@ def save_matches(cursor, matches: List[Dict[str, Any]], current_teacher: Dict[st
                 cursor.execute(f'''
                     INSERT INTO t_p91106428_student_success_trac.scheduled_dates (id, match_id, date, time)
                     VALUES ({sdid}, {mid}, {sddate}, {sdtime})
+                    ON CONFLICT (id) DO UPDATE SET
+                        match_id = EXCLUDED.match_id,
+                        date = EXCLUDED.date,
+                        time = EXCLUDED.time
                 ''')
 
 
@@ -365,6 +372,10 @@ def save_team(cursor, team: Dict[str, Any]) -> str:
             cursor.execute(f'''
                 INSERT INTO t_p91106428_student_success_trac.team_members (id, team_id, student_id, student_name, class_name, role)
                 VALUES ({member_id}, {tid}, {student_id}, {student_name}, {class_name}, {role})
+                ON CONFLICT (id) DO UPDATE SET
+                    student_name = EXCLUDED.student_name,
+                    class_name = EXCLUDED.class_name,
+                    role = EXCLUDED.role
             ''')
     
     return team['id']
