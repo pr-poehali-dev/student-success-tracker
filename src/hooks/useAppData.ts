@@ -89,13 +89,8 @@ export const useAppData = () => {
   useEffect(() => {
     if (!teacher || !isLoggedIn || isSyncing) return;
 
-    const existingTeacherIndex = globalData.teachers.findIndex(t => t.id === teacher.id);
-    const updatedTeachers = existingTeacherIndex >= 0
-      ? globalData.teachers.map(t => t.id === teacher.id ? teacher : t)
-      : [...globalData.teachers, teacher];
-
-    let updatedGlobalClasses = globalData.classes;
-    let updatedGlobalMatches = globalData.matches;
+    let updatedGlobalClasses: ClassRoom[];
+    let updatedGlobalMatches: Match[];
 
     if (teacher.role === "junior") {
       const myClassIds = classes.map(c => c.id);
@@ -105,16 +100,20 @@ export const useAppData = () => {
       const myMatchIds = matches.map(m => m.id);
       const otherMatches = globalData.matches.filter(m => !myMatchIds.includes(m.id));
       updatedGlobalMatches = [...otherMatches, ...matches];
-    } else if (teacher.role === "admin" || teacher.role === "teacher") {
+    } else {
       updatedGlobalClasses = classes;
       updatedGlobalMatches = matches;
     }
 
-    const hasChanges = 
-      JSON.stringify(globalData.classes) !== JSON.stringify(updatedGlobalClasses) ||
-      JSON.stringify(globalData.matches) !== JSON.stringify(updatedGlobalMatches);
+    const hasClassChanges = JSON.stringify(globalData.classes) !== JSON.stringify(updatedGlobalClasses);
+    const hasMatchChanges = JSON.stringify(globalData.matches) !== JSON.stringify(updatedGlobalMatches);
 
-    if (hasChanges) {
+    if (hasClassChanges || hasMatchChanges) {
+      const existingTeacherIndex = globalData.teachers.findIndex(t => t.id === teacher.id);
+      const updatedTeachers = existingTeacherIndex >= 0
+        ? globalData.teachers.map(t => t.id === teacher.id ? teacher : t)
+        : [...globalData.teachers, teacher];
+
       const newGlobalData: GlobalData = {
         teachers: updatedTeachers,
         classes: updatedGlobalClasses,
@@ -124,7 +123,9 @@ export const useAppData = () => {
       
       console.log("Auto-syncing to server:", {
         classesCount: updatedGlobalClasses.length,
-        matchesCount: updatedGlobalMatches.length
+        matchesCount: updatedGlobalMatches.length,
+        hasClassChanges,
+        hasMatchChanges
       });
       
       syncToServer({
@@ -134,9 +135,10 @@ export const useAppData = () => {
         console.log("Auto-sync completed successfully");
       }).catch(error => {
         console.error("Failed to auto-sync to server", error);
+        toast.error("Ошибка синхронизации с сервером");
       });
     }
-  }, [teacher, classes, matches, isLoggedIn, isSyncing]);
+  }, [teacher, classes, matches, isLoggedIn, isSyncing, globalData.classes, globalData.matches, globalData.teachers]);
 
   const handleLogin = async (loggedInTeacher: Teacher) => {
     setTeacher(loggedInTeacher);
