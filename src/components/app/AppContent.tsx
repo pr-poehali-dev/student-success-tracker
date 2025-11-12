@@ -156,6 +156,7 @@ export const AppContent = ({
                 <TeamsTab 
                   classes={classes}
                   matches={matches}
+                  setClasses={setClasses}
                   setMatches={setMatches}
                   teacher={teacher}
                 />
