@@ -241,7 +241,7 @@ def save_teacher(cursor, teacher: Dict[str, Any]) -> None:
 
 
 def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[str, Any] = None) -> None:
-    if current_teacher and current_teacher.get('id'):
+    if current_teacher and current_teacher.get('role') == 'junior' and current_teacher.get('id'):
         teacher_id = escape_sql(current_teacher['id'])
         cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.students WHERE class_id IN (SELECT id FROM t_p91106428_student_success_trac.classes WHERE responsible_teacher_id = {teacher_id})')
         cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.classes WHERE responsible_teacher_id = {teacher_id}')
@@ -283,7 +283,7 @@ def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[st
 
 
 def save_matches(cursor, matches: List[Dict[str, Any]], current_teacher: Dict[str, Any] = None) -> None:
-    if current_teacher and current_teacher.get('name'):
+    if current_teacher and current_teacher.get('role') == 'junior' and current_teacher.get('name'):
         teacher_name = escape_sql(current_teacher['name'])
         cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.scheduled_dates WHERE match_id IN (SELECT id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name})')
         cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name}')
