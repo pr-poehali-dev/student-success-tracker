@@ -130,23 +130,23 @@ export const TeachersManagement = ({
     toast.success("Учитель создан");
   };
 
-  const handleGenerateAllPasswords = () => {
+  const handleGenerateAllPasswords = async () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let updatedCount = 0;
 
-    teachers.forEach(teacher => {
+    for (const teacher of teachers) {
       if (!teacher.password || teacher.password === '') {
         let password = '';
         for (let i = 0; i < 8; i++) {
           password += chars.charAt(Math.floor(Math.random() * chars.length));
         }
-        onUpdateTeacher({ ...teacher, password });
+        await onUpdateTeacher({ ...teacher, password });
         updatedCount++;
       }
-    });
+    }
 
     if (updatedCount > 0) {
-      toast.success(`Пароли сгенерированы для ${updatedCount} учителей`);
+      toast.success(`Пароли сгенерированы и сохранены для ${updatedCount} учителей. Обновите страницу для применения изменений.`);
     } else {
       toast.info("Все учителя уже имеют пароли");
     }

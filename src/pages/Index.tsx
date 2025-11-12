@@ -190,7 +190,7 @@ const Index = () => {
     setMatches([]);
   };
 
-  const handleUpdateTeacher = (updatedTeacher: Teacher) => {
+  const handleUpdateTeacher = async (updatedTeacher: Teacher) => {
     const updatedTeachers = globalData.teachers.map(t => 
       t.id === updatedTeacher.id ? updatedTeacher : t
     );
@@ -200,6 +200,14 @@ const Index = () => {
     
     if (teacher?.id === updatedTeacher.id) {
       setTeacher(updatedTeacher);
+    }
+
+    try {
+      await syncToServer({ teacher: updatedTeacher });
+      toast.success("Данные синхронизированы с сервером");
+    } catch (error) {
+      console.error("Failed to sync teacher to server", error);
+      toast.error("Ошибка синхронизации с сервером");
     }
   };
 

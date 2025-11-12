@@ -76,18 +76,31 @@ export const Login = ({ onLogin }: LoginProps) => {
           return;
         }
 
+        console.log("Login attempt:", { 
+          userId: user.id, 
+          userName: user.name,
+          hasPassword: !!user.password,
+          passwordLength: user.password?.length || 0,
+          enteredPasswordLength: password.trim().length
+        });
+
+        if (!password.trim()) {
+          toast.error("Введите пароль");
+          setLoading(false);
+          return;
+        }
+
         if (!user.password || user.password === '') {
-          if (password.trim() !== '') {
-            toast.error("У этого аккаунта ещё не установлен пароль. Оставьте поле пароля пустым или обратитесь к администратору");
-            setLoading(false);
-            return;
-          }
-        } else {
-          if (user.password !== password.trim()) {
-            toast.error("Неверный пароль");
-            setLoading(false);
-            return;
-          }
+          toast.error("У этого аккаунта не установлен пароль. Обратитесь к администратору для установки пароля");
+          setLoading(false);
+          return;
+        }
+
+        if (user.password !== password.trim()) {
+          console.log("Password mismatch:", { stored: user.password, entered: password.trim() });
+          toast.error("Неверный пароль");
+          setLoading(false);
+          return;
         }
 
         onLogin(user);
