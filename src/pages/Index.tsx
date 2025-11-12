@@ -8,6 +8,7 @@ import { ClassesTab } from "@/components/ClassesTab";
 import { GameTab } from "@/components/GameTab";
 import { ExportTab } from "@/components/ExportTab";
 import { TeamsTab } from "@/components/TeamsTab";
+import { SoftSkillsTab } from "@/components/SoftSkillsTab";
 import { TeacherProfile } from "@/components/TeacherProfile";
 import { Login } from "@/components/Login";
 import { AdminPanel } from "@/components/AdminPanel";
@@ -328,7 +329,7 @@ const Index = () => {
 
         <Card className="shadow-xl border-2 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 h-16 bg-secondary/50">
+            <TabsList className="grid w-full grid-cols-5 h-16 bg-secondary/50">
               <TabsTrigger 
                 value="classes" 
                 className="text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -349,6 +350,13 @@ const Index = () => {
               >
                 <Icon name="Users" size={20} className="mr-2" />
                 Команды
+              </TabsTrigger>
+              <TabsTrigger 
+                value="softskills" 
+                className="text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Icon name="Star" size={20} className="mr-2" />
+                Софты
               </TabsTrigger>
               <TabsTrigger 
                 value="export" 
@@ -374,6 +382,21 @@ const Index = () => {
                 matches={matches}
                 setMatches={setMatches}
                 teacher={teacher}
+              />
+            </TabsContent>
+
+            <TabsContent value="softskills" className="p-6">
+              <SoftSkillsTab 
+                classes={classes}
+                matches={matches}
+                teacherName={teacher.name}
+                onUpdateStudent={(classId, student) => {
+                  setClasses(classes.map(c => 
+                    c.id === classId 
+                      ? { ...c, students: c.students.map(s => s.id === student.id ? student : s) }
+                      : c
+                  ));
+                }}
               />
             </TabsContent>
 

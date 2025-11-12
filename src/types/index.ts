@@ -20,12 +20,24 @@ export interface ActivityRecord {
   factorioFlasks?: number;
 }
 
+export interface SoftSkillRating {
+  leadership: number;
+  selfControl: number;
+  communication: number;
+  selfReflection: number;
+  criticalThinking: number;
+  matchId?: string;
+  date: string;
+  ratedBy: string;
+}
+
 export interface Student {
   id: string;
   name: string;
   points: number;
   achievements: string[];
   activities?: ActivityRecord[];
+  softSkills?: SoftSkillRating[];
 }
 
 export interface ClassRoom {
