@@ -164,6 +164,7 @@ export const AppContent = ({
               <TabsContent value="soft-skills" className="mt-0">
                 <SoftSkillsTab 
                   classes={classes}
+                  matches={matches}
                   setClasses={setClasses}
                 />
               </TabsContent>

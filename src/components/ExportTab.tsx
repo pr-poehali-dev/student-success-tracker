@@ -42,7 +42,7 @@ export const ExportTab = ({ classes, matches }: ExportTabProps) => {
 
   const totalStudents = classes.reduce((sum, cls) => sum + cls.students.length, 0);
   const totalPoints = classes.flatMap(c => c.students).reduce((sum, s) => sum + s.points, 0);
-  const totalAchievements = classes.flatMap(c => c.students).reduce((sum, s) => sum + s.achievements.length, 0);
+  const totalAchievements = classes.flatMap(c => c.students).reduce((sum, s) => sum + (s.achievements || []).length, 0);
 
   return (
     <div className="space-y-6">
