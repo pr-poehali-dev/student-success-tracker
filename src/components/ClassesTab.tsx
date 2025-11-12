@@ -20,6 +20,8 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [isAddClassOpen, setIsAddClassOpen] = useState(false);
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
+  const [isEditGamesOpen, setIsEditGamesOpen] = useState(false);
+  const [editingClassId, setEditingClassId] = useState<string>("");
   const [selectedGames, setSelectedGames] = useState<("valheim" | "civilization" | "factorio" | "sport" | "robo")[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,6 +59,30 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
     setSelectedGames([]);
     setIsAddClassOpen(false);
     toast.success(`Класс "${newClassName}" добавлен`);
+  };
+
+  const updateClassGames = () => {
+    if (!editingClassId) return;
+    
+    setClasses(classes.map(cls => 
+      cls.id === editingClassId 
+        ? { ...cls, games: selectedGames.length > 0 ? selectedGames : undefined }
+        : cls
+    ));
+    
+    setSelectedGames([]);
+    setEditingClassId("");
+    setIsEditGamesOpen(false);
+    toast.success("Игры класса обновлены");
+  };
+
+  const openEditGames = (classId: string) => {
+    const classRoom = classes.find(c => c.id === classId);
+    if (classRoom) {
+      setSelectedGames(classRoom.games || []);
+      setEditingClassId(classId);
+      setIsEditGamesOpen(true);
+    }
   };
 
   const addStudent = () => {
@@ -274,6 +300,15 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
                   </p>
                 </div>
                 <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => openEditGames(classRoom.id)}
+                  >
+                    <Icon name="Gamepad2" size={16} className="mr-2" />
+                    Игры
+                  </Button>
+
                   <Dialog open={isAddStudentOpen && selectedClassId === classRoom.id} 
                           onOpenChange={(open) => {
                             setIsAddStudentOpen(open);
@@ -316,6 +351,25 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
                 </div>
               </div>
 
+              {classRoom.games && classRoom.games.length > 0 && (
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {classRoom.games.map(game => {
+                    const gameLabels: Record<string, string> = {
+                      valheim: "Valheim",
+                      civilization: "Civilization",
+                      factorio: "Factorio",
+                      sport: "Спорт",
+                      robo: "Робототехника"
+                    };
+                    return (
+                      <span key={game} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">
+                        {gameLabels[game]}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+
               {classRoom.students.length === 0 ? (
                 <div className="text-center py-8 bg-muted/30 rounded-lg">
                   <Icon name="UserX" size={32} className="mx-auto mb-2 text-muted-foreground" />
@@ -355,6 +409,36 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
           ))}
         </div>
       )}
+
+      <Dialog open={isEditGamesOpen} onOpenChange={setIsEditGamesOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Редактировать игры класса</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Выберите игры</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {gameOptions.map(game => (
+                  <Button
+                    key={game.value}
+                    type="button"
+                    variant={selectedGames.includes(game.value) ? "default" : "outline"}
+                    onClick={() => toggleGame(game.value)}
+                    className="justify-start"
+                  >
+                    <Icon name={game.icon} size={18} className="mr-2" />
+                    {game.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <Button onClick={updateClassGames} className="w-full">
+              Сохранить изменения
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
