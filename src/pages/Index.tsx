@@ -13,7 +13,7 @@ import { Login } from "@/components/Login";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ClassRoom, Teacher, Match, AppState, GlobalData } from "@/types";
 import { saveAppState, loadAppState, clearAppState, saveGlobalData, loadGlobalData } from "@/utils/storage";
-import { syncFromServer, syncToServer } from "@/utils/sync";
+import { syncFromServer, syncToServer, deleteTeacherFromServer } from "@/utils/sync";
 import { toast } from "sonner";
 
 const Index = () => {
@@ -31,34 +31,48 @@ const Index = () => {
     const loadData = async () => {
       setIsSyncing(true);
       try {
+        const savedState = loadAppState();
+        console.log("📦 Saved state from localStorage:", savedState);
+        
         const serverData = await syncFromServer();
+        console.log("🌐 Server data loaded:", { teachersCount: serverData.teachers.length });
         setGlobalData(serverData);
         saveGlobalData(serverData);
         
-        const savedState = loadAppState();
-        if (savedState && savedState.teacher.name !== "Учитель") {
-          const updatedTeacher = serverData.teachers.find(t => t.id === savedState.teacher.id) || savedState.teacher;
-          setTeacher(updatedTeacher);
-          setIsLoggedIn(true);
+        if (savedState && savedState.teacher && savedState.teacher.name !== "Учитель") {
+          const updatedTeacher = serverData.teachers.find(t => t.id === savedState.teacher.id);
+          console.log("🔍 Looking for teacher:", savedState.teacher.id, "Found:", updatedTeacher);
           
-          const state: AppState = {
-            teacher: updatedTeacher,
-            classes: savedState.classes,
-            matches: savedState.matches
-          };
-          saveAppState(state);
-          
-          if (updatedTeacher.role === "admin" || updatedTeacher.role === "teacher") {
-            setClasses(serverData.classes);
-            setMatches(serverData.matches);
-          } else if (updatedTeacher.role === "junior") {
-            const myClasses = serverData.classes.filter(
-              cls => cls.responsibleTeacherId === updatedTeacher.id
-            );
-            const myMatches = serverData.matches.filter(m => m.createdBy === updatedTeacher.name);
-            setClasses(myClasses);
-            setMatches(myMatches);
+          if (updatedTeacher) {
+            setTeacher(updatedTeacher);
+            setIsLoggedIn(true);
+            console.log("✅ Logged in as:", updatedTeacher.name);
+            
+            const state: AppState = {
+              teacher: updatedTeacher,
+              classes: savedState.classes,
+              matches: savedState.matches
+            };
+            saveAppState(state);
+            
+            if (updatedTeacher.role === "admin" || updatedTeacher.role === "teacher") {
+              setClasses(serverData.classes);
+              setMatches(serverData.matches);
+            } else if (updatedTeacher.role === "junior") {
+              const myClasses = serverData.classes.filter(
+                cls => cls.responsibleTeacherId === updatedTeacher.id
+              );
+              const myMatches = serverData.matches.filter(m => m.createdBy === updatedTeacher.name);
+              setClasses(myClasses);
+              setMatches(myMatches);
+            }
+          } else {
+            console.warn("⚠️ Teacher not found in server data, keeping local state");
+            setTeacher(savedState.teacher);
+            setIsLoggedIn(true);
           }
+        } else {
+          console.log("❌ No valid saved state found");
         }
       } catch (error) {
         console.error("Failed to sync from server, using local data", error);
@@ -225,11 +239,19 @@ const Index = () => {
     }
   };
 
-  const handleDeleteTeacher = (teacherId: string) => {
+  const handleDeleteTeacher = async (teacherId: string) => {
     const updatedTeachers = globalData.teachers.filter(t => t.id !== teacherId);
     const newGlobalData = { ...globalData, teachers: updatedTeachers };
     setGlobalData(newGlobalData);
     saveGlobalData(newGlobalData);
+    
+    try {
+      await deleteTeacherFromServer(teacherId);
+      toast.success("Учитель удалён");
+    } catch (error) {
+      console.error("Failed to delete teacher from server", error);
+      toast.error("Ошибка удаления с сервера");
+    }
   };
 
   const handleDeleteClass = (classId: string) => {

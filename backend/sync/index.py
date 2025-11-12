@@ -17,7 +17,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, X-Auth-Token',
                 'Access-Control-Max-Age': '86400'
             },
@@ -73,6 +73,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'status': 'success', 'message': 'Data synchronized'}),
+                'isBase64Encoded': False
+            }
+        
+        elif method == 'DELETE':
+            body_data = json.loads(event.get('body', '{}'))
+            
+            if 'teacherId' in body_data:
+                cursor.execute('DELETE FROM teachers WHERE id = %s', (body_data['teacherId'],))
+            
+            conn.commit()
+            
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'status': 'success', 'message': 'Teacher deleted'}),
                 'isBase64Encoded': False
             }
         

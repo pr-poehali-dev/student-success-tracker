@@ -53,3 +53,25 @@ export const syncToServer = async (data: {
     throw error;
   }
 };
+
+export const deleteTeacherFromServer = async (teacherId: string): Promise<void> => {
+  try {
+    const response = await fetch(SYNC_API_URL, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ teacherId })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log("Delete teacher result:", result);
+  } catch (error) {
+    console.error("Error deleting teacher from server:", error);
+    throw error;
+  }
+};
