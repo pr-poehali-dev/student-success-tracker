@@ -186,11 +186,17 @@ export const SoftSkillsTab = ({ classes, matches, teacherName, onUpdateStudent }
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Общая оценка</SelectItem>
-                {matches.map((match) => (
-                  <SelectItem key={match.id} value={match.id}>
-                    {match.team1.name} vs {match.team2.name} ({new Date(match.date).toLocaleDateString()})
-                  </SelectItem>
-                ))}
+                {matches
+                  .filter(match => 
+                    !selectedStudentId || 
+                    match.team1.members.some(m => m.studentId === selectedStudentId) ||
+                    match.team2.members.some(m => m.studentId === selectedStudentId)
+                  )
+                  .map((match) => (
+                    <SelectItem key={match.id} value={match.id}>
+                      {match.team1.name} vs {match.team2.name} ({new Date(match.date).toLocaleDateString()})
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
