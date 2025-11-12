@@ -80,6 +80,8 @@ export interface AppState {
   teacher: Teacher;
   classes: ClassRoom[];
   matches: Match[];
+  currentView?: 'main' | 'profile' | 'admin';
+  activeTab?: string;
 }
 
 export interface GlobalData {

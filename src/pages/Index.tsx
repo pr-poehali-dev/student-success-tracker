@@ -40,6 +40,16 @@ const Index = () => {
         setClasses(savedState.classes);
         setMatches(savedState.matches);
         setIsLoggedIn(true);
+        
+        if (savedState.currentView === 'admin') {
+          setShowAdmin(true);
+        } else if (savedState.currentView === 'profile') {
+          setShowProfile(true);
+        }
+        
+        if (savedState.activeTab) {
+          setActiveTab(savedState.activeTab);
+        }
       }
       
       setIsSyncing(false);
@@ -51,7 +61,14 @@ const Index = () => {
   useEffect(() => {
     if (!teacher || !isLoggedIn || isSyncing) return;
 
-    const state: AppState = { teacher, classes, matches };
+    const currentView = showAdmin ? 'admin' : showProfile ? 'profile' : 'main';
+    const state: AppState = { 
+      teacher, 
+      classes, 
+      matches,
+      currentView,
+      activeTab
+    };
     saveAppState(state);
 
     const existingTeacherIndex = globalData.teachers.findIndex(t => t.id === teacher.id);
@@ -83,7 +100,7 @@ const Index = () => {
 
     setGlobalData(newGlobalData);
     saveGlobalData(newGlobalData);
-  }, [teacher, classes, matches, isLoggedIn, isSyncing, globalData.teachers, globalData.classes, globalData.matches]);
+  }, [teacher, classes, matches, isLoggedIn, isSyncing, globalData.teachers, globalData.classes, globalData.matches, showAdmin, showProfile, activeTab]);
 
   const handleLogin = async (loggedInTeacher: Teacher) => {
     setTeacher(loggedInTeacher);
