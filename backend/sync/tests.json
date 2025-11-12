@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "Get all data from database",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "teachers": "array",
+        "classes": "array",
+        "matches": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

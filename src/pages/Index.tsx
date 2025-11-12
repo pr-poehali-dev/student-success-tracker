@@ -11,6 +11,8 @@ import { Login } from "@/components/Login";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ClassRoom, Teacher, Match, AppState, GlobalData } from "@/types";
 import { saveAppState, loadAppState, clearAppState, saveGlobalData, loadGlobalData } from "@/utils/storage";
+import { syncFromServer, syncToServer } from "@/utils/sync";
+import { toast } from "sonner";
 
 const Index = () => {
   const [teacher, setTeacher] = useState<Teacher | null>(null);
@@ -19,84 +21,151 @@ const Index = () => {
   const [globalData, setGlobalData] = useState<GlobalData>({ teachers: [], classes: [], matches: [] });
   const [activeTab, setActiveTab] = useState("profile");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    const savedState = loadAppState();
-    const loadedGlobalData = loadGlobalData();
-    
-    setGlobalData(loadedGlobalData);
-
-    if (savedState && savedState.teacher.name !== "Учитель") {
-      setTeacher(savedState.teacher);
-      setIsLoggedIn(true);
-      
-      if (savedState.teacher.role === "admin") {
-        setClasses(loadedGlobalData.classes);
-        setMatches(loadedGlobalData.matches);
-      } else {
-        setClasses(savedState.classes);
-        setMatches(savedState.matches);
+    const loadData = async () => {
+      setIsSyncing(true);
+      try {
+        const serverData = await syncFromServer();
+        setGlobalData(serverData);
+        saveGlobalData(serverData);
+        
+        const savedState = loadAppState();
+        if (savedState && savedState.teacher.name !== "Учитель") {
+          setTeacher(savedState.teacher);
+          setIsLoggedIn(true);
+          
+          if (savedState.teacher.role === "admin") {
+            setClasses(serverData.classes);
+            setMatches(serverData.matches);
+          } else {
+            const myClasses = serverData.classes.filter(
+              cls => cls.responsibleTeacherId === savedState.teacher.id
+            );
+            const myMatches = serverData.matches.filter(m => m.createdBy === savedState.teacher.name);
+            setClasses(myClasses);
+            setMatches(myMatches);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to sync from server, using local data", error);
+        const loadedGlobalData = loadGlobalData();
+        setGlobalData(loadedGlobalData);
+        
+        const savedState = loadAppState();
+        if (savedState && savedState.teacher.name !== "Учитель") {
+          setTeacher(savedState.teacher);
+          setIsLoggedIn(true);
+          
+          if (savedState.teacher.role === "admin") {
+            setClasses(loadedGlobalData.classes);
+            setMatches(loadedGlobalData.matches);
+          } else {
+            setClasses(savedState.classes);
+            setMatches(savedState.matches);
+          }
+        }
+      } finally {
+        setIsSyncing(false);
       }
-    }
+    };
+    
+    loadData();
   }, []);
 
   useEffect(() => {
-    if (teacher && isLoggedIn) {
-      const existingTeacherIndex = globalData.teachers.findIndex(t => t.id === teacher.id);
-      const updatedTeachers = existingTeacherIndex >= 0
-        ? globalData.teachers.map(t => t.id === teacher.id ? teacher : t)
-        : [...globalData.teachers, teacher];
+    if (teacher && isLoggedIn && !isSyncing) {
+      const syncData = async () => {
+        const existingTeacherIndex = globalData.teachers.findIndex(t => t.id === teacher.id);
+        const updatedTeachers = existingTeacherIndex >= 0
+          ? globalData.teachers.map(t => t.id === teacher.id ? teacher : t)
+          : [...globalData.teachers, teacher];
 
-      let updatedGlobalClasses = globalData.classes;
-      let updatedGlobalMatches = globalData.matches;
+        let updatedGlobalClasses = globalData.classes;
+        let updatedGlobalMatches = globalData.matches;
 
-      if (teacher.role === "teacher") {
-        const myClassIds = classes.map(c => c.id);
-        const otherClasses = globalData.classes.filter(c => !myClassIds.includes(c.id));
-        updatedGlobalClasses = [...otherClasses, ...classes];
+        if (teacher.role === "teacher") {
+          const myClassIds = classes.map(c => c.id);
+          const otherClasses = globalData.classes.filter(c => !myClassIds.includes(c.id));
+          updatedGlobalClasses = [...otherClasses, ...classes];
 
-        const myMatchIds = matches.map(m => m.id);
-        const otherMatches = globalData.matches.filter(m => !myMatchIds.includes(m.id));
-        updatedGlobalMatches = [...otherMatches, ...matches];
+          const myMatchIds = matches.map(m => m.id);
+          const otherMatches = globalData.matches.filter(m => !myMatchIds.includes(m.id));
+          updatedGlobalMatches = [...otherMatches, ...matches];
 
-        const state: AppState = {
-          teacher,
-          classes,
-          matches
+          const state: AppState = {
+            teacher,
+            classes,
+            matches
+          };
+          saveAppState(state);
+        } else if (teacher.role === "admin") {
+          updatedGlobalClasses = classes;
+          updatedGlobalMatches = matches;
+        }
+
+        const newGlobalData: GlobalData = {
+          teachers: updatedTeachers,
+          classes: updatedGlobalClasses,
+          matches: updatedGlobalMatches
         };
-        saveAppState(state);
-      } else if (teacher.role === "admin") {
-        updatedGlobalClasses = classes;
-        updatedGlobalMatches = matches;
-      }
 
-      const newGlobalData: GlobalData = {
-        teachers: updatedTeachers,
-        classes: updatedGlobalClasses,
-        matches: updatedGlobalMatches
+        setGlobalData(newGlobalData);
+        saveGlobalData(newGlobalData);
+        
+        try {
+          await syncToServer({
+            teacher,
+            classes: updatedGlobalClasses,
+            matches: updatedGlobalMatches
+          });
+        } catch (error) {
+          console.error("Failed to sync to server", error);
+        }
       };
-
-      setGlobalData(newGlobalData);
-      saveGlobalData(newGlobalData);
+      
+      syncData();
     }
-  }, [teacher, classes, matches, isLoggedIn]);
+  }, [teacher, classes, matches, isLoggedIn, isSyncing]);
 
-  const handleLogin = (loggedInTeacher: Teacher) => {
+  const handleLogin = async (loggedInTeacher: Teacher) => {
     setTeacher(loggedInTeacher);
     setIsLoggedIn(true);
 
-    const loadedGlobalData = loadGlobalData();
-
-    if (loggedInTeacher.role === "admin") {
-      setClasses(loadedGlobalData.classes);
-      setMatches(loadedGlobalData.matches);
-    } else {
-      const myClasses = loadedGlobalData.classes.filter(
-        cls => cls.responsibleTeacherId === loggedInTeacher.id
-      );
-      const myMatches = loadedGlobalData.matches.filter(m => m.createdBy === loggedInTeacher.name);
-      setClasses(myClasses);
-      setMatches(myMatches);
+    try {
+      const serverData = await syncFromServer();
+      setGlobalData(serverData);
+      
+      if (loggedInTeacher.role === "admin") {
+        setClasses(serverData.classes);
+        setMatches(serverData.matches);
+      } else {
+        const myClasses = serverData.classes.filter(
+          cls => cls.responsibleTeacherId === loggedInTeacher.id
+        );
+        const myMatches = serverData.matches.filter(m => m.createdBy === loggedInTeacher.name);
+        setClasses(myClasses);
+        setMatches(myMatches);
+      }
+      
+      await syncToServer({ teacher: loggedInTeacher });
+    } catch (error) {
+      console.error("Failed to sync on login", error);
+      toast.error("Не удалось синхронизировать данные");
+      
+      const loadedGlobalData = loadGlobalData();
+      if (loggedInTeacher.role === "admin") {
+        setClasses(loadedGlobalData.classes);
+        setMatches(loadedGlobalData.matches);
+      } else {
+        const myClasses = loadedGlobalData.classes.filter(
+          cls => cls.responsibleTeacherId === loggedInTeacher.id
+        );
+        const myMatches = loadedGlobalData.matches.filter(m => m.createdBy === loggedInTeacher.name);
+        setClasses(myClasses);
+        setMatches(myMatches);
+      }
     }
   };
 
