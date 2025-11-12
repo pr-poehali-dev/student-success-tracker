@@ -159,6 +159,7 @@ export const AppContent = ({
                   setClasses={setClasses}
                   setMatches={setMatches}
                   teacher={teacher}
+                  onDeleteMatch={onDeleteMatch}
                 />
               </TabsContent>
 

@@ -18,9 +18,10 @@ interface TeamsTabProps {
   matches: Match[];
   setMatches: (matches: Match[]) => void;
   teacher: Teacher;
+  onDeleteMatch: (matchId: string) => void;
 }
 
-export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher }: TeamsTabProps) => {
+export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, onDeleteMatch }: TeamsTabProps) => {
   const [selectedGame, setSelectedGame] = useState<string>("");
   const [team1Members, setTeam1Members] = useState<TeamMember[]>([]);
   const [team2Members, setTeam2Members] = useState<TeamMember[]>([]);
@@ -225,8 +226,7 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher }: 
   };
 
   const deleteMatch = (matchId: string) => {
-    setMatches(matches.filter(m => m.id !== matchId));
-    toast.success("Матч удалён");
+    onDeleteMatch(matchId);
   };
 
   const handleImportComplete = (data: {
