@@ -74,10 +74,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if 'teacher' in body_data and body_data['teacher']:
                 save_teacher(cursor, body_data['teacher'])
             
-            if 'classes' in body_data and body_data['classes']:
+            if 'classes' in body_data:
                 save_classes(cursor, body_data['classes'])
             
-            if 'matches' in body_data and body_data['matches']:
+            if 'matches' in body_data:
                 save_matches(cursor, body_data['matches'])
             
             return {
