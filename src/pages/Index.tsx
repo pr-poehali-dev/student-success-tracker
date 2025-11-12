@@ -71,6 +71,10 @@ const Index = () => {
       activeTab
     };
     saveAppState(state);
+  }, [teacher, classes, matches, isLoggedIn, isSyncing, showAdmin, showProfile, activeTab]);
+
+  useEffect(() => {
+    if (!teacher || !isLoggedIn || isSyncing) return;
 
     const existingTeacherIndex = globalData.teachers.findIndex(t => t.id === teacher.id);
     const updatedTeachers = existingTeacherIndex >= 0
@@ -99,9 +103,16 @@ const Index = () => {
       matches: updatedGlobalMatches
     };
 
-    setGlobalData(newGlobalData);
-    saveGlobalData(newGlobalData);
-  }, [teacher, classes, matches, isLoggedIn, isSyncing, globalData.teachers, globalData.classes, globalData.matches, showAdmin, showProfile, activeTab]);
+    const hasChanges = 
+      JSON.stringify(globalData.teachers) !== JSON.stringify(updatedTeachers) ||
+      JSON.stringify(globalData.classes) !== JSON.stringify(updatedGlobalClasses) ||
+      JSON.stringify(globalData.matches) !== JSON.stringify(updatedGlobalMatches);
+
+    if (hasChanges) {
+      setGlobalData(newGlobalData);
+      saveGlobalData(newGlobalData);
+    }
+  }, [teacher, classes, matches, isLoggedIn, isSyncing]);
 
   const handleLogin = async (loggedInTeacher: Teacher) => {
     setTeacher(loggedInTeacher);
