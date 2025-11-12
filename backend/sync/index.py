@@ -265,6 +265,8 @@ def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[st
                 responsible_teacher_id = EXCLUDED.responsible_teacher_id
         ''')
         
+        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.students WHERE class_id = {cid}')
+        
         students = cls.get('students', [])
         for student in students:
                 if not student.get('id'):
