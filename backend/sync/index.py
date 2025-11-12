@@ -141,7 +141,13 @@ def get_all_classes(cursor) -> List[Dict[str, Any]]:
     cursor.execute('''
         SELECT c.id, c.name, c.responsible_teacher_id,
                COALESCE(json_agg(
-                   json_build_object('id', s.id, 'name', s.name)
+                   json_build_object(
+                       'id', s.id, 
+                       'name', s.name, 
+                       'points', s.points,
+                       'achievements', s.achievements,
+                       'activities', s.activities
+                   )
                    ORDER BY s.name
                ) FILTER (WHERE s.id IS NOT NULL), '[]') as students
         FROM t_p91106428_student_success_trac.classes c
@@ -277,13 +283,25 @@ def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[st
                     
                 sid = escape_sql(student['id'])
                 sname = escape_sql(student.get('name', ''))
+                spoints = escape_sql(student.get('points', 0))
+                
+                achievements_list = student.get('achievements', [])
+                if achievements_list:
+                    sachievements = "ARRAY[" + ",".join([f"'{ach.replace(chr(39), chr(39)+chr(39))}'" for ach in achievements_list]) + "]"
+                else:
+                    sachievements = "ARRAY[]::TEXT[]"
+                
+                sactivities = escape_sql(json.dumps(student.get('activities', [])))
                 
                 cursor.execute(f'''
-                    INSERT INTO t_p91106428_student_success_trac.students (id, name, class_id)
-                    VALUES ({sid}, {sname}, {cid})
+                    INSERT INTO t_p91106428_student_success_trac.students (id, name, class_id, points, achievements, activities)
+                    VALUES ({sid}, {sname}, {cid}, {spoints}, {sachievements}, {sactivities}::jsonb)
                     ON CONFLICT (id) DO UPDATE SET
                         name = EXCLUDED.name,
-                        class_id = EXCLUDED.class_id
+                        class_id = EXCLUDED.class_id,
+                        points = EXCLUDED.points,
+                        achievements = EXCLUDED.achievements,
+                        activities = EXCLUDED.activities
                 ''')
 
 
