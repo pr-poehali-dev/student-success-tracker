@@ -200,6 +200,12 @@ const Index = () => {
     
     if (teacher?.id === updatedTeacher.id) {
       setTeacher(updatedTeacher);
+      const state: AppState = {
+        teacher: updatedTeacher,
+        classes,
+        matches
+      };
+      saveAppState(state);
     }
 
     try {

@@ -265,7 +265,7 @@ def save_teacher(cursor, teacher: Dict[str, Any]) -> None:
         teacher['id'],
         teacher['name'],
         teacher.get('email', ''),
-        teacher['role'],
+        teacher.get('role', 'teacher'),
         teacher.get('username'),
         teacher.get('password', '')
     ))
