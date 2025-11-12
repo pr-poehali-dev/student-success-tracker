@@ -4,20 +4,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import Icon from "@/components/ui/icon";
-import { ClassRoom, Match, Student, SoftSkillRating } from "@/types";
+import { ClassRoom, Student, SoftSkillRating } from "@/types";
 import { toast } from "sonner";
 
 interface SoftSkillsTabProps {
   classes: ClassRoom[];
-  matches: Match[];
-  teacherName: string;
-  onUpdateStudent: (classId: string, student: Student) => void;
+  setClasses: (classes: ClassRoom[]) => void;
 }
 
-export const SoftSkillsTab = ({ classes, matches, teacherName, onUpdateStudent }: SoftSkillsTabProps) => {
+export const SoftSkillsTab = ({ classes, setClasses }: SoftSkillsTabProps) => {
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
-  const [selectedMatchId, setSelectedMatchId] = useState<string>("");
   const [selectedGameType, setSelectedGameType] = useState<"valheim" | "civilization" | "factorio" | "sport" | "robo" | "lumosity" | "">("");
   const [ratings, setRatings] = useState<Omit<SoftSkillRating, 'date' | 'ratedBy'>>({
     leadership: 0,
@@ -81,10 +78,9 @@ export const SoftSkillsTab = ({ classes, matches, teacherName, onUpdateStudent }
 
     const newRating: SoftSkillRating = {
       ...ratings,
-      matchId: selectedMatchId || undefined,
       gameType: selectedGameType || undefined,
       date: new Date().toISOString(),
-      ratedBy: teacherName,
+      ratedBy: "Учитель",
     };
 
     const updatedStudent: Student = {
@@ -92,7 +88,17 @@ export const SoftSkillsTab = ({ classes, matches, teacherName, onUpdateStudent }
       softSkills: [...(selectedStudent!.softSkills || []), newRating],
     };
 
-    onUpdateStudent(selectedClassId, updatedStudent);
+    const updatedClasses = classes.map(cls => 
+      cls.id === selectedClassId
+        ? {
+            ...cls,
+            students: cls.students.map(s => 
+              s.id === selectedStudentId ? updatedStudent : s
+            )
+          }
+        : cls
+    );
+    setClasses(updatedClasses);
 
     setRatings({
       leadership: 0,
@@ -101,7 +107,6 @@ export const SoftSkillsTab = ({ classes, matches, teacherName, onUpdateStudent }
       selfReflection: 0,
       criticalThinking: 0,
     });
-    setSelectedMatchId("");
     setSelectedGameType("");
     setSelectedStudentId("");
     setSelectedClassId("");
@@ -181,54 +186,29 @@ export const SoftSkillsTab = ({ classes, matches, teacherName, onUpdateStudent }
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Игра (необязательно)</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { value: "lumosity", label: "Люмосити", icon: "Brain" },
-                  { value: "valheim", label: "Valheim", icon: "Swords" },
-                  { value: "civilization", label: "Civilization", icon: "Globe" },
-                  { value: "factorio", label: "Factorio", icon: "Factory" },
-                  { value: "sport", label: "Спорт", icon: "Trophy" },
-                  { value: "robo", label: "Робо", icon: "Bot" }
-                ].map(game => (
-                  <Button
-                    key={game.value}
-                    type="button"
-                    variant={selectedGameType === game.value ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedGameType(selectedGameType === game.value ? "" : game.value as any)}
-                    className="justify-start"
-                  >
-                    <Icon name={game.icon} size={16} className="mr-2" />
-                    {game.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Матч (необязательно)</Label>
-              <Select value={selectedMatchId || "none"} onValueChange={(value) => setSelectedMatchId(value === "none" ? "" : value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Общая оценка (без привязки к матчу)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Общая оценка</SelectItem>
-                  {matches
-                    .filter(match => 
-                      !selectedStudentId || 
-                      match.team1.members.some(m => m.studentId === selectedStudentId) ||
-                      match.team2.members.some(m => m.studentId === selectedStudentId)
-                    )
-                    .map((match) => (
-                      <SelectItem key={match.id} value={match.id}>
-                        {match.team1.name} vs {match.team2.name} ({new Date(match.date).toLocaleDateString()})
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+          <div className="space-y-2">
+            <Label>Игра (необязательно)</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: "lumosity", label: "Люмосити", icon: "Brain" },
+                { value: "valheim", label: "Valheim", icon: "Swords" },
+                { value: "civilization", label: "Civilization", icon: "Globe" },
+                { value: "factorio", label: "Factorio", icon: "Factory" },
+                { value: "sport", label: "Спорт", icon: "Trophy" },
+                { value: "robo", label: "Робо", icon: "Bot" }
+              ].map(game => (
+                <Button
+                  key={game.value}
+                  type="button"
+                  variant={selectedGameType === game.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedGameType(selectedGameType === game.value ? "" : game.value as any)}
+                  className="justify-start"
+                >
+                  <Icon name={game.icon} size={16} className="mr-2" />
+                  {game.label}
+                </Button>
+              ))}
             </div>
           </div>
 
