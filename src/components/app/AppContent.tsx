@@ -142,6 +142,7 @@ export const AppContent = ({
                   classes={classes} 
                   setClasses={setClasses} 
                   teacher={teacher}
+                  allTeachers={globalData.teachers}
                 />
               </TabsContent>
 

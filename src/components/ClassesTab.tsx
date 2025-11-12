@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
-import { ClassRoom, Student } from "@/types";
+import { ClassRoom, Student, Teacher } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -12,9 +12,11 @@ import * as XLSX from "xlsx";
 interface ClassesTabProps {
   classes: ClassRoom[];
   setClasses: (classes: ClassRoom[]) => void;
+  teacher: Teacher;
+  allTeachers: Teacher[];
 }
 
-export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
+export const ClassesTab = ({ classes, setClasses, teacher, allTeachers }: ClassesTabProps) => {
   const [newClassName, setNewClassName] = useState("");
   const [newStudentName, setNewStudentName] = useState("");
   const [selectedClassId, setSelectedClassId] = useState<string>("");
@@ -298,6 +300,12 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
                   </h3>
                   <p className="text-muted-foreground">
                     Учеников: {classRoom.students.length}
+                    {classRoom.responsibleTeacherId && (() => {
+                      const responsibleTeacher = allTeachers.find(t => t.id === classRoom.responsibleTeacherId);
+                      return (
+                        <span className="ml-2">• Ответственный: {responsibleTeacher?.name || "Неизвестно"}</span>
+                      );
+                    })()}
                   </p>
                 </div>
                 <div className="flex gap-2">

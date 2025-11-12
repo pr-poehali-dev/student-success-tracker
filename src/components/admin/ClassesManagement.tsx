@@ -30,7 +30,7 @@ export const ClassesManagement = ({
   onUpdateClass
 }: ClassesManagementProps) => {
   const [assigningClass, setAssigningClass] = useState<ClassRoom | null>(null);
-  const [selectedTeacherId, setSelectedTeacherId] = useState<string>("");
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string>("none");
 
   const handleDeleteClass = (classId: string, className: string) => {
     if (confirm(`Вы уверены, что хотите удалить класс "${className}" со всеми учениками?`)) {
@@ -41,7 +41,7 @@ export const ClassesManagement = ({
 
   const handleAssignTeacher = (classRoom: ClassRoom) => {
     setAssigningClass(classRoom);
-    setSelectedTeacherId(classRoom.responsibleTeacherId || "");
+    setSelectedTeacherId(classRoom.responsibleTeacherId || "none");
   };
 
   const handleSaveAssignment = () => {
@@ -49,12 +49,12 @@ export const ClassesManagement = ({
 
     const updatedClass: ClassRoom = {
       ...assigningClass,
-      responsibleTeacherId: selectedTeacherId || undefined
+      responsibleTeacherId: selectedTeacherId === "none" ? undefined : selectedTeacherId
     };
 
     onUpdateClass(updatedClass);
     setAssigningClass(null);
-    setSelectedTeacherId("");
+    setSelectedTeacherId("none");
     toast.success("Ответственный учитель назначен");
   };
 
@@ -118,7 +118,7 @@ export const ClassesManagement = ({
                                     <SelectValue placeholder="Выберите учителя" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="">Не назначен</SelectItem>
+                                    <SelectItem value="none">Не назначен</SelectItem>
                                     {teachers.filter(t => t.role === "teacher" || t.role === "junior").map((teacher) => (
                                       <SelectItem key={teacher.id} value={teacher.id}>
                                         {teacher.name}
