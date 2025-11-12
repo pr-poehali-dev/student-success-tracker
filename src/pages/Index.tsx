@@ -28,53 +28,21 @@ const Index = () => {
   const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = () => {
       setIsSyncing(true);
-      try {
-        const savedState = loadAppState();
-        console.log("📦 Saved state from localStorage:", savedState);
-        
-        const serverData = await syncFromServer();
-        console.log("🌐 Server data loaded:", { teachersCount: serverData.teachers.length });
-        setGlobalData(serverData);
-        saveGlobalData(serverData);
-        
-        if (savedState?.teacher?.id) {
-          const updatedTeacher = serverData.teachers.find(t => t.id === savedState.teacher.id);
-          
-          if (updatedTeacher) {
-            setTeacher(updatedTeacher);
-            setIsLoggedIn(true);
-            
-            if (updatedTeacher.role === "admin" || updatedTeacher.role === "teacher") {
-              setClasses(serverData.classes);
-              setMatches(serverData.matches);
-            } else if (updatedTeacher.role === "junior") {
-              const myClasses = serverData.classes.filter(
-                cls => cls.responsibleTeacherId === updatedTeacher.id
-              );
-              const myMatches = serverData.matches.filter(m => m.createdBy === updatedTeacher.name);
-              setClasses(myClasses);
-              setMatches(myMatches);
-            }
-            console.log("✅ Logged in:", updatedTeacher.name);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to sync from server, using local data", error);
-        const loadedGlobalData = loadGlobalData();
-        setGlobalData(loadedGlobalData);
-        
-        const savedState = loadAppState();
-        if (savedState?.teacher?.id) {
-          setTeacher(savedState.teacher);
-          setClasses(savedState.classes);
-          setMatches(savedState.matches);
-          setIsLoggedIn(true);
-        }
-      } finally {
-        setIsSyncing(false);
+      
+      const loadedGlobalData = loadGlobalData();
+      setGlobalData(loadedGlobalData);
+      
+      const savedState = loadAppState();
+      if (savedState?.teacher?.id) {
+        setTeacher(savedState.teacher);
+        setClasses(savedState.classes);
+        setMatches(savedState.matches);
+        setIsLoggedIn(true);
       }
+      
+      setIsSyncing(false);
     };
     
     loadData();
@@ -83,113 +51,67 @@ const Index = () => {
   useEffect(() => {
     if (!teacher || !isLoggedIn || isSyncing) return;
 
-    const timer = setTimeout(() => {
-      const state: AppState = { teacher, classes, matches };
-      saveAppState(state);
+    const state: AppState = { teacher, classes, matches };
+    saveAppState(state);
 
-      const existingTeacherIndex = globalData.teachers.findIndex(t => t.id === teacher.id);
-      const updatedTeachers = existingTeacherIndex >= 0
-        ? globalData.teachers.map(t => t.id === teacher.id ? teacher : t)
-        : [...globalData.teachers, teacher];
+    const existingTeacherIndex = globalData.teachers.findIndex(t => t.id === teacher.id);
+    const updatedTeachers = existingTeacherIndex >= 0
+      ? globalData.teachers.map(t => t.id === teacher.id ? teacher : t)
+      : [...globalData.teachers, teacher];
 
-      let updatedGlobalClasses = globalData.classes;
-      let updatedGlobalMatches = globalData.matches;
+    let updatedGlobalClasses = globalData.classes;
+    let updatedGlobalMatches = globalData.matches;
 
-      if (teacher.role === "junior") {
-        const myClassIds = classes.map(c => c.id);
-        const otherClasses = globalData.classes.filter(c => !myClassIds.includes(c.id));
-        updatedGlobalClasses = [...otherClasses, ...classes];
+    if (teacher.role === "junior") {
+      const myClassIds = classes.map(c => c.id);
+      const otherClasses = globalData.classes.filter(c => !myClassIds.includes(c.id));
+      updatedGlobalClasses = [...otherClasses, ...classes];
 
-        const myMatchIds = matches.map(m => m.id);
-        const otherMatches = globalData.matches.filter(m => !myMatchIds.includes(m.id));
-        updatedGlobalMatches = [...otherMatches, ...matches];
-      } else if (teacher.role === "admin" || teacher.role === "teacher") {
-        updatedGlobalClasses = classes;
-        updatedGlobalMatches = matches;
-      }
+      const myMatchIds = matches.map(m => m.id);
+      const otherMatches = globalData.matches.filter(m => !myMatchIds.includes(m.id));
+      updatedGlobalMatches = [...otherMatches, ...matches];
+    } else if (teacher.role === "admin" || teacher.role === "teacher") {
+      updatedGlobalClasses = classes;
+      updatedGlobalMatches = matches;
+    }
 
-      const newGlobalData: GlobalData = {
-        teachers: updatedTeachers,
-        classes: updatedGlobalClasses,
-        matches: updatedGlobalMatches
-      };
+    const newGlobalData: GlobalData = {
+      teachers: updatedTeachers,
+      classes: updatedGlobalClasses,
+      matches: updatedGlobalMatches
+    };
 
-      setGlobalData(newGlobalData);
-      saveGlobalData(newGlobalData);
-
-      syncToServer({
-        teacher,
-        classes: updatedGlobalClasses,
-        matches: updatedGlobalMatches
-      }).catch(error => console.error("Failed to sync to server", error));
-    }, 500);
-
-    return () => clearTimeout(timer);
+    setGlobalData(newGlobalData);
+    saveGlobalData(newGlobalData);
   }, [teacher, classes, matches, isLoggedIn, isSyncing, globalData.teachers, globalData.classes, globalData.matches]);
 
   const handleLogin = async (loggedInTeacher: Teacher) => {
     setTeacher(loggedInTeacher);
     setIsLoggedIn(true);
 
-    try {
-      const serverData = await syncFromServer();
-      setGlobalData(serverData);
-      
-      let loginClasses: ClassRoom[] = [];
-      let loginMatches: Match[] = [];
-      
-      if (loggedInTeacher.role === "admin" || loggedInTeacher.role === "teacher") {
-        loginClasses = serverData.classes;
-        loginMatches = serverData.matches;
-        setClasses(loginClasses);
-        setMatches(loginMatches);
-      } else if (loggedInTeacher.role === "junior") {
-        loginClasses = serverData.classes.filter(
-          cls => cls.responsibleTeacherId === loggedInTeacher.id
-        );
-        loginMatches = serverData.matches.filter(m => m.createdBy === loggedInTeacher.name);
-        setClasses(loginClasses);
-        setMatches(loginMatches);
-      }
-      
-      const state: AppState = {
-        teacher: loggedInTeacher,
-        classes: loginClasses,
-        matches: loginMatches
-      };
-      saveAppState(state);
-      console.log("✅ State saved on login:", state);
-      
-      await syncToServer({ teacher: loggedInTeacher });
-    } catch (error) {
-      console.error("Failed to sync on login", error);
-      toast.error("Не удалось синхронизировать данные");
-      
-      const loadedGlobalData = loadGlobalData();
-      let loginClasses: ClassRoom[] = [];
-      let loginMatches: Match[] = [];
-      
-      if (loggedInTeacher.role === "admin" || loggedInTeacher.role === "teacher") {
-        loginClasses = loadedGlobalData.classes;
-        loginMatches = loadedGlobalData.matches;
-        setClasses(loginClasses);
-        setMatches(loginMatches);
-      } else if (loggedInTeacher.role === "junior") {
-        loginClasses = loadedGlobalData.classes.filter(
-          cls => cls.responsibleTeacherId === loggedInTeacher.id
-        );
-        loginMatches = loadedGlobalData.matches.filter(m => m.createdBy === loggedInTeacher.name);
-        setClasses(loginClasses);
-        setMatches(loginMatches);
-      }
-      
-      const state: AppState = {
-        teacher: loggedInTeacher,
-        classes: loginClasses,
-        matches: loginMatches
-      };
-      saveAppState(state);
+    const loadedGlobalData = loadGlobalData();
+    let loginClasses: ClassRoom[] = [];
+    let loginMatches: Match[] = [];
+    
+    if (loggedInTeacher.role === "admin" || loggedInTeacher.role === "teacher") {
+      loginClasses = loadedGlobalData.classes;
+      loginMatches = loadedGlobalData.matches;
+    } else if (loggedInTeacher.role === "junior") {
+      loginClasses = loadedGlobalData.classes.filter(
+        cls => cls.responsibleTeacherId === loggedInTeacher.id
+      );
+      loginMatches = loadedGlobalData.matches.filter(m => m.createdBy === loggedInTeacher.name);
     }
+    
+    setClasses(loginClasses);
+    setMatches(loginMatches);
+    
+    const state: AppState = {
+      teacher: loggedInTeacher,
+      classes: loginClasses,
+      matches: loginMatches
+    };
+    saveAppState(state);
   };
 
   const handleLogout = () => {
