@@ -74,11 +74,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if 'teacher' in body_data and body_data['teacher']:
                 save_teacher(cursor, body_data['teacher'])
             
+            current_teacher = body_data.get('currentTeacher')
+            
             if 'classes' in body_data:
-                save_classes(cursor, body_data['classes'])
+                save_classes(cursor, body_data['classes'], current_teacher)
             
             if 'matches' in body_data:
-                save_matches(cursor, body_data['matches'])
+                save_matches(cursor, body_data['matches'], current_teacher)
             
             return {
                 'statusCode': 200,
@@ -238,9 +240,14 @@ def save_teacher(cursor, teacher: Dict[str, Any]) -> None:
     ''')
 
 
-def save_classes(cursor, classes: List[Dict[str, Any]]) -> None:
-    cursor.execute('DELETE FROM t_p91106428_student_success_trac.students')
-    cursor.execute('DELETE FROM t_p91106428_student_success_trac.classes')
+def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[str, Any] = None) -> None:
+    if current_teacher and current_teacher.get('id'):
+        teacher_id = escape_sql(current_teacher['id'])
+        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.students WHERE class_id IN (SELECT id FROM t_p91106428_student_success_trac.classes WHERE responsible_teacher_id = {teacher_id})')
+        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.classes WHERE responsible_teacher_id = {teacher_id}')
+    else:
+        cursor.execute('DELETE FROM t_p91106428_student_success_trac.students')
+        cursor.execute('DELETE FROM t_p91106428_student_success_trac.classes')
     
     for cls in classes:
         if not cls.get('id'):
@@ -272,11 +279,18 @@ def save_classes(cursor, classes: List[Dict[str, Any]]) -> None:
                 ''')
 
 
-def save_matches(cursor, matches: List[Dict[str, Any]]) -> None:
-    cursor.execute('DELETE FROM t_p91106428_student_success_trac.scheduled_dates')
-    cursor.execute('DELETE FROM t_p91106428_student_success_trac.matches')
-    cursor.execute('DELETE FROM t_p91106428_student_success_trac.team_members')
-    cursor.execute('DELETE FROM t_p91106428_student_success_trac.teams')
+def save_matches(cursor, matches: List[Dict[str, Any]], current_teacher: Dict[str, Any] = None) -> None:
+    if current_teacher and current_teacher.get('name'):
+        teacher_name = escape_sql(current_teacher['name'])
+        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.scheduled_dates WHERE match_id IN (SELECT id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name})')
+        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name}')
+        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.team_members WHERE team_id IN (SELECT team1_id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name} UNION SELECT team2_id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name})')
+        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.teams WHERE id IN (SELECT team1_id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name} UNION SELECT team2_id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name})')
+    else:
+        cursor.execute('DELETE FROM t_p91106428_student_success_trac.scheduled_dates')
+        cursor.execute('DELETE FROM t_p91106428_student_success_trac.matches')
+        cursor.execute('DELETE FROM t_p91106428_student_success_trac.team_members')
+        cursor.execute('DELETE FROM t_p91106428_student_success_trac.teams')
     
     for match in matches:
         if not match.get('id'):

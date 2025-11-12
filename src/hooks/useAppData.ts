@@ -130,7 +130,8 @@ export const useAppData = () => {
       
       syncToServer({
         classes: updatedGlobalClasses,
-        matches: updatedGlobalMatches
+        matches: updatedGlobalMatches,
+        currentTeacher: teacher
       }).then(() => {
         console.log("Auto-sync completed successfully");
       }).catch(error => {
