@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,7 @@ export const Login = ({ onLogin }: LoginProps) => {
   const [selectedUserId, setSelectedUserId] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     const loadUsers = async () => {
       try {
         const data = await syncFromServer();
@@ -31,7 +31,7 @@ export const Login = ({ onLogin }: LoginProps) => {
       }
     };
     loadUsers();
-  });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +76,8 @@ export const Login = ({ onLogin }: LoginProps) => {
           return;
         }
 
-        if (user.password !== password) {
+        if (user.password !== password.trim()) {
+          console.log("Password mismatch:", { stored: user.password, entered: password.trim() });
           toast.error("Неверный пароль");
           setLoading(false);
           return;

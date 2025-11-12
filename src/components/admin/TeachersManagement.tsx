@@ -35,6 +35,7 @@ export const TeachersManagement = ({
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState<"admin" | "teacher" | "junior">("teacher");
+  const [editPassword, setEditPassword] = useState("");
   const [isCreatingTeacher, setIsCreatingTeacher] = useState(false);
   const [newTeacherName, setNewTeacherName] = useState("");
   const [newTeacherEmail, setNewTeacherEmail] = useState("");
@@ -46,6 +47,7 @@ export const TeachersManagement = ({
     setEditName(teacher.name);
     setEditEmail(teacher.email);
     setEditRole(teacher.role);
+    setEditPassword(teacher.password || "");
   };
 
   const handleSaveTeacher = () => {
@@ -58,7 +60,8 @@ export const TeachersManagement = ({
       ...editingTeacher,
       name: editName.trim(),
       email: editEmail.trim(),
-      role: editRole
+      role: editRole,
+      password: editPassword.trim() || editingTeacher.password
     };
 
     onUpdateTeacher(updatedTeacher);
@@ -80,6 +83,16 @@ export const TeachersManagement = ({
       password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setNewTeacherPassword(password);
+    toast.success("Пароль сгенерирован");
+  };
+
+  const generateEditPassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setEditPassword(password);
     toast.success("Пароль сгенерирован");
   };
 
@@ -277,6 +290,22 @@ export const TeachersManagement = ({
                                   <SelectItem value="admin">Администратор</SelectItem>
                                 </SelectContent>
                               </Select>
+                            </div>
+                            <div>
+                              <Label>Пароль</Label>
+                              <div className="flex gap-2 mt-2">
+                                <Input
+                                  value={editPassword}
+                                  onChange={(e) => setEditPassword(e.target.value)}
+                                  placeholder="Введите новый пароль"
+                                />
+                                <Button type="button" onClick={generateEditPassword} variant="outline">
+                                  <Icon name="RefreshCw" size={16} />
+                                </Button>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Оставьте пустым, если не хотите менять пароль
+                              </p>
                             </div>
                             <Button onClick={handleSaveTeacher} className="w-full">
                               Сохранить
