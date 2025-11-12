@@ -34,6 +34,12 @@ export const syncToServer = async (data: {
   matches?: Match[];
 }): Promise<void> => {
   try {
+    console.log("Syncing to server:", {
+      hasTeacher: !!data.teacher,
+      classesCount: data.classes?.length ?? 0,
+      matchesCount: data.matches?.length ?? 0
+    });
+    
     const response = await fetch(SYNC_API_URL, {
       method: 'POST',
       headers: {

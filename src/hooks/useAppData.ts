@@ -110,28 +110,33 @@ export const useAppData = () => {
       updatedGlobalMatches = matches;
     }
 
-    const newGlobalData: GlobalData = {
-      teachers: updatedTeachers,
-      classes: updatedGlobalClasses,
-      matches: updatedGlobalMatches
-    };
-
     const hasChanges = 
-      JSON.stringify(globalData.teachers) !== JSON.stringify(updatedTeachers) ||
       JSON.stringify(globalData.classes) !== JSON.stringify(updatedGlobalClasses) ||
       JSON.stringify(globalData.matches) !== JSON.stringify(updatedGlobalMatches);
 
     if (hasChanges) {
+      const newGlobalData: GlobalData = {
+        teachers: updatedTeachers,
+        classes: updatedGlobalClasses,
+        matches: updatedGlobalMatches
+      };
       setGlobalData(newGlobalData);
+      
+      console.log("Auto-syncing to server:", {
+        classesCount: updatedGlobalClasses.length,
+        matchesCount: updatedGlobalMatches.length
+      });
       
       syncToServer({
         classes: updatedGlobalClasses,
         matches: updatedGlobalMatches
+      }).then(() => {
+        console.log("Auto-sync completed successfully");
       }).catch(error => {
         console.error("Failed to auto-sync to server", error);
       });
     }
-  }, [teacher, classes, matches, isLoggedIn, isSyncing, globalData]);
+  }, [teacher, classes, matches, isLoggedIn, isSyncing]);
 
   const handleLogin = async (loggedInTeacher: Teacher) => {
     setTeacher(loggedInTeacher);
@@ -231,50 +236,22 @@ export const useAppData = () => {
   };
 
   const handleDeleteClass = async (classId: string) => {
-    const updatedClasses = globalData.classes.filter(c => c.id !== classId);
-    const newGlobalData = { ...globalData, classes: updatedClasses };
-    setGlobalData(newGlobalData);
+    const updatedClasses = classes.filter(c => c.id !== classId);
     setClasses(updatedClasses);
-    
-    try {
-      await syncToServer({ classes: updatedClasses });
-      toast.success("Класс удалён и синхронизирован");
-    } catch (error) {
-      console.error("Failed to sync class deletion to server", error);
-      toast.error("Ошибка синхронизации с сервером");
-    }
+    toast.success("Класс удалён");
   };
 
   const handleDeleteMatch = async (matchId: string) => {
-    const updatedMatches = globalData.matches.filter(m => m.id !== matchId);
-    const newGlobalData = { ...globalData, matches: updatedMatches };
-    setGlobalData(newGlobalData);
+    const updatedMatches = matches.filter(m => m.id !== matchId);
     setMatches(updatedMatches);
-    
-    try {
-      await syncToServer({ matches: updatedMatches });
-      toast.success("Матч удалён и синхронизирован");
-    } catch (error) {
-      console.error("Failed to sync match deletion to server", error);
-      toast.error("Ошибка синхронизации с сервером");
-    }
+    toast.success("Матч удалён");
   };
 
   const handleUpdateClass = async (updatedClass: ClassRoom) => {
-    const updatedClasses = globalData.classes.map(c => 
+    const updatedClasses = classes.map(c => 
       c.id === updatedClass.id ? updatedClass : c
     );
-    const newGlobalData = { ...globalData, classes: updatedClasses };
-    setGlobalData(newGlobalData);
     setClasses(updatedClasses);
-    
-    try {
-      await syncToServer({ classes: updatedClasses });
-      toast.success("Класс обновлён и синхронизирован");
-    } catch (error) {
-      console.error("Failed to sync class update to server", error);
-      toast.error("Ошибка синхронизации с сервером");
-    }
   };
 
   const handleCreateTeacher = async (newTeacher: Teacher) => {
