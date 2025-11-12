@@ -45,7 +45,7 @@ export const StudentRanking = ({ students }: StudentRankingProps) => {
               </div>
 
               <div className="flex items-center gap-2">
-                {student.achievements.slice(0, 3).map(achId => {
+                {(student.achievements || []).slice(0, 3).map(achId => {
                   const achievement = ACHIEVEMENTS.find(a => a.id === achId);
                   return achievement ? (
                     <div key={achId} className={`p-1.5 rounded ${achievement.color}`}>
@@ -53,8 +53,8 @@ export const StudentRanking = ({ students }: StudentRankingProps) => {
                     </div>
                   ) : null;
                 })}
-                {student.achievements.length > 3 && (
-                  <Badge variant="secondary">+{student.achievements.length - 3}</Badge>
+                {(student.achievements || []).length > 3 && (
+                  <Badge variant="secondary">+{(student.achievements || []).length - 3}</Badge>
                 )}
               </div>
 
