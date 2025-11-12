@@ -51,8 +51,11 @@ export const TeacherProfile = ({ teacher, onUpdate, onClearData, onLogout }: Tea
           </div>
           <div>
             <h3 className="text-xl font-semibold">{teacher.name}</h3>
+            <p className="text-sm text-muted-foreground">
+              {teacher.role === "admin" ? "Администратор" : teacher.role === "teacher" ? "Учитель" : "Младший научный сотрудник"}
+            </p>
             {teacher.email && (
-              <p className="text-sm text-muted-foreground">{teacher.email}</p>
+              <p className="text-xs text-muted-foreground mt-1">{teacher.email}</p>
             )}
           </div>
         </div>

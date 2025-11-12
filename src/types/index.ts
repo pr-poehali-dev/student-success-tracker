@@ -70,7 +70,7 @@ export interface Teacher {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "teacher";
+  role: "admin" | "teacher" | "junior";
   createdAt: string;
   username?: string;
 }

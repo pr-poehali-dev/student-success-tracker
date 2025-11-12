@@ -16,8 +16,9 @@ interface LoginProps {
 export const Login = ({ onLogin }: LoginProps) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [isAdminLogin, setIsAdminLogin] = useState(false);
+  const [loginMode, setLoginMode] = useState<"junior" | "teacher" | "admin">("junior");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [juniors, setJuniors] = useState<Teacher[]>([]);
   const [selectedTeacherId, setSelectedTeacherId] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,6 +27,7 @@ export const Login = ({ onLogin }: LoginProps) => {
       try {
         const data = await syncFromServer();
         setTeachers(data.teachers.filter(t => t.role === "teacher"));
+        setJuniors(data.teachers.filter(t => t.role === "junior"));
       } catch (error) {
         console.error("Failed to load teachers", error);
       }
@@ -38,7 +40,7 @@ export const Login = ({ onLogin }: LoginProps) => {
     setLoading(true);
     
     try {
-      if (isAdminLogin) {
+      if (loginMode === "admin") {
         if (username !== "Akrovtus" || password !== "EdenHazard_10") {
           toast.error("Неверный логин или пароль");
           setLoading(false);
@@ -58,20 +60,21 @@ export const Login = ({ onLogin }: LoginProps) => {
         toast.success("Добро пожаловать, Администратор!");
       } else {
         if (!selectedTeacherId) {
-          toast.error("Выберите учителя");
+          toast.error(loginMode === "teacher" ? "Выберите учителя" : "Выберите сотрудника");
           setLoading(false);
           return;
         }
 
-        const teacher = teachers.find(t => t.id === selectedTeacherId);
-        if (!teacher) {
-          toast.error("Учитель не найден");
+        const userList = loginMode === "teacher" ? teachers : juniors;
+        const user = userList.find(t => t.id === selectedTeacherId);
+        if (!user) {
+          toast.error("Пользователь не найден");
           setLoading(false);
           return;
         }
 
-        onLogin(teacher);
-        toast.success(`Добро пожаловать, ${teacher.name}!`);
+        onLogin(user);
+        toast.success(`Добро пожаловать, ${user.name}!`);
       }
     } catch (error) {
       console.error("Login error", error);
@@ -96,26 +99,41 @@ export const Login = ({ onLogin }: LoginProps) => {
         <div className="flex gap-2 mb-6">
           <Button
             type="button"
-            variant={!isAdminLogin ? "default" : "outline"}
+            variant={loginMode === "junior" ? "default" : "outline"}
             className="flex-1"
-            onClick={() => setIsAdminLogin(false)}
+            onClick={() => {
+              setLoginMode("junior");
+              setSelectedTeacherId("");
+            }}
+          >
+            <Icon name="UserCheck" size={18} className="mr-2" />
+            МНС
+          </Button>
+          <Button
+            type="button"
+            variant={loginMode === "teacher" ? "default" : "outline"}
+            className="flex-1"
+            onClick={() => {
+              setLoginMode("teacher");
+              setSelectedTeacherId("");
+            }}
           >
             <Icon name="User" size={18} className="mr-2" />
             Учитель
           </Button>
           <Button
             type="button"
-            variant={isAdminLogin ? "default" : "outline"}
+            variant={loginMode === "admin" ? "default" : "outline"}
             className="flex-1"
-            onClick={() => setIsAdminLogin(true)}
+            onClick={() => setLoginMode("admin")}
           >
             <Icon name="ShieldCheck" size={18} className="mr-2" />
-            Администратор
+            Админ
           </Button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {isAdminLogin ? (
+          {loginMode === "admin" ? (
             <>
               <div>
                 <Label htmlFor="username">Логин *</Label>
@@ -143,26 +161,26 @@ export const Login = ({ onLogin }: LoginProps) => {
             </>
           ) : (
             <div>
-              <Label htmlFor="teacher">Выберите учителя *</Label>
+              <Label htmlFor="teacher">{loginMode === "teacher" ? "Выберите учителя" : "Выберите младшего научного сотрудника"} *</Label>
               <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
                 <SelectTrigger className="mt-2">
                   <SelectValue placeholder="Выберите ваш аккаунт" />
                 </SelectTrigger>
                 <SelectContent>
-                  {teachers.length === 0 ? (
+                  {(loginMode === "teacher" ? teachers : juniors).length === 0 ? (
                     <SelectItem value="none" disabled>
                       Нет доступных аккаунтов
                     </SelectItem>
                   ) : (
-                    teachers.map((teacher) => (
-                      <SelectItem key={teacher.id} value={teacher.id}>
-                        {teacher.name}
+                    (loginMode === "teacher" ? teachers : juniors).map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
                       </SelectItem>
                     ))
                   )}
                 </SelectContent>
               </Select>
-              {teachers.length === 0 && (
+              {(loginMode === "teacher" ? teachers : juniors).length === 0 && (
                 <p className="text-xs text-muted-foreground mt-2">
                   Свяжитесь с администратором для создания аккаунта
                 </p>

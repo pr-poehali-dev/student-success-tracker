@@ -40,10 +40,10 @@ const Index = () => {
           setTeacher(savedState.teacher);
           setIsLoggedIn(true);
           
-          if (savedState.teacher.role === "admin") {
+          if (savedState.teacher.role === "admin" || savedState.teacher.role === "teacher") {
             setClasses(serverData.classes);
             setMatches(serverData.matches);
-          } else {
+          } else if (savedState.teacher.role === "junior") {
             const myClasses = serverData.classes.filter(
               cls => cls.responsibleTeacherId === savedState.teacher.id
             );
@@ -62,10 +62,10 @@ const Index = () => {
           setTeacher(savedState.teacher);
           setIsLoggedIn(true);
           
-          if (savedState.teacher.role === "admin") {
+          if (savedState.teacher.role === "admin" || savedState.teacher.role === "teacher") {
             setClasses(loadedGlobalData.classes);
             setMatches(loadedGlobalData.matches);
-          } else {
+          } else if (savedState.teacher.role === "junior") {
             setClasses(savedState.classes);
             setMatches(savedState.matches);
           }
@@ -89,7 +89,7 @@ const Index = () => {
         let updatedGlobalClasses = globalData.classes;
         let updatedGlobalMatches = globalData.matches;
 
-        if (teacher.role === "teacher") {
+        if (teacher.role === "junior") {
           const myClassIds = classes.map(c => c.id);
           const otherClasses = globalData.classes.filter(c => !myClassIds.includes(c.id));
           updatedGlobalClasses = [...otherClasses, ...classes];
@@ -104,7 +104,7 @@ const Index = () => {
             matches
           };
           saveAppState(state);
-        } else if (teacher.role === "admin") {
+        } else if (teacher.role === "admin" || teacher.role === "teacher") {
           updatedGlobalClasses = classes;
           updatedGlobalMatches = matches;
         }
@@ -141,10 +141,10 @@ const Index = () => {
       const serverData = await syncFromServer();
       setGlobalData(serverData);
       
-      if (loggedInTeacher.role === "admin") {
+      if (loggedInTeacher.role === "admin" || loggedInTeacher.role === "teacher") {
         setClasses(serverData.classes);
         setMatches(serverData.matches);
-      } else {
+      } else if (loggedInTeacher.role === "junior") {
         const myClasses = serverData.classes.filter(
           cls => cls.responsibleTeacherId === loggedInTeacher.id
         );
@@ -159,10 +159,10 @@ const Index = () => {
       toast.error("Не удалось синхронизировать данные");
       
       const loadedGlobalData = loadGlobalData();
-      if (loggedInTeacher.role === "admin") {
+      if (loggedInTeacher.role === "admin" || loggedInTeacher.role === "teacher") {
         setClasses(loadedGlobalData.classes);
         setMatches(loadedGlobalData.matches);
-      } else {
+      } else if (loggedInTeacher.role === "junior") {
         const myClasses = loadedGlobalData.classes.filter(
           cls => cls.responsibleTeacherId === loggedInTeacher.id
         );

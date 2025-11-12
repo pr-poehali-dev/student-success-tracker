@@ -44,13 +44,13 @@ export const AdminPanel = ({
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
-  const [editRole, setEditRole] = useState<"admin" | "teacher">("teacher");
+  const [editRole, setEditRole] = useState<"admin" | "teacher" | "junior">("teacher");
   const [assigningClass, setAssigningClass] = useState<ClassRoom | null>(null);
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>("");
   const [isCreatingTeacher, setIsCreatingTeacher] = useState(false);
   const [newTeacherName, setNewTeacherName] = useState("");
   const [newTeacherEmail, setNewTeacherEmail] = useState("");
-  const [newTeacherRole, setNewTeacherRole] = useState<"admin" | "teacher">("teacher");
+  const [newTeacherRole, setNewTeacherRole] = useState<"admin" | "teacher" | "junior">("junior");
 
   const handleEditTeacher = (teacher: Teacher) => {
     setEditingTeacher(teacher);
@@ -146,6 +146,7 @@ export const AdminPanel = ({
 
   const adminCount = teachers.filter(t => t.role === "admin").length;
   const teacherCount = teachers.filter(t => t.role === "teacher").length;
+  const juniorCount = teachers.filter(t => t.role === "junior").length;
   const totalStudents = classes.reduce((sum, cls) => sum + cls.students.length, 0);
 
   return (
@@ -155,7 +156,7 @@ export const AdminPanel = ({
         Административная панель
       </h2>
 
-      <div className="grid md:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-5 gap-4">
         <Card className="p-6 text-center bg-gradient-to-br from-purple-100 to-purple-50">
           <Icon name="ShieldCheck" size={32} className="mx-auto mb-2 text-purple-700" />
           <p className="text-3xl font-bold text-foreground">{adminCount}</p>
@@ -166,6 +167,12 @@ export const AdminPanel = ({
           <Icon name="Users" size={32} className="mx-auto mb-2 text-blue-700" />
           <p className="text-3xl font-bold text-foreground">{teacherCount}</p>
           <p className="text-muted-foreground">Учителей</p>
+        </Card>
+
+        <Card className="p-6 text-center bg-gradient-to-br from-cyan-100 to-cyan-50">
+          <Icon name="UserCheck" size={32} className="mx-auto mb-2 text-cyan-700" />
+          <p className="text-3xl font-bold text-foreground">{juniorCount}</p>
+          <p className="text-muted-foreground">МНС</p>
         </Card>
 
         <Card className="p-6 text-center bg-gradient-to-br from-green-100 to-green-50">
@@ -221,11 +228,12 @@ export const AdminPanel = ({
                 </div>
                 <div>
                   <Label>Роль</Label>
-                  <Select value={newTeacherRole} onValueChange={(value) => setNewTeacherRole(value as "admin" | "teacher")}>
+                  <Select value={newTeacherRole} onValueChange={(value) => setNewTeacherRole(value as "admin" | "teacher" | "junior")}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="junior">Младший научный сотрудник</SelectItem>
                       <SelectItem value="teacher">Учитель</SelectItem>
                       <SelectItem value="admin">Администратор</SelectItem>
                     </SelectContent>
@@ -263,7 +271,7 @@ export const AdminPanel = ({
                     <TableCell>{teacher.email || "-"}</TableCell>
                     <TableCell>
                       <Badge variant={teacher.role === "admin" ? "default" : "secondary"}>
-                        {teacher.role === "admin" ? "Администратор" : "Учитель"}
+                        {teacher.role === "admin" ? "Администратор" : teacher.role === "teacher" ? "Учитель" : "МНС"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -308,11 +316,12 @@ export const AdminPanel = ({
                               </div>
                               <div>
                                 <Label>Роль</Label>
-                                <Select value={editRole} onValueChange={(value) => setEditRole(value as "admin" | "teacher")}>
+                                <Select value={editRole} onValueChange={(value) => setEditRole(value as "admin" | "teacher" | "junior")}>
                                   <SelectTrigger>
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
+                                    <SelectItem value="junior">Младший научный сотрудник</SelectItem>
                                     <SelectItem value="teacher">Учитель</SelectItem>
                                     <SelectItem value="admin">Администратор</SelectItem>
                                   </SelectContent>
