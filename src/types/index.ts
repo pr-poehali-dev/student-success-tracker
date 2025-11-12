@@ -69,10 +69,18 @@ export interface Teacher {
   id: string;
   name: string;
   email: string;
+  role: "admin" | "teacher";
+  createdAt: string;
 }
 
 export interface AppState {
   teacher: Teacher;
+  classes: ClassRoom[];
+  matches: Match[];
+}
+
+export interface GlobalData {
+  teachers: Teacher[];
   classes: ClassRoom[];
   matches: Match[];
 }

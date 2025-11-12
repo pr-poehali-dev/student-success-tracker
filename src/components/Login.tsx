@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import Icon from "@/components/ui/icon";
 import { Teacher } from "@/types";
 import { toast } from "sonner";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface LoginProps {
   onLogin: (teacher: Teacher) => void;
@@ -14,6 +15,7 @@ interface LoginProps {
 export const Login = ({ onLogin }: LoginProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState<"admin" | "teacher">("teacher");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +28,9 @@ export const Login = ({ onLogin }: LoginProps) => {
     const teacher: Teacher = {
       id: Date.now().toString(),
       name: name.trim(),
-      email: email.trim()
+      email: email.trim(),
+      role: role,
+      createdAt: new Date().toISOString()
     };
 
     onLogin(teacher);
@@ -69,6 +73,36 @@ export const Login = ({ onLogin }: LoginProps) => {
               placeholder="email@example.com"
               className="mt-2"
             />
+          </div>
+
+          <div>
+            <Label className="mb-3 block">Роль</Label>
+            <RadioGroup value={role} onValueChange={(value) => setRole(value as "admin" | "teacher")}>
+              <div className="flex items-center space-x-2 mb-2">
+                <RadioGroupItem value="teacher" id="teacher-role" />
+                <Label htmlFor="teacher-role" className="cursor-pointer font-normal">
+                  <div className="flex items-center gap-2">
+                    <Icon name="User" size={18} />
+                    <div>
+                      <p className="font-medium">Учитель</p>
+                      <p className="text-xs text-muted-foreground">Может создавать классы и матчи</p>
+                    </div>
+                  </div>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="admin" id="admin-role" />
+                <Label htmlFor="admin-role" className="cursor-pointer font-normal">
+                  <div className="flex items-center gap-2">
+                    <Icon name="ShieldCheck" size={18} />
+                    <div>
+                      <p className="font-medium">Администратор</p>
+                      <p className="text-xs text-muted-foreground">Полный доступ ко всем данным</p>
+                    </div>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
           </div>
 
           <Button type="submit" className="w-full" size="lg">
