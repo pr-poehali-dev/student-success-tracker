@@ -29,31 +29,67 @@ const Index = () => {
   const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
-    const loadData = () => {
+    const loadData = async () => {
       setIsSyncing(true);
       
-      const loadedGlobalData = loadGlobalData();
-      setGlobalData(loadedGlobalData);
-      
-      const savedState = loadAppState();
-      if (savedState?.teacher?.id) {
-        setTeacher(savedState.teacher);
-        setClasses(savedState.classes);
-        setMatches(savedState.matches);
-        setIsLoggedIn(true);
+      try {
+        const serverData = await syncFromServer();
         
-        if (savedState.currentView === 'admin') {
-          setShowAdmin(true);
-        } else if (savedState.currentView === 'profile') {
-          setShowProfile(true);
+        saveGlobalData(serverData);
+        setGlobalData(serverData);
+        
+        const savedState = loadAppState();
+        if (savedState?.teacher?.id) {
+          const teacherStillExists = serverData.teachers.find(t => t.id === savedState.teacher.id);
+          
+          if (teacherStillExists) {
+            setTeacher(savedState.teacher);
+            setClasses(savedState.classes);
+            setMatches(savedState.matches);
+            setIsLoggedIn(true);
+            
+            if (savedState.currentView === 'admin') {
+              setShowAdmin(true);
+            } else if (savedState.currentView === 'profile') {
+              setShowProfile(true);
+            }
+            
+            if (savedState.activeTab) {
+              setActiveTab(savedState.activeTab);
+            }
+          } else {
+            clearAppState();
+            toast.error("Ваш аккаунт был удалён. Войдите снова");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to sync from server on load", error);
+        
+        const loadedGlobalData = loadGlobalData();
+        setGlobalData(loadedGlobalData);
+        
+        const savedState = loadAppState();
+        if (savedState?.teacher?.id) {
+          setTeacher(savedState.teacher);
+          setClasses(savedState.classes);
+          setMatches(savedState.matches);
+          setIsLoggedIn(true);
+          
+          if (savedState.currentView === 'admin') {
+            setShowAdmin(true);
+          } else if (savedState.currentView === 'profile') {
+            setShowProfile(true);
+          }
+          
+          if (savedState.activeTab) {
+            setActiveTab(savedState.activeTab);
+          }
         }
         
-        if (savedState.activeTab) {
-          setActiveTab(savedState.activeTab);
-        }
+        toast.error("Не удалось синхронизироваться с сервером. Работа в оффлайн режиме");
+      } finally {
+        setIsSyncing(false);
       }
-      
-      setIsSyncing(false);
     };
     
     loadData();

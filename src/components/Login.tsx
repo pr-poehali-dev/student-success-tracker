@@ -23,11 +23,17 @@ export const Login = ({ onLogin }: LoginProps) => {
 
   useEffect(() => {
     const loadUsers = async () => {
+      setLoading(true);
       try {
         const data = await syncFromServer();
-        setAllUsers(data.teachers.filter(t => t.role === "teacher" || t.role === "junior"));
+        const activeTeachers = data.teachers.filter(t => t.role === "teacher" || t.role === "junior");
+        setAllUsers(activeTeachers);
+        console.log("Loaded teachers from server:", activeTeachers.length);
       } catch (error) {
         console.error("Failed to load users", error);
+        toast.error("Ошибка загрузки пользователей с сервера");
+      } finally {
+        setLoading(false);
       }
     };
     loadUsers();
