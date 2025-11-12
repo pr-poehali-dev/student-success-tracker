@@ -26,6 +26,7 @@ interface AdminPanelProps {
   onDeleteTeacher: (teacherId: string) => void;
   onDeleteClass: (classId: string) => void;
   onDeleteMatch: (matchId: string) => void;
+  onUpdateClass: (updatedClass: ClassRoom) => void;
 }
 
 export const AdminPanel = ({ 
@@ -35,12 +36,15 @@ export const AdminPanel = ({
   onUpdateTeacher, 
   onDeleteTeacher,
   onDeleteClass,
-  onDeleteMatch
+  onDeleteMatch,
+  onUpdateClass
 }: AdminPanelProps) => {
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState<"admin" | "teacher">("teacher");
+  const [assigningClass, setAssigningClass] = useState<ClassRoom | null>(null);
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string>("");
 
   const handleEditTeacher = (teacher: Teacher) => {
     setEditingTeacher(teacher);
@@ -86,6 +90,25 @@ export const AdminPanel = ({
       onDeleteMatch(matchId);
       toast.success("Матч удалён");
     }
+  };
+
+  const handleAssignTeacher = (classRoom: ClassRoom) => {
+    setAssigningClass(classRoom);
+    setSelectedTeacherId(classRoom.responsibleTeacherId || "");
+  };
+
+  const handleSaveAssignment = () => {
+    if (!assigningClass) return;
+
+    const updatedClass: ClassRoom = {
+      ...assigningClass,
+      responsibleTeacherId: selectedTeacherId || undefined
+    };
+
+    onUpdateClass(updatedClass);
+    setAssigningClass(null);
+    setSelectedTeacherId("");
+    toast.success("Ответственный учитель назначен");
   };
 
   const adminCount = teachers.filter(t => t.role === "admin").length;
@@ -246,27 +269,78 @@ export const AdminPanel = ({
           </div>
         ) : (
           <div className="space-y-3">
-            {classes.map((cls) => (
-              <div 
-                key={cls.id}
-                className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg hover:bg-secondary/50 transition-colors"
-              >
-                <div>
-                  <p className="font-medium text-lg">{cls.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Учеников: {cls.students.length}
-                  </p>
-                </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDeleteClass(cls.id, cls.name)}
+            {classes.map((cls) => {
+              const responsibleTeacher = teachers.find(t => t.id === cls.responsibleTeacherId);
+              return (
+                <div 
+                  key={cls.id}
+                  className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg hover:bg-secondary/50 transition-colors"
                 >
-                  <Icon name="Trash2" size={16} className="mr-2" />
-                  Удалить
-                </Button>
-              </div>
-            ))}
+                  <div className="flex-1">
+                    <p className="font-medium text-lg">{cls.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Учеников: {cls.students.length}
+                    </p>
+                    {responsibleTeacher && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Ответственный: {responsibleTeacher.name}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAssignTeacher(cls)}
+                        >
+                          <Icon name="UserCog" size={16} className="mr-2" />
+                          Назначить
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Назначить ответственного</DialogTitle>
+                          <DialogDescription>
+                            Выберите учителя для класса {assigningClass?.name}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 mt-4">
+                          <div>
+                            <Label>Учитель</Label>
+                            <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Выберите учителя" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">Не назначен</SelectItem>
+                                {teachers.filter(t => t.role === "teacher").map((teacher) => (
+                                  <SelectItem key={teacher.id} value={teacher.id}>
+                                    {teacher.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button onClick={handleSaveAssignment} className="w-full">
+                            Сохранить
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteClass(cls.id, cls.name)}
+                    >
+                      <Icon name="Trash2" size={16} className="mr-2" />
+                      Удалить
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </Card>

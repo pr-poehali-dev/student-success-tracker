@@ -91,21 +91,12 @@ const Index = () => {
       setClasses(loadedGlobalData.classes);
       setMatches(loadedGlobalData.matches);
     } else {
-      const teacherData = loadedGlobalData.teachers.find(t => t.id === loggedInTeacher.id);
-      if (teacherData) {
-        const myClasses = loadedGlobalData.classes.filter(
-          cls => cls.students.some(s => 
-            loadedGlobalData.matches.some(m => 
-              m.createdBy === loggedInTeacher.name && 
-              (m.team1.members.some(tm => tm.studentId === s.id) || 
-               m.team2.members.some(tm => tm.studentId === s.id))
-            )
-          )
-        );
-        const myMatches = loadedGlobalData.matches.filter(m => m.createdBy === loggedInTeacher.name);
-        setClasses(myClasses);
-        setMatches(myMatches);
-      }
+      const myClasses = loadedGlobalData.classes.filter(
+        cls => cls.responsibleTeacherId === loggedInTeacher.id
+      );
+      const myMatches = loadedGlobalData.matches.filter(m => m.createdBy === loggedInTeacher.name);
+      setClasses(myClasses);
+      setMatches(myMatches);
     }
   };
 
@@ -160,6 +151,16 @@ const Index = () => {
     setGlobalData(newGlobalData);
     saveGlobalData(newGlobalData);
     setMatches(updatedMatches);
+  };
+
+  const handleUpdateClass = (updatedClass: ClassRoom) => {
+    const updatedClasses = globalData.classes.map(c => 
+      c.id === updatedClass.id ? updatedClass : c
+    );
+    const newGlobalData = { ...globalData, classes: updatedClasses };
+    setGlobalData(newGlobalData);
+    saveGlobalData(newGlobalData);
+    setClasses(updatedClasses);
   };
 
   if (!isLoggedIn || !teacher) {
@@ -278,6 +279,7 @@ const Index = () => {
                   onDeleteTeacher={handleDeleteTeacher}
                   onDeleteClass={handleDeleteClass}
                   onDeleteMatch={handleDeleteMatch}
+                  onUpdateClass={handleUpdateClass}
                 />
               </TabsContent>
             )}

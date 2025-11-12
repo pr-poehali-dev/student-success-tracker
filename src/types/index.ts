@@ -32,6 +32,7 @@ export interface ClassRoom {
   id: string;
   name: string;
   students: Student[];
+  responsibleTeacherId?: string;
 }
 
 export interface TeamMember {
@@ -71,6 +72,7 @@ export interface Teacher {
   email: string;
   role: "admin" | "teacher";
   createdAt: string;
+  username?: string;
 }
 
 export interface AppState {

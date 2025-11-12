@@ -15,26 +15,47 @@ interface LoginProps {
 export const Login = ({ onLogin }: LoginProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"admin" | "teacher">("teacher");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isAdminLogin, setIsAdminLogin] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim()) {
-      toast.error("Введите ваше ФИО");
-      return;
+    if (isAdminLogin) {
+      if (username !== "Akrovtus" || password !== "EdenHazard_10") {
+        toast.error("Неверный логин или пароль");
+        return;
+      }
+      
+      const adminTeacher: Teacher = {
+        id: "admin-akrovtus",
+        name: "Администратор",
+        email: "admin@system.local",
+        role: "admin",
+        username: "Akrovtus",
+        createdAt: new Date().toISOString()
+      };
+      
+      onLogin(adminTeacher);
+      toast.success("Добро пожаловать, Администратор!");
+    } else {
+      if (!name.trim()) {
+        toast.error("Введите ваше ФИО");
+        return;
+      }
+
+      const teacher: Teacher = {
+        id: Date.now().toString(),
+        name: name.trim(),
+        email: email.trim(),
+        role: "teacher",
+        createdAt: new Date().toISOString()
+      };
+
+      onLogin(teacher);
+      toast.success(`Добро пожаловать, ${name}!`);
     }
-
-    const teacher: Teacher = {
-      id: Date.now().toString(),
-      name: name.trim(),
-      email: email.trim(),
-      role: role,
-      createdAt: new Date().toISOString()
-    };
-
-    onLogin(teacher);
-    toast.success(`Добро пожаловать, ${name}!`);
   };
 
   return (
@@ -50,60 +71,81 @@ export const Login = ({ onLogin }: LoginProps) => {
           </p>
         </div>
 
+        <div className="flex gap-2 mb-6">
+          <Button
+            type="button"
+            variant={!isAdminLogin ? "default" : "outline"}
+            className="flex-1"
+            onClick={() => setIsAdminLogin(false)}
+          >
+            <Icon name="User" size={18} className="mr-2" />
+            Учитель
+          </Button>
+          <Button
+            type="button"
+            variant={isAdminLogin ? "default" : "outline"}
+            className="flex-1"
+            onClick={() => setIsAdminLogin(true)}
+          >
+            <Icon name="ShieldCheck" size={18} className="mr-2" />
+            Администратор
+          </Button>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <Label htmlFor="name">ФИО преподавателя *</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Например: Иванова Мария Петровна"
-              className="mt-2"
-              autoFocus
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="email">Email (необязательно)</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@example.com"
-              className="mt-2"
-            />
-          </div>
-
-          <div>
-            <Label className="mb-3 block">Роль</Label>
-            <RadioGroup value={role} onValueChange={(value) => setRole(value as "admin" | "teacher")}>
-              <div className="flex items-center space-x-2 mb-2">
-                <RadioGroupItem value="teacher" id="teacher-role" />
-                <Label htmlFor="teacher-role" className="cursor-pointer font-normal">
-                  <div className="flex items-center gap-2">
-                    <Icon name="User" size={18} />
-                    <div>
-                      <p className="font-medium">Учитель</p>
-                      <p className="text-xs text-muted-foreground">Может создавать классы и матчи</p>
-                    </div>
-                  </div>
-                </Label>
+          {isAdminLogin ? (
+            <>
+              <div>
+                <Label htmlFor="username">Логин *</Label>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Введите логин"
+                  className="mt-2"
+                  autoFocus
+                />
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="admin" id="admin-role" />
-                <Label htmlFor="admin-role" className="cursor-pointer font-normal">
-                  <div className="flex items-center gap-2">
-                    <Icon name="ShieldCheck" size={18} />
-                    <div>
-                      <p className="font-medium">Администратор</p>
-                      <p className="text-xs text-muted-foreground">Полный доступ ко всем данным</p>
-                    </div>
-                  </div>
-                </Label>
+
+              <div>
+                <Label htmlFor="password">Пароль *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Введите пароль"
+                  className="mt-2"
+                />
               </div>
-            </RadioGroup>
-          </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <Label htmlFor="name">ФИО преподавателя *</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Например: Иванова Мария Петровна"
+                  className="mt-2"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="email">Email (необязательно)</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="email@example.com"
+                  className="mt-2"
+                />
+              </div>
+            </>
+          )}
 
           <Button type="submit" className="w-full" size="lg">
             <Icon name="LogIn" size={20} className="mr-2" />
