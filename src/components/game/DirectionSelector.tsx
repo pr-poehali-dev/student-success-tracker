@@ -43,7 +43,7 @@ export const DirectionSelector = ({
             <div className="mb-4 p-3 bg-secondary/30 rounded-lg">
               <p className="font-medium">{selectedStudent.name}</p>
               <p className="text-sm text-muted-foreground">
-                Направлений: {selectedStudent.achievements.length}
+                Направлений: {selectedStudent.achievements?.length || 0}
               </p>
             </div>
           )}
@@ -64,7 +64,7 @@ export const DirectionSelector = ({
                     <Icon name={achievement.icon as any} size={24} />
                   </div>
                   <span className="text-sm font-medium">{achievement.name}</span>
-                  {selectedStudent?.achievements.includes(achievement.id) && (
+                  {selectedStudent?.achievements?.includes(achievement.id) && (
                     <Badge variant="secondary" className="text-xs">✓</Badge>
                   )}
                 </div>

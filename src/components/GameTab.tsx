@@ -69,9 +69,9 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
               student.id === selectedStudentId
                 ? { 
                     ...student, 
-                    achievements: student.achievements.includes(achievementId)
-                      ? student.achievements
-                      : [...student.achievements, achievementId]
+                    achievements: (student.achievements || []).includes(achievementId)
+                      ? (student.achievements || [])
+                      : [...(student.achievements || []), achievementId]
                   }
                 : student
             )
