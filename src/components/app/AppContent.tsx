@@ -170,6 +170,7 @@ export const AppContent = ({
                   classes={classes}
                   matches={matches}
                   setClasses={setClasses}
+                  teacher={teacher}
                 />
               </TabsContent>
 
