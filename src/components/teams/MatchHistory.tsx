@@ -3,16 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Icon from "@/components/ui/icon";
-import { Match } from "@/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Match, Teacher } from "@/types";
 import { GAME_TYPES } from "./GameSelector";
 
 interface MatchHistoryProps {
   matches: Match[];
   onSetResult: (matchId: string, winner: "team1" | "team2") => void;
   onDeleteMatch: (matchId: string) => void;
+  teacher: Teacher;
 }
 
-export const MatchHistory = ({ matches, onSetResult, onDeleteMatch }: MatchHistoryProps) => {
+export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, teacher }: MatchHistoryProps) => {
   const [visibleCount, setVisibleCount] = useState(20);
   
   const sortedMatches = [...matches].sort((a, b) => 
@@ -39,6 +41,7 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch }: MatchHisto
         <div className="space-y-4">
           {visibleMatches.map(match => {
             const game = GAME_TYPES.find(g => g.id === match.gameType);
+            const canDelete = teacher.role === "admin" || match.createdBy === teacher.name;
             return (
               <Card key={match.id} className="p-4 border-2">
                 <div className="flex items-start justify-between mb-3">
@@ -56,13 +59,28 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch }: MatchHisto
                       </p>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onDeleteMatch(match.id)}
-                  >
-                    <Icon name="Trash2" size={16} />
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => canDelete && onDeleteMatch(match.id)}
+                            disabled={!canDelete}
+                            className={!canDelete ? "cursor-not-allowed opacity-50" : ""}
+                          >
+                            <Icon name="Trash2" size={16} />
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!canDelete && (
+                        <TooltipContent>
+                          <p>Этот матч создали не вы</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
 
                 {match.scheduledDates && match.scheduledDates.length > 0 && (

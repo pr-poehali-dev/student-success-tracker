@@ -371,6 +371,7 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
           matches={filteredMatches}
           onSetResult={setMatchResult}
           onDeleteMatch={deleteMatch}
+          teacher={teacher}
         />
       </Card>
     </div>
