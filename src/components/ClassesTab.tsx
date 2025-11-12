@@ -22,10 +22,11 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
   const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
   const [isEditGamesOpen, setIsEditGamesOpen] = useState(false);
   const [editingClassId, setEditingClassId] = useState<string>("");
-  const [selectedGames, setSelectedGames] = useState<("valheim" | "civilization" | "factorio" | "sport" | "robo")[]>([]);
+  const [selectedGames, setSelectedGames] = useState<("valheim" | "civilization" | "factorio" | "sport" | "robo" | "lumosity")[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const gameOptions: { value: "valheim" | "civilization" | "factorio" | "sport" | "robo"; label: string; icon: string }[] = [
+  const gameOptions: { value: "valheim" | "civilization" | "factorio" | "sport" | "robo" | "lumosity"; label: string; icon: string }[] = [
+    { value: "lumosity", label: "Люмосити", icon: "Brain" },
     { value: "valheim", label: "Valheim", icon: "Swords" },
     { value: "civilization", label: "Civilization", icon: "Globe" },
     { value: "factorio", label: "Factorio", icon: "Factory" },
@@ -33,7 +34,7 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
     { value: "robo", label: "Робототехника", icon: "Bot" }
   ];
 
-  const toggleGame = (game: "valheim" | "civilization" | "factorio" | "sport" | "robo") => {
+  const toggleGame = (game: "valheim" | "civilization" | "factorio" | "sport" | "robo" | "lumosity") => {
     setSelectedGames(prev => 
       prev.includes(game) 
         ? prev.filter(g => g !== game)
@@ -355,6 +356,7 @@ export const ClassesTab = ({ classes, setClasses }: ClassesTabProps) => {
                 <div className="mb-4 flex flex-wrap gap-2">
                   {classRoom.games.map(game => {
                     const gameLabels: Record<string, string> = {
+                      lumosity: "Люмосити",
                       valheim: "Valheim",
                       civilization: "Civilization",
                       factorio: "Factorio",

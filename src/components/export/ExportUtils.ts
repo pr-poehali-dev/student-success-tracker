@@ -10,6 +10,7 @@ const getMatchName = (matchId: string | undefined, matches: Match[]): string => 
 
 const getGameTypeName = (gameType: string | undefined): string => {
   const gameLabels: Record<string, string> = {
+    lumosity: "Люмосити",
     valheim: "Valheim",
     civilization: "Civilization",
     factorio: "Factorio",

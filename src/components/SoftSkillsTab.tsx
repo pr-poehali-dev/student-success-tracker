@@ -18,7 +18,7 @@ export const SoftSkillsTab = ({ classes, matches, teacherName, onUpdateStudent }
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
   const [selectedMatchId, setSelectedMatchId] = useState<string>("");
-  const [selectedGameType, setSelectedGameType] = useState<"valheim" | "civilization" | "factorio" | "sport" | "robo" | "">("");
+  const [selectedGameType, setSelectedGameType] = useState<"valheim" | "civilization" | "factorio" | "sport" | "robo" | "lumosity" | "">("");
   const [ratings, setRatings] = useState<Omit<SoftSkillRating, 'date' | 'ratedBy'>>({
     leadership: 0,
     selfControl: 0,
@@ -186,6 +186,7 @@ export const SoftSkillsTab = ({ classes, matches, teacherName, onUpdateStudent }
               <Label>Игра (необязательно)</Label>
               <div className="grid grid-cols-2 gap-2">
                 {[
+                  { value: "lumosity", label: "Люмосити", icon: "Brain" },
                   { value: "valheim", label: "Valheim", icon: "Swords" },
                   { value: "civilization", label: "Civilization", icon: "Globe" },
                   { value: "factorio", label: "Factorio", icon: "Factory" },
@@ -300,6 +301,7 @@ export const SoftSkillsTab = ({ classes, matches, teacherName, onUpdateStudent }
                         <div className="flex flex-wrap gap-2">
                           {classGames.map(game => {
                             const gameLabels: Record<string, string> = {
+                              lumosity: "Люмосити",
                               valheim: "Valheim",
                               civilization: "Civilization",
                               factorio: "Factorio",

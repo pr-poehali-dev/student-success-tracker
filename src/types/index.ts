@@ -27,7 +27,7 @@ export interface SoftSkillRating {
   selfReflection: number;
   criticalThinking: number;
   matchId?: string;
-  gameType?: "valheim" | "civilization" | "factorio" | "sport" | "robo";
+  gameType?: "valheim" | "civilization" | "factorio" | "sport" | "robo" | "lumosity";
   date: string;
   ratedBy: string;
 }
@@ -46,7 +46,7 @@ export interface ClassRoom {
   name: string;
   students: Student[];
   responsibleTeacherId?: string;
-  games?: ("valheim" | "civilization" | "factorio" | "sport" | "robo")[];
+  games?: ("valheim" | "civilization" | "factorio" | "sport" | "robo" | "lumosity")[];
 }
 
 export interface TeamMember {
