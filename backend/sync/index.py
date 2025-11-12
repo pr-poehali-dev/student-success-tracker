@@ -85,8 +85,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'status': 'success', 'message': 'Data synchronized'}),
-                'isBase64Encoded': False
+                'isBase64Encoded': False,
+                'body': json.dumps({'status': 'success', 'message': 'Data synchronized'})
             }
         
         elif method == 'DELETE':
@@ -241,6 +241,9 @@ def save_teacher(cursor, teacher: Dict[str, Any]) -> None:
 
 
 def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[str, Any] = None) -> None:
+    if not classes:
+        return
+    
     if current_teacher and current_teacher.get('role') == 'junior' and current_teacher.get('id'):
         teacher_id = escape_sql(current_teacher['id'])
         cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.students WHERE class_id IN (SELECT id FROM t_p91106428_student_success_trac.classes WHERE responsible_teacher_id = {teacher_id})')
@@ -285,6 +288,9 @@ def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[st
 
 
 def save_matches(cursor, matches: List[Dict[str, Any]], current_teacher: Dict[str, Any] = None) -> None:
+    if not matches:
+        return
+    
     if current_teacher and current_teacher.get('role') == 'junior' and current_teacher.get('name'):
         teacher_name = escape_sql(current_teacher['name'])
         cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.scheduled_dates WHERE match_id IN (SELECT id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name})')
