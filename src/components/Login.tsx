@@ -3,58 +3,80 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Icon from "@/components/ui/icon";
 import { Teacher } from "@/types";
 import { toast } from "sonner";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { syncFromServer } from "@/utils/sync";
 
 interface LoginProps {
   onLogin: (teacher: Teacher) => void;
 }
 
 export const Login = ({ onLogin }: LoginProps) => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isAdminLogin, setIsAdminLogin] = useState(false);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [selectedTeacherId, setSelectedTeacherId] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useState(() => {
+    const loadTeachers = async () => {
+      try {
+        const data = await syncFromServer();
+        setTeachers(data.teachers.filter(t => t.role === "teacher"));
+      } catch (error) {
+        console.error("Failed to load teachers", error);
+      }
+    };
+    loadTeachers();
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     
-    if (isAdminLogin) {
-      if (username !== "Akrovtus" || password !== "EdenHazard_10") {
-        toast.error("Неверный логин или пароль");
-        return;
-      }
-      
-      const adminTeacher: Teacher = {
-        id: "admin-akrovtus",
-        name: "Администратор",
-        email: "admin@system.local",
-        role: "admin",
-        username: "Akrovtus",
-        createdAt: new Date().toISOString()
-      };
-      
-      onLogin(adminTeacher);
-      toast.success("Добро пожаловать, Администратор!");
-    } else {
-      if (!name.trim()) {
-        toast.error("Введите ваше ФИО");
-        return;
-      }
+    try {
+      if (isAdminLogin) {
+        if (username !== "Akrovtus" || password !== "EdenHazard_10") {
+          toast.error("Неверный логин или пароль");
+          setLoading(false);
+          return;
+        }
+        
+        const adminTeacher: Teacher = {
+          id: "admin-akrovtus",
+          name: "Администратор",
+          email: "admin@system.local",
+          role: "admin",
+          username: "Akrovtus",
+          createdAt: new Date().toISOString()
+        };
+        
+        onLogin(adminTeacher);
+        toast.success("Добро пожаловать, Администратор!");
+      } else {
+        if (!selectedTeacherId) {
+          toast.error("Выберите учителя");
+          setLoading(false);
+          return;
+        }
 
-      const teacher: Teacher = {
-        id: Date.now().toString(),
-        name: name.trim(),
-        email: email.trim(),
-        role: "teacher",
-        createdAt: new Date().toISOString()
-      };
+        const teacher = teachers.find(t => t.id === selectedTeacherId);
+        if (!teacher) {
+          toast.error("Учитель не найден");
+          setLoading(false);
+          return;
+        }
 
-      onLogin(teacher);
-      toast.success(`Добро пожаловать, ${name}!`);
+        onLogin(teacher);
+        toast.success(`Добро пожаловать, ${teacher.name}!`);
+      }
+    } catch (error) {
+      console.error("Login error", error);
+      toast.error("Ошибка входа");
+      setLoading(false);
     }
   };
 
@@ -120,41 +142,42 @@ export const Login = ({ onLogin }: LoginProps) => {
               </div>
             </>
           ) : (
-            <>
-              <div>
-                <Label htmlFor="name">ФИО преподавателя *</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Например: Иванова Мария Петровна"
-                  className="mt-2"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="email">Email (необязательно)</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="email@example.com"
-                  className="mt-2"
-                />
-              </div>
-            </>
+            <div>
+              <Label htmlFor="teacher">Выберите учителя *</Label>
+              <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
+                <SelectTrigger className="mt-2">
+                  <SelectValue placeholder="Выберите ваш аккаунт" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teachers.length === 0 ? (
+                    <SelectItem value="none" disabled>
+                      Нет доступных аккаунтов
+                    </SelectItem>
+                  ) : (
+                    teachers.map((teacher) => (
+                      <SelectItem key={teacher.id} value={teacher.id}>
+                        {teacher.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {teachers.length === 0 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Свяжитесь с администратором для создания аккаунта
+                </p>
+              )}
+            </div>
           )}
 
-          <Button type="submit" className="w-full" size="lg">
+          <Button type="submit" className="w-full" size="lg" disabled={loading}>
             <Icon name="LogIn" size={20} className="mr-2" />
-            Войти
+            {loading ? "Загрузка..." : "Войти"}
           </Button>
         </form>
 
         <div className="mt-6 pt-6 border-t text-center text-sm text-muted-foreground">
-          <p>Данные сохраняются локально в вашем браузере</p>
+          <p>Данные синхронизируются с сервером</p>
         </div>
       </Card>
     </div>

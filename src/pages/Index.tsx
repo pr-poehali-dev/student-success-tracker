@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import Icon from "@/components/ui/icon";
 import { ClassesTab } from "@/components/ClassesTab";
 import { GameTab } from "@/components/GameTab";
@@ -19,9 +21,11 @@ const Index = () => {
   const [classes, setClasses] = useState<ClassRoom[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [globalData, setGlobalData] = useState<GlobalData>({ teachers: [], classes: [], matches: [] });
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState("classes");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -232,36 +236,119 @@ const Index = () => {
     setClasses(updatedClasses);
   };
 
+  const handleCreateTeacher = async (newTeacher: Teacher) => {
+    const updatedTeachers = [...globalData.teachers, newTeacher];
+    const newGlobalData = { ...globalData, teachers: updatedTeachers };
+    setGlobalData(newGlobalData);
+    saveGlobalData(newGlobalData);
+    
+    try {
+      await syncToServer({ teacher: newTeacher });
+    } catch (error) {
+      console.error("Failed to sync new teacher to server", error);
+      toast.error("Не удалось синхронизировать нового учителя");
+    }
+  };
+
   if (!isLoggedIn || !teacher) {
     return <Login onLogin={handleLogin} />;
   }
 
   const isAdmin = teacher.role === "admin";
-  const tabsCount = isAdmin ? 6 : 5;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/30">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <header className="mb-8 text-center animate-fade-in">
-          <div className="flex items-center justify-center gap-3 mb-2">
+        <header className="mb-8 flex items-center justify-between animate-fade-in">
+          <div className="flex items-center gap-3">
             <Icon name="GraduationCap" size={40} className="text-primary" />
-            <h1 className="text-5xl font-bold text-foreground">Успехи учеников</h1>
+            <div>
+              <h1 className="text-4xl font-bold text-foreground">Успехи учеников</h1>
+              <p className="text-muted-foreground text-sm">
+                Отслеживайте достижения и мотивируйте учеников
+              </p>
+            </div>
           </div>
-          <p className="text-muted-foreground text-lg">
-            Отслеживайте достижения и мотивируйте учеников
-          </p>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
+                <Icon name="User" size={24} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-2 py-1.5 text-sm font-semibold">{teacher.name}</div>
+              <div className="px-2 py-1.5 text-xs text-muted-foreground">{teacher.email || 'Нет email'}</div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => { setShowProfile(true); setShowAdmin(false); }}>
+                <Icon name="User" size={16} className="mr-2" />
+                Профиль
+              </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem onClick={() => { setShowAdmin(true); setShowProfile(false); }}>
+                  <Icon name="Shield" size={16} className="mr-2" />
+                  Админка
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <Icon name="LogOut" size={16} className="mr-2" />
+                Выйти
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
+
+        {showProfile && (
+          <Card className="shadow-xl border-2 p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+                <Icon name="User" size={28} />
+                Личный кабинет
+              </h2>
+              <Button variant="outline" onClick={() => setShowProfile(false)}>
+                <Icon name="X" size={20} className="mr-2" />
+                Закрыть
+              </Button>
+            </div>
+            <TeacherProfile 
+              teacher={teacher}
+              onUpdate={handleTeacherUpdate}
+              onClearData={handleClearData}
+              onLogout={handleLogout}
+            />
+          </Card>
+        )}
+
+        {showAdmin && isAdmin && (
+          <Card className="shadow-xl border-2 p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+                <Icon name="Shield" size={28} />
+                Административная панель
+              </h2>
+              <Button variant="outline" onClick={() => setShowAdmin(false)}>
+                <Icon name="X" size={20} className="mr-2" />
+                Закрыть
+              </Button>
+            </div>
+            <AdminPanel 
+              teachers={globalData.teachers}
+              classes={globalData.classes}
+              matches={globalData.matches}
+              onUpdateTeacher={handleUpdateTeacher}
+              onDeleteTeacher={handleDeleteTeacher}
+              onDeleteClass={handleDeleteClass}
+              onDeleteMatch={handleDeleteMatch}
+              onUpdateClass={handleUpdateClass}
+              onCreateTeacher={handleCreateTeacher}
+            />
+          </Card>
+        )}
 
         <Card className="shadow-xl border-2 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className={`grid w-full grid-cols-${tabsCount} h-16 bg-secondary/50`}>
-              <TabsTrigger 
-                value="profile" 
-                className="text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              >
-                <Icon name="User" size={20} className="mr-2" />
-                Профиль
-              </TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 h-16 bg-secondary/50">
               <TabsTrigger 
                 value="classes" 
                 className="text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -290,31 +377,7 @@ const Index = () => {
                 <Icon name="Download" size={20} className="mr-2" />
                 Экспорт
               </TabsTrigger>
-              {isAdmin && (
-                <TabsTrigger 
-                  value="admin" 
-                  className="text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                >
-                  <Icon name="Shield" size={20} className="mr-2" />
-                  Админка
-                </TabsTrigger>
-              )}
             </TabsList>
-
-            <TabsContent value="profile" className="p-6">
-              <div className="space-y-6">
-                <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
-                  <Icon name="User" size={28} />
-                  Личный кабинет
-                </h2>
-                <TeacherProfile 
-                  teacher={teacher}
-                  onUpdate={handleTeacherUpdate}
-                  onClearData={handleClearData}
-                  onLogout={handleLogout}
-                />
-              </div>
-            </TabsContent>
 
             <TabsContent value="classes" className="p-6">
               <ClassesTab classes={classes} setClasses={setClasses} />
@@ -337,21 +400,6 @@ const Index = () => {
             <TabsContent value="export" className="p-6">
               <ExportTab classes={classes} />
             </TabsContent>
-
-            {isAdmin && (
-              <TabsContent value="admin" className="p-6">
-                <AdminPanel 
-                  teachers={globalData.teachers}
-                  classes={globalData.classes}
-                  matches={globalData.matches}
-                  onUpdateTeacher={handleUpdateTeacher}
-                  onDeleteTeacher={handleDeleteTeacher}
-                  onDeleteClass={handleDeleteClass}
-                  onDeleteMatch={handleDeleteMatch}
-                  onUpdateClass={handleUpdateClass}
-                />
-              </TabsContent>
-            )}
           </Tabs>
         </Card>
       </div>

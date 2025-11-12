@@ -27,6 +27,7 @@ interface AdminPanelProps {
   onDeleteClass: (classId: string) => void;
   onDeleteMatch: (matchId: string) => void;
   onUpdateClass: (updatedClass: ClassRoom) => void;
+  onCreateTeacher?: (teacher: Teacher) => void;
 }
 
 export const AdminPanel = ({ 
@@ -37,7 +38,8 @@ export const AdminPanel = ({
   onDeleteTeacher,
   onDeleteClass,
   onDeleteMatch,
-  onUpdateClass
+  onUpdateClass,
+  onCreateTeacher
 }: AdminPanelProps) => {
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
   const [editName, setEditName] = useState("");
@@ -45,6 +47,10 @@ export const AdminPanel = ({
   const [editRole, setEditRole] = useState<"admin" | "teacher">("teacher");
   const [assigningClass, setAssigningClass] = useState<ClassRoom | null>(null);
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>("");
+  const [isCreatingTeacher, setIsCreatingTeacher] = useState(false);
+  const [newTeacherName, setNewTeacherName] = useState("");
+  const [newTeacherEmail, setNewTeacherEmail] = useState("");
+  const [newTeacherRole, setNewTeacherRole] = useState<"admin" | "teacher">("teacher");
 
   const handleEditTeacher = (teacher: Teacher) => {
     setEditingTeacher(teacher);
@@ -111,6 +117,33 @@ export const AdminPanel = ({
     toast.success("Ответственный учитель назначен");
   };
 
+  const handleCreateTeacher = () => {
+    if (!newTeacherName.trim()) {
+      toast.error("Введите имя учителя");
+      return;
+    }
+
+    const newTeacher: Teacher = {
+      id: `teacher-${Date.now()}`,
+      name: newTeacherName.trim(),
+      email: newTeacherEmail.trim(),
+      role: newTeacherRole,
+      createdAt: new Date().toISOString()
+    };
+
+    if (onCreateTeacher) {
+      onCreateTeacher(newTeacher);
+    } else {
+      onUpdateTeacher(newTeacher);
+    }
+    
+    setIsCreatingTeacher(false);
+    setNewTeacherName("");
+    setNewTeacherEmail("");
+    setNewTeacherRole("teacher");
+    toast.success("Учитель создан");
+  };
+
   const adminCount = teachers.filter(t => t.role === "admin").length;
   const teacherCount = teachers.filter(t => t.role === "teacher").length;
   const totalStudents = classes.reduce((sum, cls) => sum + cls.students.length, 0);
@@ -149,10 +182,62 @@ export const AdminPanel = ({
       </div>
 
       <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Icon name="Users" size={20} className="text-primary" />
-          Управление учителями
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Icon name="Users" size={20} className="text-primary" />
+            Управление учителями
+          </h3>
+          <Dialog open={isCreatingTeacher} onOpenChange={setIsCreatingTeacher}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setIsCreatingTeacher(true)}>
+                <Icon name="UserPlus" size={16} className="mr-2" />
+                Создать учителя
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Создать нового учителя</DialogTitle>
+                <DialogDescription>
+                  Введите данные нового учителя
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label>ФИО *</Label>
+                  <Input
+                    value={newTeacherName}
+                    onChange={(e) => setNewTeacherName(e.target.value)}
+                    placeholder="Введите ФИО"
+                  />
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={newTeacherEmail}
+                    onChange={(e) => setNewTeacherEmail(e.target.value)}
+                    placeholder="Введите email"
+                  />
+                </div>
+                <div>
+                  <Label>Роль</Label>
+                  <Select value={newTeacherRole} onValueChange={(value) => setNewTeacherRole(value as "admin" | "teacher")}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="teacher">Учитель</SelectItem>
+                      <SelectItem value="admin">Администратор</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={handleCreateTeacher} className="w-full">
+                  Создать
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
 
         {teachers.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
