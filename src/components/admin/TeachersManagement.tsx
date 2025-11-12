@@ -130,6 +130,28 @@ export const TeachersManagement = ({
     toast.success("Учитель создан");
   };
 
+  const handleGenerateAllPasswords = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let updatedCount = 0;
+
+    teachers.forEach(teacher => {
+      if (!teacher.password || teacher.password === '') {
+        let password = '';
+        for (let i = 0; i < 8; i++) {
+          password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        onUpdateTeacher({ ...teacher, password });
+        updatedCount++;
+      }
+    });
+
+    if (updatedCount > 0) {
+      toast.success(`Пароли сгенерированы для ${updatedCount} учителей`);
+    } else {
+      toast.info("Все учителя уже имеют пароли");
+    }
+  };
+
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
@@ -137,13 +159,18 @@ export const TeachersManagement = ({
           <Icon name="Users" size={20} className="text-primary" />
           Управление учителями
         </h3>
-        <Dialog open={isCreatingTeacher} onOpenChange={setIsCreatingTeacher}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsCreatingTeacher(true)}>
-              <Icon name="UserPlus" size={16} className="mr-2" />
-              Создать учителя
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button onClick={handleGenerateAllPasswords} variant="outline">
+            <Icon name="Key" size={16} className="mr-2" />
+            Сгенерировать пароли
+          </Button>
+          <Dialog open={isCreatingTeacher} onOpenChange={setIsCreatingTeacher}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setIsCreatingTeacher(true)}>
+                <Icon name="UserPlus" size={16} className="mr-2" />
+                Создать учителя
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Создать нового учителя</DialogTitle>
