@@ -239,8 +239,8 @@ def save_teacher(cursor, teacher: Dict[str, Any]) -> None:
 
 
 def save_classes(cursor, classes: List[Dict[str, Any]]) -> None:
-    if not classes:
-        return
+    cursor.execute('DELETE FROM t_p91106428_student_success_trac.students')
+    cursor.execute('DELETE FROM t_p91106428_student_success_trac.classes')
     
     for cls in classes:
         if not cls.get('id'):
@@ -259,10 +259,7 @@ def save_classes(cursor, classes: List[Dict[str, Any]]) -> None:
         ''')
         
         students = cls.get('students', [])
-        if students:
-            cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.students WHERE class_id = {cid}')
-            
-            for student in students:
+        for student in students:
                 if not student.get('id'):
                     continue
                     
@@ -276,8 +273,10 @@ def save_classes(cursor, classes: List[Dict[str, Any]]) -> None:
 
 
 def save_matches(cursor, matches: List[Dict[str, Any]]) -> None:
-    if not matches:
-        return
+    cursor.execute('DELETE FROM t_p91106428_student_success_trac.scheduled_dates')
+    cursor.execute('DELETE FROM t_p91106428_student_success_trac.matches')
+    cursor.execute('DELETE FROM t_p91106428_student_success_trac.team_members')
+    cursor.execute('DELETE FROM t_p91106428_student_success_trac.teams')
     
     for match in matches:
         if not match.get('id'):
@@ -308,10 +307,7 @@ def save_matches(cursor, matches: List[Dict[str, Any]]) -> None:
         ''')
         
         scheduled_dates = match.get('scheduledDates', [])
-        if scheduled_dates:
-            cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.scheduled_dates WHERE match_id = {mid}')
-            
-            for sd in scheduled_dates:
+        for sd in scheduled_dates:
                 if not sd.get('id'):
                     continue
                     
