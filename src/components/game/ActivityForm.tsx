@@ -9,8 +9,10 @@ interface ActivityFormProps {
   selectedDirection: string;
   lumosityPoints: string;
   setLumosityPoints: (value: string) => void;
-  roboTime: string;
-  setRoboTime: (value: string) => void;
+  roboMinutes: string;
+  setRoboMinutes: (value: string) => void;
+  roboSeconds: string;
+  setRoboSeconds: (value: string) => void;
   sportResult: "win" | "loss";
   setSportResult: (value: "win" | "loss") => void;
   sportRole: "captain" | "player";
@@ -44,8 +46,10 @@ export const ActivityForm = ({
   selectedDirection,
   lumosityPoints,
   setLumosityPoints,
-  roboTime,
-  setRoboTime,
+  roboMinutes,
+  setRoboMinutes,
+  roboSeconds,
+  setRoboSeconds,
   sportResult,
   setSportResult,
   sportRole,
@@ -111,15 +115,28 @@ export const ActivityForm = ({
 
       {selectedDirection === "robo" && (
         <div className="space-y-4">
-          <div>
-            <Label>Время (в минутах)</Label>
-            <Input
-              type="number"
-              value={roboTime}
-              onChange={(e) => setRoboTime(e.target.value)}
-              min="1"
-              placeholder="Введите время"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Минуты</Label>
+              <Input
+                type="number"
+                value={roboMinutes}
+                onChange={(e) => setRoboMinutes(e.target.value)}
+                min="0"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <Label>Секунды</Label>
+              <Input
+                type="number"
+                value={roboSeconds}
+                onChange={(e) => setRoboSeconds(e.target.value)}
+                min="0"
+                max="59"
+                placeholder="0"
+              />
+            </div>
           </div>
           <p className="text-sm text-muted-foreground">
             Время будет сохранено в Excel файл

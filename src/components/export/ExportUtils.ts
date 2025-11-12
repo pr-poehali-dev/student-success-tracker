@@ -1,6 +1,15 @@
 import { ClassRoom, Match } from "@/types";
 import * as XLSX from "xlsx";
 
+const formatTime = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (mins > 0) {
+    return `${mins} мин ${secs} сек`;
+  }
+  return `${secs} сек`;
+};
+
 const getMatchName = (matchId: string | undefined, matches: Match[]): string => {
   if (!matchId) return "-";
   const match = matches.find(m => m.id === matchId);
@@ -43,7 +52,7 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [])
         "ФИО": student.name,
         "Класс": cls.name,
         "Люмосити (баллы)": lumosityTotal,
-        "Робо (время мин)": roboTotal,
+        "Робо (время)": formatTime(roboTotal),
         "Спорт Побед": sportWins,
         "Спорт Проигрышей": sportLosses,
         "Спорт Капитаном": sportCaptain,
@@ -62,7 +71,8 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [])
           "ФИО": student.name,
           "Класс": cls.name,
           "Дата": new Date(activity.date).toLocaleString('ru-RU'),
-          "Баллы": activity.points || 0
+          "Баллы": activity.points || 0,
+          "Оценил": activity.ratedBy || "-"
         }))
     )
   );
@@ -79,7 +89,8 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [])
           "ФИО": student.name,
           "Класс": cls.name,
           "Дата": new Date(activity.date).toLocaleString('ru-RU'),
-          "Время (мин)": activity.time || 0
+          "Время": formatTime(activity.time || 0),
+          "Оценил": activity.ratedBy || "-"
         }))
     )
   );
@@ -101,7 +112,8 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [])
           "Противник": activity.opponentTeamName || "-",
           "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
           "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
-          "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
+          "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-",
+          "Оценил": activity.ratedBy || "-"
         }))
     )
   );
@@ -123,7 +135,8 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [])
           "Противник": activity.opponentTeamName || "-",
           "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
           "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
-          "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
+          "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-",
+          "Оценил": activity.ratedBy || "-"
         }))
     )
   );
@@ -150,7 +163,8 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [])
           "Год защиты": activity.civilizationDefenseYear || "-",
           "Производство 1": activity.civilizationProduction1 || "-",
           "Производство 2": activity.civilizationProduction2 || "-",
-          "Производство 3": activity.civilizationProduction3 || "-"
+          "Производство 3": activity.civilizationProduction3 || "-",
+          "Оценил": activity.ratedBy || "-"
         }))
     )
   );
@@ -169,7 +183,8 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [])
           "Дата": new Date(activity.date).toLocaleString('ru-RU'),
           "Количество граждан": activity.simcityCitizens || "-",
           "Уровень счастья": activity.simcityHappiness || "-",
-          "Производство": activity.simcityProduction || "-"
+          "Производство": activity.simcityProduction || "-",
+          "Оценил": activity.ratedBy || "-"
         }))
     )
   );
@@ -192,7 +207,8 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [])
           "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
           "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
           "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-",
-          "Количество колб": activity.factorioFlasks || "-"
+          "Количество колб": activity.factorioFlasks || "-",
+          "Оценил": activity.ratedBy || "-"
         }))
     )
   );
@@ -208,7 +224,8 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [])
         .map(activity => ({
           "ФИО": student.name,
           "Класс": cls.name,
-          "Дата": new Date(activity.date).toLocaleString('ru-RU')
+          "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+          "Оценил": activity.ratedBy || "-"
         }))
     )
   );
@@ -295,7 +312,7 @@ export const createClassExcelWorkbook = (classRoom: ClassRoom, matches: Match[] 
       "ФИО": student.name,
       "Класс": classRoom.name,
       "Люмосити (баллы)": lumosityTotal,
-      "Робо (время мин)": roboTotal,
+      "Робо (время)": formatTime(roboTotal),
       "Спорт Побед": sportWins,
       "Спорт Проигрышей": sportLosses,
       "Спорт Капитаном": sportCaptain,
@@ -312,7 +329,8 @@ export const createClassExcelWorkbook = (classRoom: ClassRoom, matches: Match[] 
         "ФИО": student.name,
         "Класс": classRoom.name,
         "Дата": new Date(activity.date).toLocaleString('ru-RU'),
-        "Баллы": activity.points || 0
+        "Баллы": activity.points || 0,
+        "Оценил": activity.ratedBy || "-"
       }))
   );
   if (lumosityData.length > 0) {
@@ -327,7 +345,8 @@ export const createClassExcelWorkbook = (classRoom: ClassRoom, matches: Match[] 
         "ФИО": student.name,
         "Класс": classRoom.name,
         "Дата": new Date(activity.date).toLocaleString('ru-RU'),
-        "Время (мин)": activity.time || 0
+        "Время": formatTime(activity.time || 0),
+        "Оценил": activity.ratedBy || "-"
       }))
   );
   if (roboData.length > 0) {
@@ -347,7 +366,8 @@ export const createClassExcelWorkbook = (classRoom: ClassRoom, matches: Match[] 
         "Противник": activity.opponentTeamName || "-",
         "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
         "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
-        "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
+        "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-",
+        "Оценил": activity.ratedBy || "-"
       }))
   );
   if (sportData.length > 0) {
@@ -367,7 +387,8 @@ export const createClassExcelWorkbook = (classRoom: ClassRoom, matches: Match[] 
         "Противник": activity.opponentTeamName || "-",
         "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
         "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
-        "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-"
+        "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-",
+        "Оценил": activity.ratedBy || "-"
       }))
   );
   if (valheimData.length > 0) {
@@ -392,7 +413,8 @@ export const createClassExcelWorkbook = (classRoom: ClassRoom, matches: Match[] 
         "Год защиты": activity.civilizationDefenseYear || "-",
         "Производство 1": activity.civilizationProduction1 || "-",
         "Производство 2": activity.civilizationProduction2 || "-",
-        "Производство 3": activity.civilizationProduction3 || "-"
+        "Производство 3": activity.civilizationProduction3 || "-",
+        "Оценил": activity.ratedBy || "-"
       }))
   );
   if (civilizationData.length > 0) {
@@ -409,7 +431,8 @@ export const createClassExcelWorkbook = (classRoom: ClassRoom, matches: Match[] 
         "Дата": new Date(activity.date).toLocaleString('ru-RU'),
         "Количество граждан": activity.simcityCitizens || "-",
         "Уровень счастья": activity.simcityHappiness || "-",
-        "Производство": activity.simcityProduction || "-"
+        "Производство": activity.simcityProduction || "-",
+        "Оценил": activity.ratedBy || "-"
       }))
   );
   if (simcityData.length > 0) {
@@ -430,7 +453,8 @@ export const createClassExcelWorkbook = (classRoom: ClassRoom, matches: Match[] 
         "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
         "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
         "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-",
-        "Количество колб": activity.factorioFlasks || "-"
+        "Количество колб": activity.factorioFlasks || "-",
+        "Оценил": activity.ratedBy || "-"
       }))
   );
   if (factorioData.length > 0) {
@@ -444,7 +468,8 @@ export const createClassExcelWorkbook = (classRoom: ClassRoom, matches: Match[] 
       .map(activity => ({
         "ФИО": student.name,
         "Класс": classRoom.name,
-        "Дата": new Date(activity.date).toLocaleString('ru-RU')
+        "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+        "Оценил": activity.ratedBy || "-"
       }))
   );
   if (pe3dData.length > 0) {

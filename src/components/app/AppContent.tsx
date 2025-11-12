@@ -149,7 +149,8 @@ export const AppContent = ({
               <TabsContent value="game" className="mt-0">
                 <GameTab 
                   classes={classes} 
-                  setClasses={setClasses} 
+                  setClasses={setClasses}
+                  teacher={teacher}
                 />
               </TabsContent>
 

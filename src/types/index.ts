@@ -1,6 +1,7 @@
 export interface ActivityRecord {
   type: "lumosity" | "robo" | "sport" | "valheim" | "civilization" | "simcity" | "factorio" | "pe3d";
   date: string;
+  ratedBy?: string;
   points?: number;
   time?: number;
   result?: "win" | "loss";

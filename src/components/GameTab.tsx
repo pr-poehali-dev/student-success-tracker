@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
-import { ClassRoom, ActivityRecord } from "@/types";
+import { ClassRoom, ActivityRecord, Teacher } from "@/types";
 import { toast } from "sonner";
 import { StudentSelector } from "./game/StudentSelector";
 import { DirectionSelector, ACHIEVEMENTS } from "./game/DirectionSelector";
@@ -10,15 +10,17 @@ import { StudentRanking } from "./game/StudentRanking";
 interface GameTabProps {
   classes: ClassRoom[];
   setClasses: (classes: ClassRoom[]) => void;
+  teacher: Teacher;
 }
 
-export const GameTab = ({ classes, setClasses }: GameTabProps) => {
+export const GameTab = ({ classes, setClasses, teacher }: GameTabProps) => {
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
   const [selectedDirection, setSelectedDirection] = useState<string>("");
   
   const [lumosityPoints, setLumosityPoints] = useState<string>("10");
-  const [roboTime, setRoboTime] = useState<string>("30");
+  const [roboMinutes, setRoboMinutes] = useState<string>("0");
+  const [roboSeconds, setRoboSeconds] = useState<string>("30");
   const [sportResult, setSportResult] = useState<"win" | "loss">("win");
   const [sportRole, setSportRole] = useState<"captain" | "player">("player");
   
@@ -102,19 +104,25 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
       activity = {
         type: "lumosity",
         date: new Date().toISOString(),
-        points
+        points,
+        ratedBy: teacher.name
       };
       pointsToAdd = points;
     } else if (selectedDirection === "robo") {
-      const time = parseInt(roboTime);
-      if (isNaN(time) || time <= 0) {
+      const minutes = parseInt(roboMinutes) || 0;
+      const seconds = parseInt(roboSeconds) || 0;
+      
+      if (minutes === 0 && seconds === 0) {
         toast.error("Введите корректное время");
         return;
       }
+      
+      const totalSeconds = minutes * 60 + seconds;
       activity = {
         type: "robo",
         date: new Date().toISOString(),
-        time
+        time: totalSeconds,
+        ratedBy: teacher.name
       };
       pointsToAdd = 0;
     } else if (selectedDirection === "sport") {
@@ -122,7 +130,8 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
         type: "sport",
         date: new Date().toISOString(),
         result: sportResult,
-        role: sportRole
+        role: sportRole,
+        ratedBy: teacher.name
       };
       pointsToAdd = 0;
     } else if (selectedDirection === "valheim") {
@@ -130,7 +139,8 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
         type: "valheim",
         date: new Date().toISOString(),
         result: valheimResult,
-        role: valheimRole
+        role: valheimRole,
+        ratedBy: teacher.name
       };
       pointsToAdd = 0;
     } else if (selectedDirection === "civilization") {
@@ -147,7 +157,8 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
         civilizationDefenseYear: defenseYear,
         civilizationProduction1: civProd1,
         civilizationProduction2: civProd2,
-        civilizationProduction3: civProd3
+        civilizationProduction3: civProd3,
+        ratedBy: teacher.name
       };
       pointsToAdd = 0;
     } else if (selectedDirection === "simcity") {
@@ -162,7 +173,8 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
         date: new Date().toISOString(),
         simcityCitizens: citizens,
         simcityHappiness: happiness,
-        simcityProduction: simcityProduction
+        simcityProduction: simcityProduction,
+        ratedBy: teacher.name
       };
       pointsToAdd = 0;
     } else if (selectedDirection === "factorio") {
@@ -174,13 +186,15 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
       activity = {
         type: "factorio",
         date: new Date().toISOString(),
-        factorioFlasks: flasks
+        factorioFlasks: flasks,
+        ratedBy: teacher.name
       };
       pointsToAdd = 0;
     } else if (selectedDirection === "pe3d") {
       activity = {
         type: "pe3d",
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        ratedBy: teacher.name
       };
       pointsToAdd = 0;
     } else {
@@ -207,7 +221,10 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
     if (selectedDirection === "lumosity") {
       toast.success(`Добавлено! +${pointsToAdd} баллов`);
     } else if (selectedDirection === "robo") {
-      toast.success(`Время ${roboTime} мин записано`);
+      const mins = parseInt(roboMinutes) || 0;
+      const secs = parseInt(roboSeconds) || 0;
+      const timeStr = mins > 0 ? `${mins} мин ${secs} сек` : `${secs} сек`;
+      toast.success(`Время ${timeStr} записано`);
     } else if (selectedDirection === "sport") {
       toast.success(`Результат записан`);
     } else {
@@ -242,8 +259,10 @@ export const GameTab = ({ classes, setClasses }: GameTabProps) => {
         selectedDirection={selectedDirection}
         lumosityPoints={lumosityPoints}
         setLumosityPoints={setLumosityPoints}
-        roboTime={roboTime}
-        setRoboTime={setRoboTime}
+        roboMinutes={roboMinutes}
+        setRoboMinutes={setRoboMinutes}
+        roboSeconds={roboSeconds}
+        setRoboSeconds={setRoboSeconds}
         sportResult={sportResult}
         setSportResult={setSportResult}
         sportRole={sportRole}
