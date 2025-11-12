@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,19 @@ interface MatchHistoryProps {
 }
 
 export const MatchHistory = ({ matches, onSetResult, onDeleteMatch }: MatchHistoryProps) => {
+  const [visibleCount, setVisibleCount] = useState(20);
+  
+  const sortedMatches = [...matches].sort((a, b) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+  
+  const visibleMatches = sortedMatches.slice(0, visibleCount);
+  const hasMore = visibleCount < sortedMatches.length;
+  
+  const loadMore = () => {
+    setVisibleCount(prev => prev + 20);
+  };
+
   return (
     <>
       {matches.length === 0 ? (
@@ -23,7 +37,7 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch }: MatchHisto
         </Card>
       ) : (
         <div className="space-y-4">
-          {matches.map(match => {
+          {visibleMatches.map(match => {
             const game = GAME_TYPES.find(g => g.id === match.gameType);
             return (
               <Card key={match.id} className="p-4 border-2">
@@ -126,6 +140,19 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch }: MatchHisto
               </Card>
             );
           })}
+          
+          {hasMore && (
+            <div className="text-center pt-4">
+              <Button 
+                onClick={loadMore}
+                variant="outline"
+                className="w-full"
+              >
+                <Icon name="ChevronDown" size={18} className="mr-2" />
+                Показать ещё ({sortedMatches.length - visibleCount} матчей)
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </>
