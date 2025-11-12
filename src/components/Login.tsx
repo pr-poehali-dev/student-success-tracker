@@ -16,23 +16,21 @@ interface LoginProps {
 export const Login = ({ onLogin }: LoginProps) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [loginMode, setLoginMode] = useState<"junior" | "teacher" | "admin">("junior");
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [juniors, setJuniors] = useState<Teacher[]>([]);
-  const [selectedTeacherId, setSelectedTeacherId] = useState("");
+  const [loginMode, setLoginMode] = useState<"user" | "admin">("user");
+  const [allUsers, setAllUsers] = useState<Teacher[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
   const [loading, setLoading] = useState(false);
 
   useState(() => {
-    const loadTeachers = async () => {
+    const loadUsers = async () => {
       try {
         const data = await syncFromServer();
-        setTeachers(data.teachers.filter(t => t.role === "teacher"));
-        setJuniors(data.teachers.filter(t => t.role === "junior"));
+        setAllUsers(data.teachers.filter(t => t.role === "teacher" || t.role === "junior"));
       } catch (error) {
-        console.error("Failed to load teachers", error);
+        console.error("Failed to load users", error);
       }
     };
-    loadTeachers();
+    loadUsers();
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,16 +57,27 @@ export const Login = ({ onLogin }: LoginProps) => {
         onLogin(adminTeacher);
         toast.success("Добро пожаловать, Администратор!");
       } else {
-        if (!selectedTeacherId) {
-          toast.error(loginMode === "teacher" ? "Выберите учителя" : "Выберите сотрудника");
+        if (!selectedUserId) {
+          toast.error("Выберите пользователя");
           setLoading(false);
           return;
         }
 
-        const userList = loginMode === "teacher" ? teachers : juniors;
-        const user = userList.find(t => t.id === selectedTeacherId);
+        if (!password.trim()) {
+          toast.error("Введите пароль");
+          setLoading(false);
+          return;
+        }
+
+        const user = allUsers.find(t => t.id === selectedUserId);
         if (!user) {
           toast.error("Пользователь не найден");
+          setLoading(false);
+          return;
+        }
+
+        if (user.password !== password) {
+          toast.error("Неверный пароль");
           setLoading(false);
           return;
         }
@@ -99,33 +108,25 @@ export const Login = ({ onLogin }: LoginProps) => {
         <div className="flex gap-2 mb-6">
           <Button
             type="button"
-            variant={loginMode === "junior" ? "default" : "outline"}
+            variant={loginMode === "user" ? "default" : "outline"}
             className="flex-1"
             onClick={() => {
-              setLoginMode("junior");
-              setSelectedTeacherId("");
-            }}
-          >
-            <Icon name="UserCheck" size={18} className="mr-2" />
-            МНС
-          </Button>
-          <Button
-            type="button"
-            variant={loginMode === "teacher" ? "default" : "outline"}
-            className="flex-1"
-            onClick={() => {
-              setLoginMode("teacher");
-              setSelectedTeacherId("");
+              setLoginMode("user");
+              setSelectedUserId("");
+              setPassword("");
             }}
           >
             <Icon name="User" size={18} className="mr-2" />
-            Учитель
+            Логин
           </Button>
           <Button
             type="button"
             variant={loginMode === "admin" ? "default" : "outline"}
             className="flex-1"
-            onClick={() => setLoginMode("admin")}
+            onClick={() => {
+              setLoginMode("admin");
+              setPassword("");
+            }}
           >
             <Icon name="ShieldCheck" size={18} className="mr-2" />
             Админ
@@ -160,32 +161,46 @@ export const Login = ({ onLogin }: LoginProps) => {
               </div>
             </>
           ) : (
-            <div>
-              <Label htmlFor="teacher">{loginMode === "teacher" ? "Выберите учителя" : "Выберите младшего научного сотрудника"} *</Label>
-              <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Выберите ваш аккаунт" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(loginMode === "teacher" ? teachers : juniors).length === 0 ? (
-                    <SelectItem value="none" disabled>
-                      Нет доступных аккаунтов
-                    </SelectItem>
-                  ) : (
-                    (loginMode === "teacher" ? teachers : juniors).map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name}
+            <>
+              <div>
+                <Label htmlFor="user">Выберите пользователя *</Label>
+                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Выберите ваш аккаунт" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allUsers.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        Нет доступных аккаунтов
                       </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              {(loginMode === "teacher" ? teachers : juniors).length === 0 && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Свяжитесь с администратором для создания аккаунта
-                </p>
-              )}
-            </div>
+                    ) : (
+                      allUsers.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name} ({user.role === "teacher" ? "Учитель" : "МНС"})
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                {allUsers.length === 0 && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Свяжитесь с администратором для создания аккаунта
+                  </p>
+                )}
+              </div>
+              
+              <div>
+                <Label htmlFor="userPassword">Пароль *</Label>
+                <Input
+                  id="userPassword"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Введите пароль"
+                  className="mt-2"
+                />
+              </div>
+            </>
           )}
 
           <Button type="submit" className="w-full" size="lg" disabled={loading}>

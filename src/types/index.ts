@@ -73,6 +73,7 @@ export interface Teacher {
   role: "admin" | "teacher" | "junior";
   createdAt: string;
   username?: string;
+  password?: string;
 }
 
 export interface AppState {

@@ -51,6 +51,7 @@ export const AdminPanel = ({
   const [newTeacherName, setNewTeacherName] = useState("");
   const [newTeacherEmail, setNewTeacherEmail] = useState("");
   const [newTeacherRole, setNewTeacherRole] = useState<"admin" | "teacher" | "junior">("junior");
+  const [newTeacherPassword, setNewTeacherPassword] = useState("");
 
   const handleEditTeacher = (teacher: Teacher) => {
     setEditingTeacher(teacher);
@@ -117,9 +118,24 @@ export const AdminPanel = ({
     toast.success("Ответственный учитель назначен");
   };
 
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewTeacherPassword(password);
+    toast.success("Пароль сгенерирован");
+  };
+
   const handleCreateTeacher = () => {
     if (!newTeacherName.trim()) {
       toast.error("Введите имя учителя");
+      return;
+    }
+
+    if (!newTeacherPassword.trim()) {
+      toast.error("Сгенерируйте пароль");
       return;
     }
 
@@ -128,6 +144,7 @@ export const AdminPanel = ({
       name: newTeacherName.trim(),
       email: newTeacherEmail.trim(),
       role: newTeacherRole,
+      password: newTeacherPassword.trim(),
       createdAt: new Date().toISOString()
     };
 
@@ -140,7 +157,8 @@ export const AdminPanel = ({
     setIsCreatingTeacher(false);
     setNewTeacherName("");
     setNewTeacherEmail("");
-    setNewTeacherRole("teacher");
+    setNewTeacherRole("junior");
+    setNewTeacherPassword("");
     toast.success("Учитель создан");
   };
 
@@ -239,6 +257,23 @@ export const AdminPanel = ({
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label>Пароль *</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      value={newTeacherPassword}
+                      onChange={(e) => setNewTeacherPassword(e.target.value)}
+                      placeholder="Пароль"
+                      readOnly
+                    />
+                    <Button type="button" onClick={generatePassword} variant="outline">
+                      <Icon name="RefreshCw" size={16} />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Нажмите на кнопку для генерации пароля
+                  </p>
+                </div>
                 <Button onClick={handleCreateTeacher} className="w-full">
                   Создать
                 </Button>
@@ -260,6 +295,7 @@ export const AdminPanel = ({
                   <TableHead>ФИО</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Роль</TableHead>
+                  <TableHead>Пароль</TableHead>
                   <TableHead>Дата регистрации</TableHead>
                   <TableHead className="text-right">Действия</TableHead>
                 </TableRow>
@@ -273,6 +309,9 @@ export const AdminPanel = ({
                       <Badge variant={teacher.role === "admin" ? "default" : "secondary"}>
                         {teacher.role === "admin" ? "Администратор" : teacher.role === "teacher" ? "Учитель" : "МНС"}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <code className="text-xs bg-muted px-2 py-1 rounded">{teacher.password || "-"}</code>
                     </TableCell>
                     <TableCell>
                       {new Date(teacher.createdAt).toLocaleDateString('ru-RU')}
