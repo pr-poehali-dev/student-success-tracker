@@ -341,13 +341,84 @@ export const useAppData = () => {
   const handleDeleteClass = async (classId: string) => {
     const updatedClasses = classes.filter(c => c.id !== classId);
     setClasses(updatedClasses);
-    toast.success("Класс удалён");
+    
+    // Обновляем globalData напрямую и синхронизируем сразу
+    const updatedGlobalClasses = globalData.classes.filter(c => c.id !== classId);
+    const newGlobalData = { ...globalData, classes: updatedGlobalClasses };
+    setGlobalData(newGlobalData);
+    
+    // Синхронизируем сразу без debounce
+    try {
+      console.log("🔄 DELETE: Syncing class deletion to server...");
+      await syncToServer({
+        classes: updatedGlobalClasses,
+        matches: globalData.matches,
+        currentTeacher: teacher!
+      });
+      console.log("✅ DELETE: Class deletion synced");
+      toast.success("Класс удалён");
+    } catch (error) {
+      console.error("❌ DELETE: Failed to sync class deletion", error);
+      toast.error("Ошибка удаления класса");
+    }
   };
 
   const handleDeleteMatch = async (matchId: string) => {
     const updatedMatches = matches.filter(m => m.id !== matchId);
     setMatches(updatedMatches);
-    toast.success("Матч удалён");
+    
+    // Обновляем globalData напрямую и синхронизируем сразу
+    const updatedGlobalMatches = globalData.matches.filter(m => m.id !== matchId);
+    const newGlobalData = { ...globalData, matches: updatedGlobalMatches };
+    setGlobalData(newGlobalData);
+    
+    // Синхронизируем сразу без debounce
+    try {
+      console.log("🔄 DELETE: Syncing match deletion to server...");
+      await syncToServer({
+        classes: globalData.classes,
+        matches: updatedGlobalMatches,
+        currentTeacher: teacher!
+      });
+      console.log("✅ DELETE: Match deletion synced");
+      toast.success("Матч удалён");
+    } catch (error) {
+      console.error("❌ DELETE: Failed to sync match deletion", error);
+      toast.error("Ошибка удаления матча");
+    }
+  };
+
+  const handleDeleteStudent = async (classId: string, studentId: string) => {
+    const updatedClasses = classes.map(cls => 
+      cls.id === classId 
+        ? { ...cls, students: cls.students.filter(s => s.id !== studentId) }
+        : cls
+    );
+    setClasses(updatedClasses);
+    
+    // Обновляем globalData напрямую и синхронизируем сразу
+    const updatedGlobalClasses = globalData.classes.map(cls => 
+      cls.id === classId 
+        ? { ...cls, students: cls.students.filter(s => s.id !== studentId) }
+        : cls
+    );
+    const newGlobalData = { ...globalData, classes: updatedGlobalClasses };
+    setGlobalData(newGlobalData);
+    
+    // Синхронизируем сразу без debounce
+    try {
+      console.log("🔄 DELETE: Syncing student deletion to server...");
+      await syncToServer({
+        classes: updatedGlobalClasses,
+        matches: globalData.matches,
+        currentTeacher: teacher!
+      });
+      console.log("✅ DELETE: Student deletion synced");
+      toast.success("Ученик удален");
+    } catch (error) {
+      console.error("❌ DELETE: Failed to sync student deletion", error);
+      toast.error("Ошибка удаления ученика");
+    }
   };
 
   const handleUpdateClass = async (updatedClass: ClassRoom) => {
@@ -432,6 +503,7 @@ export const useAppData = () => {
     handleDeleteTeacher,
     handleDeleteClass,
     handleDeleteMatch,
+    handleDeleteStudent,
     handleUpdateClass,
     handleCreateTeacher,
     handleForceSync,
