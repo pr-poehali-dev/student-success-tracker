@@ -153,19 +153,16 @@ export const useAppData = () => {
       const hasClassChanges = JSON.stringify(globalData.classes) !== JSON.stringify(updatedGlobalClasses);
       const hasMatchChanges = JSON.stringify(globalData.matches) !== JSON.stringify(updatedGlobalMatches);
 
-      if (hasClassChanges || hasMatchChanges) {
-        const existingTeacherIndex = globalData.teachers.findIndex(t => t.id === teacher.id);
-        const updatedTeachers = existingTeacherIndex >= 0
-          ? globalData.teachers.map(t => t.id === teacher.id ? teacher : t)
-          : [...globalData.teachers, teacher];
+      console.log("🔍 [DEBUG] Checking for changes:", {
+        hasClassChanges,
+        hasMatchChanges,
+        currentGlobalClasses: globalData.classes.map(c => c.id),
+        updatedGlobalClasses: updatedGlobalClasses.map(c => c.id),
+        currentGlobalMatches: globalData.matches.map(m => m.id),
+        updatedGlobalMatches: updatedGlobalMatches.map(m => m.id)
+      });
 
-        const newGlobalData: GlobalData = {
-          teachers: updatedTeachers,
-          classes: updatedGlobalClasses,
-          matches: updatedGlobalMatches
-        };
-        setGlobalData(newGlobalData);
-        
+      if (hasClassChanges || hasMatchChanges) {
         // Мониторинг: логируем попытку синхронизации
         const now = Date.now();
         if (now - syncCounterRef.current.lastReset > 60000) {
@@ -183,7 +180,9 @@ export const useAppData = () => {
           matchesCount: updatedGlobalMatches.length,
           hasClassChanges,
           hasMatchChanges,
-          timestamp: new Date().toLocaleTimeString()
+          timestamp: new Date().toLocaleTimeString(),
+          classIds: updatedGlobalClasses.map(c => c.id),
+          matchIds: updatedGlobalMatches.map(m => m.id)
         });
         
         // Устанавливаем флаг "идет синхронизация"
@@ -197,6 +196,20 @@ export const useAppData = () => {
           currentTeacher: teacher
         }).then(() => {
           console.log("✅ Auto-sync completed successfully");
+          
+          // Обновляем globalData только ПОСЛЕ успешной синхронизации с сервером
+          const existingTeacherIndex = globalData.teachers.findIndex(t => t.id === teacher.id);
+          const updatedTeachers = existingTeacherIndex >= 0
+            ? globalData.teachers.map(t => t.id === teacher.id ? teacher : t)
+            : [...globalData.teachers, teacher];
+
+          const newGlobalData: GlobalData = {
+            teachers: updatedTeachers,
+            classes: updatedGlobalClasses,
+            matches: updatedGlobalMatches
+          };
+          setGlobalData(newGlobalData);
+          
           toast.success("Данные сохранены", { id: 'sync-toast' });
         }).catch(error => {
           console.error("❌ Failed to auto-sync to server", error);
@@ -328,22 +341,12 @@ export const useAppData = () => {
   const handleDeleteClass = async (classId: string) => {
     const updatedClasses = classes.filter(c => c.id !== classId);
     setClasses(updatedClasses);
-    
-    // Обновляем globalData сразу для всех ролей
-    const updatedGlobalClasses = globalData.classes.filter(c => c.id !== classId);
-    setGlobalData({ ...globalData, classes: updatedGlobalClasses });
-    
     toast.success("Класс удалён");
   };
 
   const handleDeleteMatch = async (matchId: string) => {
     const updatedMatches = matches.filter(m => m.id !== matchId);
     setMatches(updatedMatches);
-    
-    // Обновляем globalData сразу для всех ролей
-    const updatedGlobalMatches = globalData.matches.filter(m => m.id !== matchId);
-    setGlobalData({ ...globalData, matches: updatedGlobalMatches });
-    
     toast.success("Матч удалён");
   };
 
