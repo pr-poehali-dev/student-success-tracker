@@ -226,6 +226,8 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
   };
 
   const deleteMatch = (matchId: string) => {
+    console.log("🚨 [TeamsTab] deleteMatch called", { matchId });
+    console.log("🚨 [TeamsTab] Calling onDeleteMatch callback");
     onDeleteMatch(matchId);
   };
 

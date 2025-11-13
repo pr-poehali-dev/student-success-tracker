@@ -120,7 +120,9 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, onDelete
   };
 
   const deleteClass = (classId: string) => {
+    console.log("🚨 [ClassesTab] deleteClass called", { classId, hasCallback: !!onDeleteClass });
     if (onDeleteClass) {
+      console.log("🚨 [ClassesTab] Calling onDeleteClass callback");
       // Используем переданную функцию из useAppData (синхронизация напрямую)
       onDeleteClass(classId);
     } else {
@@ -132,7 +134,9 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, onDelete
   };
 
   const deleteStudent = (classId: string, studentId: string) => {
+    console.log("🚨 [ClassesTab] deleteStudent called", { classId, studentId, hasCallback: !!onDeleteStudent });
     if (onDeleteStudent) {
+      console.log("🚨 [ClassesTab] Calling onDeleteStudent callback");
       // Используем переданную функцию из useAppData (синхронизация напрямую)
       onDeleteStudent(classId, studentId);
     } else {

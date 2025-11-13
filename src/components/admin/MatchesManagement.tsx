@@ -13,7 +13,9 @@ interface MatchesManagementProps {
 
 export const MatchesManagement = ({ matches, onDeleteMatch }: MatchesManagementProps) => {
   const handleDeleteMatch = (matchId: string) => {
+    console.log("🚨 [MatchesManagement] handleDeleteMatch called", { matchId });
     if (confirm("Вы уверены, что хотите удалить этот матч?")) {
+      console.log("🚨 [MatchesManagement] User confirmed, calling onDeleteMatch");
       onDeleteMatch(matchId);
       toast.success("Матч удалён");
     }

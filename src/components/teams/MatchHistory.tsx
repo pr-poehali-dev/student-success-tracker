@@ -66,7 +66,13 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, teacher }: M
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => canDelete && onDeleteMatch(match.id)}
+                            onClick={() => {
+                              console.log("🚨 [MatchHistory] Delete button clicked", { matchId: match.id, canDelete });
+                              if (canDelete) {
+                                console.log("🚨 [MatchHistory] Calling onDeleteMatch");
+                                onDeleteMatch(match.id);
+                              }
+                            }}
                             disabled={!canDelete}
                             className={!canDelete ? "cursor-not-allowed opacity-50" : ""}
                           >

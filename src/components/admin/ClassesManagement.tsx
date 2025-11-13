@@ -33,7 +33,9 @@ export const ClassesManagement = ({
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>("none");
 
   const handleDeleteClass = (classId: string, className: string) => {
+    console.log("🚨 [ClassesManagement] handleDeleteClass called", { classId, className });
     if (confirm(`Вы уверены, что хотите удалить класс "${className}" со всеми учениками?`)) {
+      console.log("🚨 [ClassesManagement] User confirmed, calling onDeleteClass");
       onDeleteClass(classId);
       toast.success("Класс удалён");
     }
