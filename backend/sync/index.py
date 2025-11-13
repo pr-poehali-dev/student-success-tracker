@@ -71,10 +71,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif method == 'POST':
             body_data = json.loads(event.get('body', '{}'))
             
-            if 'teacher' in body_data and body_data['teacher']:
-                save_teacher(cursor, body_data['teacher'])
+            current_teacher = body_data.get('teacher') or body_data.get('currentTeacher')
             
-            current_teacher = body_data.get('currentTeacher')
+            if current_teacher:
+                save_teacher(cursor, current_teacher)
             
             if 'classes' in body_data:
                 save_classes(cursor, body_data['classes'], current_teacher)
