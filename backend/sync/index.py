@@ -309,9 +309,6 @@ def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[st
 
 
 def save_matches(cursor, matches: List[Dict[str, Any]], current_teacher: Dict[str, Any] = None) -> None:
-    if not matches:
-        return
-    
     if current_teacher and current_teacher.get('role') == 'junior' and current_teacher.get('name'):
         teacher_name = escape_sql(current_teacher['name'])
         cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.scheduled_dates WHERE match_id IN (SELECT id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name})')
