@@ -14,9 +14,11 @@ interface ClassesTabProps {
   setClasses: (classes: ClassRoom[]) => void;
   teacher: Teacher;
   allTeachers: Teacher[];
+  onDeleteStudent?: (classId: string, studentId: string) => void;
+  onDeleteClass?: (classId: string) => void;
 }
 
-export const ClassesTab = ({ classes, setClasses, teacher, allTeachers }: ClassesTabProps) => {
+export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, onDeleteStudent, onDeleteClass }: ClassesTabProps) => {
   const [newClassName, setNewClassName] = useState("");
   const [newStudentName, setNewStudentName] = useState("");
   const [selectedClassId, setSelectedClassId] = useState<string>("");
@@ -118,18 +120,30 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers }: Classe
   };
 
   const deleteClass = (classId: string) => {
-    const className = classes.find(c => c.id === classId)?.name;
-    setClasses(classes.filter(cls => cls.id !== classId));
-    toast.success(`Класс "${className}" удален`);
+    if (onDeleteClass) {
+      // Используем переданную функцию из useAppData (синхронизация напрямую)
+      onDeleteClass(classId);
+    } else {
+      // Fallback на старую логику
+      const className = classes.find(c => c.id === classId)?.name;
+      setClasses(classes.filter(cls => cls.id !== classId));
+      toast.success(`Класс "${className}" удален`);
+    }
   };
 
   const deleteStudent = (classId: string, studentId: string) => {
-    setClasses(classes.map(cls => 
-      cls.id === classId 
-        ? { ...cls, students: cls.students.filter(s => s.id !== studentId) }
-        : cls
-    ));
-    toast.success("Ученик удален");
+    if (onDeleteStudent) {
+      // Используем переданную функцию из useAppData (синхронизация напрямую)
+      onDeleteStudent(classId, studentId);
+    } else {
+      // Fallback на старую логику
+      setClasses(classes.map(cls => 
+        cls.id === classId 
+          ? { ...cls, students: cls.students.filter(s => s.id !== studentId) }
+          : cls
+      ));
+      toast.success("Ученик удален");
+    }
   };
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {

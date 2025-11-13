@@ -4,16 +4,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import Icon from "@/components/ui/icon";
-import { ClassRoom, Student, SoftSkillRating, Match } from "@/types";
+import { ClassRoom, Student, SoftSkillRating, Match, Teacher } from "@/types";
 import { toast } from "sonner";
 
 interface SoftSkillsTabProps {
   classes: ClassRoom[];
   matches: Match[];
   setClasses: (classes: ClassRoom[]) => void;
+  teacher: Teacher;
 }
 
-export const SoftSkillsTab = ({ classes, matches, setClasses }: SoftSkillsTabProps) => {
+export const SoftSkillsTab = ({ classes, matches, setClasses, teacher }: SoftSkillsTabProps) => {
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
   const [selectedMatchId, setSelectedMatchId] = useState<string>("");
@@ -83,7 +84,7 @@ export const SoftSkillsTab = ({ classes, matches, setClasses }: SoftSkillsTabPro
       matchId: selectedMatchId || undefined,
       gameType: selectedGameType || undefined,
       date: new Date().toISOString(),
-      ratedBy: "Учитель",
+      ratedBy: teacher.name,
     };
 
     const updatedStudent: Student = {

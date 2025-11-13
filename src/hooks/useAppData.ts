@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ClassRoom, Teacher, Match, AppState, GlobalData } from "@/types";
 import { saveAppState, loadAppState, clearAppState } from "@/utils/storage";
 import { syncFromServer, syncToServer, deleteTeacherFromServer } from "@/utils/sync";
@@ -12,15 +12,31 @@ export const useAppData = () => {
   const [activeTab, setActiveTab] = useState("classes");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncInProgress, setIsSyncInProgress] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  
+  // Счетчик вызовов для мониторинга
+  const syncCounterRef = useRef({ get: 0, post: 0, delete: 0, lastReset: Date.now() });
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Отслеживание предыдущего состояния для определения удалений
+  const prevClassesRef = useRef<ClassRoom[]>([]);
+  const prevMatchesRef = useRef<Match[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       setIsSyncing(true);
       
       try {
+        console.log("📥 GET: Loading data from server...");
+        syncCounterRef.current.get++;
         const serverData = await syncFromServer();
+        console.log("✅ GET: Data loaded successfully", {
+          teachers: serverData.teachers.length,
+          classes: serverData.classes.length,
+          matches: serverData.matches.length
+        });
         setGlobalData(serverData);
         
         const savedState = loadAppState();
@@ -45,6 +61,10 @@ export const useAppData = () => {
             setClasses(loginClasses);
             setMatches(loginMatches);
             setIsLoggedIn(true);
+            
+            // Инициализируем prev refs для отслеживания удалений
+            prevClassesRef.current = [...loginClasses];
+            prevMatchesRef.current = [...loginMatches];
             
             if (savedState.currentView === 'admin') {
               setShowAdmin(true);
@@ -87,66 +107,136 @@ export const useAppData = () => {
   }, [teacher, classes, matches, isLoggedIn, isSyncing, showAdmin, showProfile, activeTab]);
 
   useEffect(() => {
-    if (!teacher || !isLoggedIn || isSyncing) return;
+    if (!teacher || !isLoggedIn || isSyncing || isSyncInProgress) return;
 
-    let updatedGlobalClasses: ClassRoom[];
-    let updatedGlobalMatches: Match[];
-
-    if (teacher.role === "junior") {
-      const myClassIds = classes.map(c => c.id);
-      const otherClasses = globalData.classes.filter(c => !myClassIds.includes(c.id));
-      updatedGlobalClasses = [...otherClasses, ...classes];
-
-      const myMatchIds = matches.map(m => m.id);
-      const otherMatches = globalData.matches.filter(m => !myMatchIds.includes(m.id));
-      updatedGlobalMatches = [...otherMatches, ...matches];
-    } else {
-      updatedGlobalClasses = classes;
-      updatedGlobalMatches = matches;
+    // Очищаем предыдущий таймер debounce
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
 
-    const hasClassChanges = JSON.stringify(globalData.classes) !== JSON.stringify(updatedGlobalClasses);
-    const hasMatchChanges = JSON.stringify(globalData.matches) !== JSON.stringify(updatedGlobalMatches);
+    // Откладываем синхронизацию на 3 секунды
+    debounceTimerRef.current = setTimeout(() => {
+      let updatedGlobalClasses: ClassRoom[];
+      let updatedGlobalMatches: Match[];
 
-    if (hasClassChanges || hasMatchChanges) {
-      const existingTeacherIndex = globalData.teachers.findIndex(t => t.id === teacher.id);
-      const updatedTeachers = existingTeacherIndex >= 0
-        ? globalData.teachers.map(t => t.id === teacher.id ? teacher : t)
-        : [...globalData.teachers, teacher];
+      if (teacher.role === "junior") {
+        // Определяем удаленные классы (были в prev, нет в current)
+        const prevClassIds = prevClassesRef.current.map(c => c.id);
+        const currentClassIds = classes.map(c => c.id);
+        const deletedClassIds = prevClassIds.filter(id => !currentClassIds.includes(id));
+        
+        // Определяем удаленные матчи
+        const prevMatchIds = prevMatchesRef.current.map(m => m.id);
+        const currentMatchIds = matches.map(m => m.id);
+        const deletedMatchIds = prevMatchIds.filter(id => !currentMatchIds.includes(id));
+        
+        // Берем классы других учителей И удаляем те, что junior удалил
+        const otherClasses = globalData.classes.filter(c => 
+          !currentClassIds.includes(c.id) && !deletedClassIds.includes(c.id)
+        );
+        updatedGlobalClasses = [...otherClasses, ...classes];
 
-      const newGlobalData: GlobalData = {
-        teachers: updatedTeachers,
-        classes: updatedGlobalClasses,
-        matches: updatedGlobalMatches
-      };
-      setGlobalData(newGlobalData);
-      
-      console.log("Auto-syncing to server:", {
-        classesCount: updatedGlobalClasses.length,
-        matchesCount: updatedGlobalMatches.length,
+        // Берем матчи других учителей И удаляем те, что junior удалил
+        const otherMatches = globalData.matches.filter(m => 
+          !currentMatchIds.includes(m.id) && !deletedMatchIds.includes(m.id)
+        );
+        updatedGlobalMatches = [...otherMatches, ...matches];
+        
+        // Обновляем prev refs для следующего сравнения
+        prevClassesRef.current = [...classes];
+        prevMatchesRef.current = [...matches];
+      } else {
+        updatedGlobalClasses = classes;
+        updatedGlobalMatches = matches;
+      }
+
+      const hasClassChanges = JSON.stringify(globalData.classes) !== JSON.stringify(updatedGlobalClasses);
+      const hasMatchChanges = JSON.stringify(globalData.matches) !== JSON.stringify(updatedGlobalMatches);
+
+      console.log("🔍 [DEBUG] Checking for changes:", {
         hasClassChanges,
-        hasMatchChanges
+        hasMatchChanges,
+        currentGlobalClasses: globalData.classes.map(c => c.id),
+        updatedGlobalClasses: updatedGlobalClasses.map(c => c.id),
+        currentGlobalMatches: globalData.matches.map(m => m.id),
+        updatedGlobalMatches: updatedGlobalMatches.map(m => m.id)
       });
-      
-      syncToServer({
-        classes: updatedGlobalClasses,
-        matches: updatedGlobalMatches,
-        currentTeacher: teacher
-      }).then(() => {
-        console.log("Auto-sync completed successfully");
-      }).catch(error => {
-        console.error("Failed to auto-sync to server", error);
-        toast.error("Ошибка синхронизации с сервером");
-      });
-    }
-  }, [teacher, classes, matches, isLoggedIn, isSyncing, globalData.classes, globalData.matches, globalData.teachers]);
+
+      if (hasClassChanges || hasMatchChanges) {
+        // Мониторинг: логируем попытку синхронизации
+        const now = Date.now();
+        if (now - syncCounterRef.current.lastReset > 60000) {
+          console.log("📊 SYNC STATS (last minute):", {
+            GET: syncCounterRef.current.get,
+            POST: syncCounterRef.current.post,
+            DELETE: syncCounterRef.current.delete,
+            TOTAL: syncCounterRef.current.get + syncCounterRef.current.post + syncCounterRef.current.delete
+          });
+          syncCounterRef.current = { get: 0, post: 0, delete: 0, lastReset: now };
+        }
+        
+        console.log("🔄 [DEBOUNCED] Auto-syncing to server:", {
+          classesCount: updatedGlobalClasses.length,
+          matchesCount: updatedGlobalMatches.length,
+          hasClassChanges,
+          hasMatchChanges,
+          timestamp: new Date().toLocaleTimeString(),
+          classIds: updatedGlobalClasses.map(c => c.id),
+          matchIds: updatedGlobalMatches.map(m => m.id)
+        });
+        
+        // Устанавливаем флаг "идет синхронизация"
+        setIsSyncInProgress(true);
+        toast.loading("Сохранение данных...", { id: 'sync-toast' });
+        syncCounterRef.current.post++;
+        
+        syncToServer({
+          classes: updatedGlobalClasses,
+          matches: updatedGlobalMatches,
+          currentTeacher: teacher
+        }).then(() => {
+          console.log("✅ Auto-sync completed successfully");
+          
+          // Обновляем globalData только ПОСЛЕ успешной синхронизации с сервером
+          const existingTeacherIndex = globalData.teachers.findIndex(t => t.id === teacher.id);
+          const updatedTeachers = existingTeacherIndex >= 0
+            ? globalData.teachers.map(t => t.id === teacher.id ? teacher : t)
+            : [...globalData.teachers, teacher];
+
+          const newGlobalData: GlobalData = {
+            teachers: updatedTeachers,
+            classes: updatedGlobalClasses,
+            matches: updatedGlobalMatches
+          };
+          setGlobalData(newGlobalData);
+          
+          toast.success("Данные сохранены", { id: 'sync-toast' });
+        }).catch(error => {
+          console.error("❌ Failed to auto-sync to server", error);
+          toast.error("Ошибка синхронизации с сервером", { id: 'sync-toast' });
+        }).finally(() => {
+          setIsSyncInProgress(false);
+        });
+      }
+    }, 3000); // Debounce 3 секунды
+
+    // Cleanup функция для очистки таймера
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [teacher, classes, matches, isLoggedIn, isSyncing, isSyncInProgress, globalData.classes, globalData.matches, globalData.teachers]);
 
   const handleLogin = async (loggedInTeacher: Teacher) => {
     setTeacher(loggedInTeacher);
     setIsLoggedIn(true);
 
     try {
+      console.log("📥 GET: Login - loading data from server...");
+      syncCounterRef.current.get++;
       const serverData = await syncFromServer();
+      console.log("✅ GET: Login data loaded");
       setGlobalData(serverData);
       
       let loginClasses: ClassRoom[] = [];
@@ -164,6 +254,10 @@ export const useAppData = () => {
       
       setClasses(loginClasses);
       setMatches(loginMatches);
+      
+      // Инициализируем prev refs для отслеживания удалений
+      prevClassesRef.current = [...loginClasses];
+      prevMatchesRef.current = [...loginMatches];
       
       const state: AppState = {
         teacher: loggedInTeacher,
@@ -216,10 +310,13 @@ export const useAppData = () => {
     }
 
     try {
+      console.log("🔄 POST: Updating teacher...");
+      syncCounterRef.current.post++;
       await syncToServer({ teacher: updatedTeacher });
+      console.log("✅ POST: Teacher updated");
       toast.success("Данные синхронизированы с сервером");
     } catch (error) {
-      console.error("Failed to sync teacher to server", error);
+      console.error("❌ POST: Failed to sync teacher to server", error);
       toast.error("Ошибка синхронизации с сервером");
     }
   };
@@ -230,24 +327,134 @@ export const useAppData = () => {
     setGlobalData(newGlobalData);
     
     try {
+      console.log("🗑️ DELETE: Deleting teacher...");
+      syncCounterRef.current.delete++;
       await deleteTeacherFromServer(teacherId);
+      console.log("✅ DELETE: Teacher deleted");
       toast.success("Учитель удалён");
     } catch (error) {
-      console.error("Failed to delete teacher from server", error);
+      console.error("❌ DELETE: Failed to delete teacher from server", error);
       toast.error("Ошибка удаления с сервера");
     }
   };
 
   const handleDeleteClass = async (classId: string) => {
+    console.log("🗑️ handleDeleteClass called:", { classId, classesCount: classes.length, globalClassesCount: globalData.classes.length });
+    
     const updatedClasses = classes.filter(c => c.id !== classId);
     setClasses(updatedClasses);
-    toast.success("Класс удалён");
+    
+    // Обновляем globalData напрямую и синхронизируем сразу
+    const updatedGlobalClasses = globalData.classes.filter(c => c.id !== classId);
+    const newGlobalData = { ...globalData, classes: updatedGlobalClasses };
+    setGlobalData(newGlobalData);
+    
+    // Синхронизируем сразу без debounce
+    try {
+      if (!teacher) {
+        console.error("❌ DELETE: No teacher found");
+        toast.error("Ошибка: учитель не авторизован");
+        return;
+      }
+      
+      console.log("🔄 DELETE: Syncing class deletion to server...", {
+        updatedClassesCount: updatedGlobalClasses.length,
+        teacherName: teacher.name
+      });
+      
+      await syncToServer({
+        classes: updatedGlobalClasses,
+        matches: globalData.matches,
+        currentTeacher: teacher
+      });
+      console.log("✅ DELETE: Class deletion synced");
+      toast.success("Класс удалён");
+    } catch (error) {
+      console.error("❌ DELETE: Failed to sync class deletion", error);
+      toast.error("Ошибка удаления класса");
+    }
   };
 
   const handleDeleteMatch = async (matchId: string) => {
+    console.log("🗑️ handleDeleteMatch called:", { matchId, matchesCount: matches.length, globalMatchesCount: globalData.matches.length });
+    
     const updatedMatches = matches.filter(m => m.id !== matchId);
     setMatches(updatedMatches);
-    toast.success("Матч удалён");
+    
+    // Обновляем globalData напрямую и синхронизируем сразу
+    const updatedGlobalMatches = globalData.matches.filter(m => m.id !== matchId);
+    const newGlobalData = { ...globalData, matches: updatedGlobalMatches };
+    setGlobalData(newGlobalData);
+    
+    // Синхронизируем сразу без debounce
+    try {
+      if (!teacher) {
+        console.error("❌ DELETE: No teacher found");
+        toast.error("Ошибка: учитель не авторизован");
+        return;
+      }
+      
+      console.log("🔄 DELETE: Syncing match deletion to server...", {
+        updatedMatchesCount: updatedGlobalMatches.length,
+        teacherName: teacher.name
+      });
+      
+      await syncToServer({
+        classes: globalData.classes,
+        matches: updatedGlobalMatches,
+        currentTeacher: teacher
+      });
+      console.log("✅ DELETE: Match deletion synced");
+      toast.success("Матч удалён");
+    } catch (error) {
+      console.error("❌ DELETE: Failed to sync match deletion", error);
+      toast.error("Ошибка удаления матча");
+    }
+  };
+
+  const handleDeleteStudent = async (classId: string, studentId: string) => {
+    console.log("🗑️ handleDeleteStudent called:", { classId, studentId, classesCount: classes.length });
+    
+    const updatedClasses = classes.map(cls => 
+      cls.id === classId 
+        ? { ...cls, students: cls.students.filter(s => s.id !== studentId) }
+        : cls
+    );
+    setClasses(updatedClasses);
+    
+    // Обновляем globalData напрямую и синхронизируем сразу
+    const updatedGlobalClasses = globalData.classes.map(cls => 
+      cls.id === classId 
+        ? { ...cls, students: cls.students.filter(s => s.id !== studentId) }
+        : cls
+    );
+    const newGlobalData = { ...globalData, classes: updatedGlobalClasses };
+    setGlobalData(newGlobalData);
+    
+    // Синхронизируем сразу без debounce
+    try {
+      if (!teacher) {
+        console.error("❌ DELETE: No teacher found");
+        toast.error("Ошибка: учитель не авторизован");
+        return;
+      }
+      
+      console.log("🔄 DELETE: Syncing student deletion to server...", {
+        updatedClassesCount: updatedGlobalClasses.length,
+        teacherName: teacher.name
+      });
+      
+      await syncToServer({
+        classes: updatedGlobalClasses,
+        matches: globalData.matches,
+        currentTeacher: teacher
+      });
+      console.log("✅ DELETE: Student deletion synced");
+      toast.success("Ученик удален");
+    } catch (error) {
+      console.error("❌ DELETE: Failed to sync student deletion", error);
+      toast.error("Ошибка удаления ученика");
+    }
   };
 
   const handleUpdateClass = async (updatedClass: ClassRoom) => {
@@ -292,6 +499,10 @@ export const useAppData = () => {
       setClasses(loginClasses);
       setMatches(loginMatches);
       
+      // Обновляем prev refs после принудительной синхронизации
+      prevClassesRef.current = [...loginClasses];
+      prevMatchesRef.current = [...loginMatches];
+      
       const state: AppState = {
         teacher: teacher!,
         classes: loginClasses,
@@ -328,6 +539,7 @@ export const useAppData = () => {
     handleDeleteTeacher,
     handleDeleteClass,
     handleDeleteMatch,
+    handleDeleteStudent,
     handleUpdateClass,
     handleCreateTeacher,
     handleForceSync,

@@ -26,6 +26,7 @@ const Index = () => {
     handleDeleteTeacher,
     handleDeleteClass,
     handleDeleteMatch,
+    handleDeleteStudent,
     handleUpdateClass,
     handleCreateTeacher,
     handleForceSync,
@@ -69,6 +70,7 @@ const Index = () => {
           onDeleteTeacher={handleDeleteTeacher}
           onDeleteClass={handleDeleteClass}
           onDeleteMatch={handleDeleteMatch}
+          onDeleteStudent={handleDeleteStudent}
           onUpdateClass={handleUpdateClass}
           onCreateTeacher={handleCreateTeacher}
         />

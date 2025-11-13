@@ -35,6 +35,7 @@ interface AppContentProps {
   onDeleteTeacher: (teacherId: string) => void;
   onDeleteClass: (classId: string) => void;
   onDeleteMatch: (matchId: string) => void;
+  onDeleteStudent: (classId: string, studentId: string) => void;
   onUpdateClass: (updatedClass: ClassRoom) => void;
   onCreateTeacher: (teacher: Teacher) => void;
 }
@@ -59,6 +60,7 @@ export const AppContent = ({
   onDeleteTeacher,
   onDeleteClass,
   onDeleteMatch,
+  onDeleteStudent,
   onUpdateClass,
   onCreateTeacher,
 }: AppContentProps) => {
@@ -143,6 +145,8 @@ export const AppContent = ({
                   setClasses={setClasses} 
                   teacher={teacher}
                   allTeachers={globalData.teachers}
+                  onDeleteStudent={onDeleteStudent}
+                  onDeleteClass={onDeleteClass}
                 />
               </TabsContent>
 
@@ -170,6 +174,7 @@ export const AppContent = ({
                   classes={classes}
                   matches={matches}
                   setClasses={setClasses}
+                  teacher={teacher}
                 />
               </TabsContent>
 
