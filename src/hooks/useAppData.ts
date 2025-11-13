@@ -400,9 +400,9 @@ export const useAppData = () => {
       });
       
       await syncToServer({
+        teacher: teacher,
         classes: globalData.classes,
-        matches: updatedGlobalMatches,
-        currentTeacher: teacher
+        matches: updatedGlobalMatches
       });
       console.log("✅ DELETE: Match deletion synced");
       toast.success("Матч удалён");
