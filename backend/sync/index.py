@@ -146,8 +146,7 @@ def get_all_classes(cursor) -> List[Dict[str, Any]]:
                        'name', s.name, 
                        'points', s.points,
                        'achievements', s.achievements,
-                       'activities', s.activities,
-                       'softSkills', s.soft_skills
+                       'activities', s.activities
                    )
                    ORDER BY s.name
                ) FILTER (WHERE s.id IS NOT NULL), '[]') as students
@@ -293,18 +292,16 @@ def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[st
                     sachievements = "ARRAY[]::TEXT[]"
                 
                 sactivities = escape_sql(json.dumps(student.get('activities', [])))
-                ssoftskills = escape_sql(json.dumps(student.get('softSkills', [])))
                 
                 cursor.execute(f'''
-                    INSERT INTO t_p91106428_student_success_trac.students (id, name, class_id, points, achievements, activities, soft_skills)
-                    VALUES ({sid}, {sname}, {cid}, {spoints}, {sachievements}, {sactivities}::jsonb, {ssoftskills}::jsonb)
+                    INSERT INTO t_p91106428_student_success_trac.students (id, name, class_id, points, achievements, activities)
+                    VALUES ({sid}, {sname}, {cid}, {spoints}, {sachievements}, {sactivities}::jsonb)
                     ON CONFLICT (id) DO UPDATE SET
                         name = EXCLUDED.name,
                         class_id = EXCLUDED.class_id,
                         points = EXCLUDED.points,
                         achievements = EXCLUDED.achievements,
-                        activities = EXCLUDED.activities,
-                        soft_skills = EXCLUDED.soft_skills
+                        activities = EXCLUDED.activities
                 ''')
 
 
