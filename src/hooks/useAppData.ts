@@ -19,6 +19,10 @@ export const useAppData = () => {
   // Счетчик вызовов для мониторинга
   const syncCounterRef = useRef({ get: 0, post: 0, delete: 0, lastReset: Date.now() });
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Отслеживание предыдущего состояния для определения удалений
+  const prevClassesRef = useRef<ClassRoom[]>([]);
+  const prevMatchesRef = useRef<Match[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -57,6 +61,10 @@ export const useAppData = () => {
             setClasses(loginClasses);
             setMatches(loginMatches);
             setIsLoggedIn(true);
+            
+            // Инициализируем prev refs для отслеживания удалений
+            prevClassesRef.current = [...loginClasses];
+            prevMatchesRef.current = [...loginMatches];
             
             if (savedState.currentView === 'admin') {
               setShowAdmin(true);
@@ -112,13 +120,31 @@ export const useAppData = () => {
       let updatedGlobalMatches: Match[];
 
       if (teacher.role === "junior") {
-        const myClassIds = classes.map(c => c.id);
-        const otherClasses = globalData.classes.filter(c => !myClassIds.includes(c.id));
+        // Определяем удаленные классы (были в prev, нет в current)
+        const prevClassIds = prevClassesRef.current.map(c => c.id);
+        const currentClassIds = classes.map(c => c.id);
+        const deletedClassIds = prevClassIds.filter(id => !currentClassIds.includes(id));
+        
+        // Определяем удаленные матчи
+        const prevMatchIds = prevMatchesRef.current.map(m => m.id);
+        const currentMatchIds = matches.map(m => m.id);
+        const deletedMatchIds = prevMatchIds.filter(id => !currentMatchIds.includes(id));
+        
+        // Берем классы других учителей И удаляем те, что junior удалил
+        const otherClasses = globalData.classes.filter(c => 
+          !currentClassIds.includes(c.id) && !deletedClassIds.includes(c.id)
+        );
         updatedGlobalClasses = [...otherClasses, ...classes];
 
-        const myMatchIds = matches.map(m => m.id);
-        const otherMatches = globalData.matches.filter(m => !myMatchIds.includes(m.id));
+        // Берем матчи других учителей И удаляем те, что junior удалил
+        const otherMatches = globalData.matches.filter(m => 
+          !currentMatchIds.includes(m.id) && !deletedMatchIds.includes(m.id)
+        );
         updatedGlobalMatches = [...otherMatches, ...matches];
+        
+        // Обновляем prev refs для следующего сравнения
+        prevClassesRef.current = [...classes];
+        prevMatchesRef.current = [...matches];
       } else {
         updatedGlobalClasses = classes;
         updatedGlobalMatches = matches;
@@ -216,6 +242,10 @@ export const useAppData = () => {
       setClasses(loginClasses);
       setMatches(loginMatches);
       
+      // Инициализируем prev refs для отслеживания удалений
+      prevClassesRef.current = [...loginClasses];
+      prevMatchesRef.current = [...loginMatches];
+      
       const state: AppState = {
         teacher: loggedInTeacher,
         classes: loginClasses,
@@ -298,12 +328,22 @@ export const useAppData = () => {
   const handleDeleteClass = async (classId: string) => {
     const updatedClasses = classes.filter(c => c.id !== classId);
     setClasses(updatedClasses);
+    
+    // Обновляем globalData сразу для всех ролей
+    const updatedGlobalClasses = globalData.classes.filter(c => c.id !== classId);
+    setGlobalData({ ...globalData, classes: updatedGlobalClasses });
+    
     toast.success("Класс удалён");
   };
 
   const handleDeleteMatch = async (matchId: string) => {
     const updatedMatches = matches.filter(m => m.id !== matchId);
     setMatches(updatedMatches);
+    
+    // Обновляем globalData сразу для всех ролей
+    const updatedGlobalMatches = globalData.matches.filter(m => m.id !== matchId);
+    setGlobalData({ ...globalData, matches: updatedGlobalMatches });
+    
     toast.success("Матч удалён");
   };
 
@@ -348,6 +388,10 @@ export const useAppData = () => {
       
       setClasses(loginClasses);
       setMatches(loginMatches);
+      
+      // Обновляем prev refs после принудительной синхронизации
+      prevClassesRef.current = [...loginClasses];
+      prevMatchesRef.current = [...loginMatches];
       
       const state: AppState = {
         teacher: teacher!,
