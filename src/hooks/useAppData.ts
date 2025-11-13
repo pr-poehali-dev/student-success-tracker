@@ -339,6 +339,8 @@ export const useAppData = () => {
   };
 
   const handleDeleteClass = async (classId: string) => {
+    console.log("🗑️ handleDeleteClass called:", { classId, classesCount: classes.length, globalClassesCount: globalData.classes.length });
+    
     const updatedClasses = classes.filter(c => c.id !== classId);
     setClasses(updatedClasses);
     
@@ -349,11 +351,21 @@ export const useAppData = () => {
     
     // Синхронизируем сразу без debounce
     try {
-      console.log("🔄 DELETE: Syncing class deletion to server...");
+      if (!teacher) {
+        console.error("❌ DELETE: No teacher found");
+        toast.error("Ошибка: учитель не авторизован");
+        return;
+      }
+      
+      console.log("🔄 DELETE: Syncing class deletion to server...", {
+        updatedClassesCount: updatedGlobalClasses.length,
+        teacherName: teacher.name
+      });
+      
       await syncToServer({
         classes: updatedGlobalClasses,
         matches: globalData.matches,
-        currentTeacher: teacher!
+        currentTeacher: teacher
       });
       console.log("✅ DELETE: Class deletion synced");
       toast.success("Класс удалён");
@@ -364,6 +376,8 @@ export const useAppData = () => {
   };
 
   const handleDeleteMatch = async (matchId: string) => {
+    console.log("🗑️ handleDeleteMatch called:", { matchId, matchesCount: matches.length, globalMatchesCount: globalData.matches.length });
+    
     const updatedMatches = matches.filter(m => m.id !== matchId);
     setMatches(updatedMatches);
     
@@ -374,11 +388,21 @@ export const useAppData = () => {
     
     // Синхронизируем сразу без debounce
     try {
-      console.log("🔄 DELETE: Syncing match deletion to server...");
+      if (!teacher) {
+        console.error("❌ DELETE: No teacher found");
+        toast.error("Ошибка: учитель не авторизован");
+        return;
+      }
+      
+      console.log("🔄 DELETE: Syncing match deletion to server...", {
+        updatedMatchesCount: updatedGlobalMatches.length,
+        teacherName: teacher.name
+      });
+      
       await syncToServer({
         classes: globalData.classes,
         matches: updatedGlobalMatches,
-        currentTeacher: teacher!
+        currentTeacher: teacher
       });
       console.log("✅ DELETE: Match deletion synced");
       toast.success("Матч удалён");
@@ -389,6 +413,8 @@ export const useAppData = () => {
   };
 
   const handleDeleteStudent = async (classId: string, studentId: string) => {
+    console.log("🗑️ handleDeleteStudent called:", { classId, studentId, classesCount: classes.length });
+    
     const updatedClasses = classes.map(cls => 
       cls.id === classId 
         ? { ...cls, students: cls.students.filter(s => s.id !== studentId) }
@@ -407,11 +433,21 @@ export const useAppData = () => {
     
     // Синхронизируем сразу без debounce
     try {
-      console.log("🔄 DELETE: Syncing student deletion to server...");
+      if (!teacher) {
+        console.error("❌ DELETE: No teacher found");
+        toast.error("Ошибка: учитель не авторизован");
+        return;
+      }
+      
+      console.log("🔄 DELETE: Syncing student deletion to server...", {
+        updatedClassesCount: updatedGlobalClasses.length,
+        teacherName: teacher.name
+      });
+      
       await syncToServer({
         classes: updatedGlobalClasses,
         matches: globalData.matches,
-        currentTeacher: teacher!
+        currentTeacher: teacher
       });
       console.log("✅ DELETE: Student deletion synced");
       toast.success("Ученик удален");

@@ -146,6 +146,7 @@ export const AppContent = ({
                   teacher={teacher}
                   allTeachers={globalData.teachers}
                   onDeleteStudent={onDeleteStudent}
+                  onDeleteClass={onDeleteClass}
                 />
               </TabsContent>
 
