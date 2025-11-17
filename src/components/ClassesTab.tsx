@@ -143,6 +143,17 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, attendan
   };
 
   const openAttendanceDialog = (studentId: string) => {
+    // Если студент уже отмечен как отсутствующий - удаляем все его отметки
+    if (isStudentAbsent(studentId)) {
+      const studentAttendance = attendance.filter(a => a.studentId === studentId);
+      if (studentAttendance.length > 0) {
+        setAttendance(attendance.filter(a => a.studentId !== studentId));
+        toast.success(`Удалено отметок: ${studentAttendance.length}`);
+      }
+      return;
+    }
+    
+    // Если студент не отмечен - открываем диалог для выбора даты
     setSelectedStudentForAttendance(studentId);
     setAttendanceDate("");
     setIsAttendanceDialogOpen(true);
