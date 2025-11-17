@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
@@ -5,6 +6,16 @@ import { ClassRoom, Teacher } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ClassCardProps {
   classRoom: ClassRoom;
@@ -39,6 +50,22 @@ export const ClassCard = ({
   setNewStudentName,
   onAddStudent
 }: ClassCardProps) => {
+  const [deleteStudentDialogOpen, setDeleteStudentDialogOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<{ id: string; name: string } | null>(null);
+
+  const handleDeleteClick = (studentId: string, studentName: string) => {
+    setStudentToDelete({ id: studentId, name: studentName });
+    setDeleteStudentDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (studentToDelete) {
+      onDeleteStudent(classRoom.id, studentToDelete.id);
+      setDeleteStudentDialogOpen(false);
+      setStudentToDelete(null);
+    }
+  };
+
   return (
     <Card className="p-6 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start mb-4">
@@ -164,7 +191,7 @@ export const ClassCard = ({
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => onDeleteStudent(classRoom.id, student.id)}
+                  onClick={() => handleDeleteClick(student.id, student.name)}
                 >
                   <Icon name="X" size={16} />
                 </Button>
@@ -173,6 +200,26 @@ export const ClassCard = ({
           ))}
         </div>
       )}
+
+      <AlertDialog open={deleteStudentDialogOpen} onOpenChange={setDeleteStudentDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить ученика?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Уверены, что хотите удалить {studentToDelete?.name}? Это действие нельзя будет отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
