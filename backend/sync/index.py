@@ -2,8 +2,29 @@ import json
 import os
 import psycopg2
 from typing import Dict, Any, List
+from datetime import date, datetime
 
 SCHEMA = 't_p91106428_student_success_trac'
+
+def convert_dates_to_strings(obj: Any) -> Any:
+    """Recursively convert date/datetime objects to ISO format strings"""
+    if isinstance(obj, (date, datetime)):
+        return obj.isoformat()
+    elif isinstance(obj, dict):
+        return {k: convert_dates_to_strings(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_dates_to_strings(item) for item in obj]
+    return obj
+
+def safe_date_to_string(date_obj: Any) -> Any:
+    """Safely convert date/datetime to string, or return as-is if already string"""
+    if date_obj is None:
+        return None
+    if isinstance(date_obj, str):
+        return date_obj
+    if isinstance(date_obj, (date, datetime)):
+        return date_obj.isoformat()
+    return date_obj
 
 def escape_sql(value: Any) -> str:
     """Escape values for simple query protocol"""
@@ -62,6 +83,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'matches': matches_data,
                 'attendance': attendance_data
             }
+            
+            # Convert all date objects to strings before JSON serialization
+            result = convert_dates_to_strings(result)
             
             return {
                 'statusCode': 200,
@@ -192,7 +216,7 @@ def get_all_matches(cursor) -> List[Dict[str, Any]]:
             dates_by_match[match_id] = []
         dates_by_match[match_id].append({
             'id': date_row[0],
-            'date': date_row[1],
+            'date': safe_date_to_string(date_row[1]),
             'time': date_row[2]
         })
     
@@ -222,10 +246,10 @@ def get_all_matches(cursor) -> List[Dict[str, Any]]:
             'team1': teams_data.get(team1_id, {'id': team1_id, 'name': '', 'members': []}),
             'team2': teams_data.get(team2_id, {'id': team2_id, 'name': '', 'members': []}),
             'result': row[4],
-            'date': row[5],
+            'date': safe_date_to_string(row[5]),
             'completed': row[6],
             'createdBy': row[7],
-            'createdAt': row[8].isoformat() if row[8] else None,
+            'createdAt': safe_date_to_string(row[8]),
             'scheduledDates': dates_by_match.get(match_id, [])
         })
     
@@ -424,8 +448,8 @@ def get_all_attendance(cursor) -> List[Dict[str, Any]]:
         attendance.append({
             'id': row[0],
             'studentId': row[1],
-            'date': row[2],
-            'createdAt': row[3].isoformat() if row[3] else None
+            'date': safe_date_to_string(row[2]),
+            'createdAt': safe_date_to_string(row[3])
         })
     
     return attendance
