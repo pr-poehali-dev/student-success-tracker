@@ -143,13 +143,12 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, attendan
   };
 
   const openAttendanceDialog = (studentId: string) => {
-    // Если студент уже отмечен как отсутствующий - удаляем все его отметки
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Если студент уже отмечен как отсутствующий СЕГОДНЯ - удаляем только сегодняшнюю отметку
     if (isStudentAbsent(studentId)) {
-      const studentAttendance = attendance.filter(a => a.studentId === studentId);
-      if (studentAttendance.length > 0) {
-        setAttendance(attendance.filter(a => a.studentId !== studentId));
-        toast.success(`Удалено отметок: ${studentAttendance.length}`);
-      }
+      setAttendance(attendance.filter(a => !(a.studentId === studentId && a.date === today)));
+      toast.success("Отметка \"Н\" на сегодня снята");
       return;
     }
     
@@ -186,7 +185,8 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, attendan
   };
 
   const isStudentAbsent = (studentId: string): boolean => {
-    return attendance.some(a => a.studentId === studentId);
+    const today = new Date().toISOString().split('T')[0];
+    return attendance.some(a => a.studentId === studentId && a.date === today);
   };
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
