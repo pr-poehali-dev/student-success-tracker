@@ -422,13 +422,35 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, onDelete
                           </div>
                         </div>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => deleteStudent(classRoom.id, student.id)}
-                      >
-                        <Icon name="X" size={16} />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant={student.attendance ? "destructive" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            setClasses(classes.map(cls => 
+                              cls.id === classRoom.id 
+                                ? {
+                                    ...cls,
+                                    students: cls.students.map(s => 
+                                      s.id === student.id 
+                                        ? { ...s, attendance: !s.attendance }
+                                        : s
+                                    )
+                                  }
+                                : cls
+                            ));
+                          }}
+                        >
+                          Н
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => deleteStudent(classRoom.id, student.id)}
+                        >
+                          <Icon name="X" size={16} />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -40,6 +40,7 @@ export interface Student {
   achievements: string[];
   activities?: ActivityRecord[];
   softSkills?: SoftSkillRating[];
+  attendance?: boolean;
 }
 
 export interface ClassRoom {

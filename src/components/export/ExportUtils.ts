@@ -52,6 +52,7 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [])
       return {
         "ФИО": student.name,
         "Класс": cls.name,
+        "Посещаемость": student.attendance ? "Н" : "",
         "Люмосити (баллы)": lumosityTotal,
         "Робо (время)": formatTime(roboTotal),
         "Спорт Побед": sportWins,
