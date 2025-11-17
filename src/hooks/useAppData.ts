@@ -156,17 +156,21 @@ export const useAppData = () => {
 
       const hasClassChanges = JSON.stringify(globalData.classes) !== JSON.stringify(updatedGlobalClasses);
       const hasMatchChanges = JSON.stringify(globalData.matches) !== JSON.stringify(updatedGlobalMatches);
+      const hasAttendanceChanges = JSON.stringify(globalData.attendance) !== JSON.stringify(attendance);
 
       console.log("🔍 [DEBUG] Checking for changes:", {
         hasClassChanges,
         hasMatchChanges,
+        hasAttendanceChanges,
         currentGlobalClasses: globalData.classes.map(c => c.id),
         updatedGlobalClasses: updatedGlobalClasses.map(c => c.id),
         currentGlobalMatches: globalData.matches.map(m => m.id),
-        updatedGlobalMatches: updatedGlobalMatches.map(m => m.id)
+        updatedGlobalMatches: updatedGlobalMatches.map(m => m.id),
+        currentAttendance: globalData.attendance.length,
+        updatedAttendance: attendance.length
       });
 
-      if (hasClassChanges || hasMatchChanges) {
+      if (hasClassChanges || hasMatchChanges || hasAttendanceChanges) {
         // Мониторинг: логируем попытку синхронизации
         const now = Date.now();
         if (now - syncCounterRef.current.lastReset > 60000) {
@@ -182,8 +186,10 @@ export const useAppData = () => {
         console.log("🔄 [DEBOUNCED] Auto-syncing to server:", {
           classesCount: updatedGlobalClasses.length,
           matchesCount: updatedGlobalMatches.length,
+          attendanceCount: attendance.length,
           hasClassChanges,
           hasMatchChanges,
+          hasAttendanceChanges,
           timestamp: new Date().toLocaleTimeString(),
           classIds: updatedGlobalClasses.map(c => c.id),
           matchIds: updatedGlobalMatches.map(m => m.id)
@@ -211,7 +217,8 @@ export const useAppData = () => {
           const newGlobalData: GlobalData = {
             teachers: updatedTeachers,
             classes: updatedGlobalClasses,
-            matches: updatedGlobalMatches
+            matches: updatedGlobalMatches,
+            attendance: attendance
           };
           setGlobalData(newGlobalData);
           
