@@ -9,16 +9,18 @@ import { TeamsTab } from "@/components/TeamsTab";
 import { SoftSkillsTab } from "@/components/SoftSkillsTab";
 import { TeacherProfile } from "@/components/TeacherProfile";
 import { AdminPanel } from "@/components/AdminPanel";
-import { ClassRoom, Teacher, Match } from "@/types";
+import { ClassRoom, Teacher, Match, AttendanceRecord } from "@/types";
 
 interface AppContentProps {
   teacher: Teacher;
   classes: ClassRoom[];
   matches: Match[];
+  attendance: AttendanceRecord[];
   globalData: {
     teachers: Teacher[];
     classes: ClassRoom[];
     matches: Match[];
+    attendance: AttendanceRecord[];
   };
   activeTab: string;
   showProfile: boolean;
@@ -26,6 +28,7 @@ interface AppContentProps {
   isAdmin: boolean;
   setClasses: (classes: ClassRoom[]) => void;
   setMatches: (matches: Match[]) => void;
+  setAttendance: (attendance: AttendanceRecord[]) => void;
   setActiveTab: (tab: string) => void;
   setShowProfile: (show: boolean) => void;
   setShowAdmin: (show: boolean) => void;
@@ -44,6 +47,7 @@ export const AppContent = ({
   teacher,
   classes,
   matches,
+  attendance,
   globalData,
   activeTab,
   showProfile,
@@ -51,6 +55,7 @@ export const AppContent = ({
   isAdmin,
   setClasses,
   setMatches,
+  setAttendance,
   setActiveTab,
   setShowProfile,
   setShowAdmin,
@@ -145,6 +150,8 @@ export const AppContent = ({
                   setClasses={setClasses} 
                   teacher={teacher}
                   allTeachers={globalData.teachers}
+                  attendance={attendance}
+                  setAttendance={setAttendance}
                   onDeleteStudent={onDeleteStudent}
                   onDeleteClass={onDeleteClass}
                 />
@@ -182,7 +189,7 @@ export const AppContent = ({
                 <ExportTab 
                   classes={classes}
                   matches={matches}
-                  teacher={teacher}
+                  attendance={attendance}
                 />
               </TabsContent>
             </div>

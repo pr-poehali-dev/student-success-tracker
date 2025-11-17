@@ -1,4 +1,4 @@
-import { ClassRoom, Match } from "@/types";
+import { ClassRoom, Match, AttendanceRecord } from "@/types";
 import * as XLSX from "xlsx";
 
 const formatTime = (seconds: number): string => {
@@ -30,7 +30,7 @@ const getGameTypeName = (gameType: string | undefined): string => {
   return gameType ? gameLabels[gameType] || "-" : "-";
 };
 
-export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = []) => {
+export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [], attendance: AttendanceRecord[] = []) => {
   const workbook = XLSX.utils.book_new();
 
   const summaryData = classes.flatMap(cls =>
@@ -49,10 +49,13 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [])
       const sportCaptain = sportActivities.filter(a => a.role === "captain").length;
       const sportPlayer = sportActivities.filter(a => a.role === "player").length;
 
+      const studentAbsences = attendance.filter(a => a.studentId === student.id);
+      const absenceDates = studentAbsences.map(a => new Date(a.date).toLocaleDateString('ru-RU')).join(', ');
+
       return {
         "ФИО": student.name,
         "Класс": cls.name,
-        "Посещаемость": student.attendance ? "Н" : "",
+        "Посещаемость": absenceDates || "",
         "Люмосити (баллы)": lumosityTotal,
         "Робо (время)": formatTime(roboTotal),
         "Спорт Побед": sportWins,
@@ -292,7 +295,7 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [])
   return workbook;
 };
 
-export const createClassExcelWorkbook = (classRoom: ClassRoom, matches: Match[] = []) => {
+export const createClassExcelWorkbook = (classRoom: ClassRoom, matches: Match[] = [], attendance: AttendanceRecord[] = []) => {
   const workbook = XLSX.utils.book_new();
 
   const summaryData = classRoom.students.map(student => {
@@ -310,9 +313,13 @@ export const createClassExcelWorkbook = (classRoom: ClassRoom, matches: Match[] 
     const sportCaptain = sportActivities.filter(a => a.role === "captain").length;
     const sportPlayer = sportActivities.filter(a => a.role === "player").length;
 
+    const studentAbsences = attendance.filter(a => a.studentId === student.id);
+    const absenceDates = studentAbsences.map(a => new Date(a.date).toLocaleDateString('ru-RU')).join(', ');
+
     return {
       "ФИО": student.name,
       "Класс": classRoom.name,
+      "Посещаемость": absenceDates || "",
       "Люмосити (баллы)": lumosityTotal,
       "Робо (время)": formatTime(roboTotal),
       "Спорт Побед": sportWins,

@@ -54,11 +54,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             teachers_data = get_all_teachers(cursor)
             classes_data = get_all_classes(cursor)
             matches_data = get_all_matches(cursor)
+            attendance_data = get_all_attendance(cursor)
             
             result = {
                 'teachers': teachers_data,
                 'classes': classes_data,
-                'matches': matches_data
+                'matches': matches_data,
+                'attendance': attendance_data
             }
             
             return {
@@ -78,6 +80,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             if 'classes' in body_data:
                 save_classes(cursor, body_data['classes'], current_teacher)
+            
+            if 'attendance' in body_data:
+                save_attendance(cursor, body_data['attendance'])
             
             if 'matches' in body_data:
                 save_matches(cursor, body_data['matches'], current_teacher)
@@ -405,3 +410,44 @@ def save_team(cursor, team: Dict[str, Any]) -> str:
             ''')
     
     return team['id']
+
+
+def get_all_attendance(cursor) -> List[Dict[str, Any]]:
+    cursor.execute('''
+        SELECT id, student_id, date, created_at
+        FROM t_p91106428_student_success_trac.attendance
+        ORDER BY date DESC
+    ''')
+    
+    attendance = []
+    for row in cursor.fetchall():
+        attendance.append({
+            'id': row[0],
+            'studentId': row[1],
+            'date': row[2],
+            'createdAt': row[3].isoformat() if row[3] else None
+        })
+    
+    return attendance
+
+
+def save_attendance(cursor, attendance_list: List[Dict[str, Any]]) -> None:
+    if not attendance_list:
+        return
+    
+    cursor.execute('DELETE FROM t_p91106428_student_success_trac.attendance')
+    
+    for att in attendance_list:
+        if not att.get('id'):
+            continue
+        
+        att_id = escape_sql(att['id'])
+        student_id = escape_sql(att['studentId'])
+        date = escape_sql(att['date'])
+        
+        cursor.execute(f'''
+            INSERT INTO t_p91106428_student_success_trac.attendance (id, student_id, date, created_at)
+            VALUES ({att_id}, {student_id}, {date}, NOW())
+            ON CONFLICT (student_id, date) DO UPDATE SET
+                id = EXCLUDED.id
+        ''')

@@ -1,4 +1,4 @@
-import { GlobalData, Teacher, ClassRoom, Match } from "@/types";
+import { GlobalData, Teacher, ClassRoom, Match, AttendanceRecord } from "@/types";
 
 const SYNC_API_URL = "https://functions.poehali.dev/5f412d00-6e28-4197-9c9d-c71b82e72629";
 
@@ -70,7 +70,8 @@ export const syncFromServer = async (): Promise<GlobalData> => {
     return {
       teachers: data.teachers || [],
       classes: data.classes || [],
-      matches: data.matches || []
+      matches: data.matches || [],
+      attendance: data.attendance || []
     };
   } catch (error) {
     globalApiCounter.errors++;
@@ -83,6 +84,7 @@ export const syncToServer = async (data: {
   teacher?: Teacher;
   classes?: ClassRoom[];
   matches?: Match[];
+  attendance?: AttendanceRecord[];
   currentTeacher?: Teacher;
 }): Promise<void> => {
   const startTime = Date.now();
@@ -94,6 +96,7 @@ export const syncToServer = async (data: {
       hasTeacher: !!data.teacher,
       classesCount: data.classes?.length ?? 0,
       matchesCount: data.matches?.length ?? 0,
+      attendanceCount: data.attendance?.length ?? 0,
       currentTeacher: data.currentTeacher?.name
     });
     

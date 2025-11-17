@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
-import { ClassRoom, Student, Teacher } from "@/types";
+import { ClassRoom, Student, Teacher, AttendanceRecord } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -14,11 +14,13 @@ interface ClassesTabProps {
   setClasses: (classes: ClassRoom[]) => void;
   teacher: Teacher;
   allTeachers: Teacher[];
+  attendance: AttendanceRecord[];
+  setAttendance: (attendance: AttendanceRecord[]) => void;
   onDeleteStudent?: (classId: string, studentId: string) => void;
   onDeleteClass?: (classId: string) => void;
 }
 
-export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, onDeleteStudent, onDeleteClass }: ClassesTabProps) => {
+export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, attendance, setAttendance, onDeleteStudent, onDeleteClass }: ClassesTabProps) => {
   const [newClassName, setNewClassName] = useState("");
   const [newStudentName, setNewStudentName] = useState("");
   const [selectedClassId, setSelectedClassId] = useState<string>("");
@@ -27,6 +29,9 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, onDelete
   const [isEditGamesOpen, setIsEditGamesOpen] = useState(false);
   const [editingClassId, setEditingClassId] = useState<string>("");
   const [selectedGames, setSelectedGames] = useState<("valheim" | "civilization" | "factorio" | "sport" | "robo" | "lumosity")[]>([]);
+  const [isAttendanceDialogOpen, setIsAttendanceDialogOpen] = useState(false);
+  const [selectedStudentForAttendance, setSelectedStudentForAttendance] = useState<string>("");
+  const [attendanceDate, setAttendanceDate] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const gameOptions: { value: "valheim" | "civilization" | "factorio" | "sport" | "robo" | "lumosity"; label: string; icon: string }[] = [
@@ -148,6 +153,42 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, onDelete
       ));
       toast.success("Ученик удален");
     }
+  };
+
+  const openAttendanceDialog = (studentId: string) => {
+    setSelectedStudentForAttendance(studentId);
+    setAttendanceDate("");
+    setIsAttendanceDialogOpen(true);
+  };
+
+  const markAbsent = (date?: string) => {
+    if (!selectedStudentForAttendance) return;
+
+    const finalDate = date || new Date().toISOString().split('T')[0];
+    const existingRecord = attendance.find(
+      a => a.studentId === selectedStudentForAttendance && a.date === finalDate
+    );
+
+    if (existingRecord) {
+      setAttendance(attendance.filter(a => a.id !== existingRecord.id));
+      toast.success("Отметка \"Н\" снята");
+    } else {
+      const newAttendance: AttendanceRecord = {
+        id: `attendance-${Date.now()}`,
+        studentId: selectedStudentForAttendance,
+        date: finalDate,
+        createdAt: new Date().toISOString()
+      };
+      setAttendance([...attendance, newAttendance]);
+      toast.success("Отметка \"Н\" добавлена");
+    }
+
+    setIsAttendanceDialogOpen(false);
+    setSelectedStudentForAttendance("");
+  };
+
+  const isStudentAbsent = (studentId: string): boolean => {
+    return attendance.some(a => a.studentId === studentId);
   };
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -424,22 +465,9 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, onDelete
                       </div>
                       <div className="flex items-center gap-2">
                         <Button 
-                          variant={student.attendance ? "destructive" : "outline"}
+                          variant={isStudentAbsent(student.id) ? "destructive" : "outline"}
                           size="sm"
-                          onClick={() => {
-                            setClasses(classes.map(cls => 
-                              cls.id === classRoom.id 
-                                ? {
-                                    ...cls,
-                                    students: cls.students.map(s => 
-                                      s.id === student.id 
-                                        ? { ...s, attendance: !s.attendance }
-                                        : s
-                                    )
-                                  }
-                                : cls
-                            ));
-                          }}
+                          onClick={() => openAttendanceDialog(student.id)}
                         >
                           Н
                         </Button>
@@ -486,6 +514,42 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, onDelete
             <Button onClick={updateClassGames} className="w-full">
               Сохранить изменения
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAttendanceDialogOpen} onOpenChange={setIsAttendanceDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Отметить отсутствие</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Дата отсутствия</Label>
+              <Input
+                type="date"
+                value={attendanceDate}
+                onChange={(e) => setAttendanceDate(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Button 
+                onClick={() => markAbsent()} 
+                variant="outline"
+                className="w-full"
+              >
+                <Icon name="Calendar" size={16} className="mr-2" />
+                Сегодня
+              </Button>
+              <Button 
+                onClick={() => markAbsent(attendanceDate)}
+                disabled={!attendanceDate}
+                className="w-full"
+              >
+                Отметить выбранную дату
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

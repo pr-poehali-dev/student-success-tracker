@@ -8,6 +8,7 @@ const Index = () => {
     teacher,
     classes,
     matches,
+    attendance,
     globalData,
     activeTab,
     isLoggedIn,
@@ -15,6 +16,7 @@ const Index = () => {
     showAdmin,
     setClasses,
     setMatches,
+    setAttendance,
     setActiveTab,
     setShowProfile,
     setShowAdmin,
@@ -54,6 +56,7 @@ const Index = () => {
           teacher={teacher}
           classes={classes}
           matches={matches}
+          attendance={attendance}
           globalData={globalData}
           activeTab={activeTab}
           showProfile={showProfile}
@@ -61,6 +64,7 @@ const Index = () => {
           isAdmin={isAdmin}
           setClasses={setClasses}
           setMatches={setMatches}
+          setAttendance={setAttendance}
           setActiveTab={setActiveTab}
           setShowProfile={setShowProfile}
           setShowAdmin={setShowAdmin}

@@ -33,6 +33,13 @@ export interface SoftSkillRating {
   ratedBy: string;
 }
 
+export interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  date: string;
+  createdAt?: string;
+}
+
 export interface Student {
   id: string;
   name: string;
@@ -40,7 +47,6 @@ export interface Student {
   achievements: string[];
   activities?: ActivityRecord[];
   softSkills?: SoftSkillRating[];
-  attendance?: boolean;
 }
 
 export interface ClassRoom {
@@ -96,6 +102,7 @@ export interface AppState {
   teacher: Teacher;
   classes: ClassRoom[];
   matches: Match[];
+  attendance: AttendanceRecord[];
   currentView?: 'main' | 'profile' | 'admin';
   activeTab?: string;
 }
@@ -104,4 +111,5 @@ export interface GlobalData {
   teachers: Teacher[];
   classes: ClassRoom[];
   matches: Match[];
+  attendance: AttendanceRecord[];
 }

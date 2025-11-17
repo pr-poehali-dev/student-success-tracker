@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
-import { ClassRoom, Match } from "@/types";
+import { ClassRoom, Match, AttendanceRecord } from "@/types";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { createExcelWorkbook, createClassExcelWorkbook } from "./export/ExportUtils";
@@ -11,16 +11,17 @@ import { ClassExportList } from "./export/ClassExportList";
 interface ExportTabProps {
   classes: ClassRoom[];
   matches: Match[];
+  attendance: AttendanceRecord[];
 }
 
-export const ExportTab = ({ classes, matches }: ExportTabProps) => {
+export const ExportTab = ({ classes, matches, attendance }: ExportTabProps) => {
   const exportToExcel = () => {
     if (classes.length === 0) {
       toast.error("Нет данных для экспорта");
       return;
     }
 
-    const workbook = createExcelWorkbook(classes, matches);
+    const workbook = createExcelWorkbook(classes, matches, attendance);
     const date = new Date().toISOString().split('T')[0];
     XLSX.writeFile(workbook, `Успехи_учеников_${date}.xlsx`);
     
@@ -33,7 +34,7 @@ export const ExportTab = ({ classes, matches }: ExportTabProps) => {
       return;
     }
 
-    const workbook = createClassExcelWorkbook(classRoom, matches);
+    const workbook = createClassExcelWorkbook(classRoom, matches, attendance);
     const date = new Date().toISOString().split('T')[0];
     XLSX.writeFile(workbook, `Класс_${classRoom.name}_${date}.xlsx`);
     

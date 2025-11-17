@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ClassRoom, Teacher, Match, AppState, GlobalData } from "@/types";
+import { ClassRoom, Teacher, Match, AppState, GlobalData, AttendanceRecord } from "@/types";
 import { saveAppState, loadAppState, clearAppState } from "@/utils/storage";
 import { syncFromServer, syncToServer, deleteTeacherFromServer } from "@/utils/sync";
 import { toast } from "sonner";
@@ -8,7 +8,8 @@ export const useAppData = () => {
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [classes, setClasses] = useState<ClassRoom[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [globalData, setGlobalData] = useState<GlobalData>({ teachers: [], classes: [], matches: [] });
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [globalData, setGlobalData] = useState<GlobalData>({ teachers: [], classes: [], matches: [], attendance: [] });
   const [activeTab, setActiveTab] = useState("classes");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -35,7 +36,8 @@ export const useAppData = () => {
         console.log("✅ GET: Data loaded successfully", {
           teachers: serverData.teachers.length,
           classes: serverData.classes.length,
-          matches: serverData.matches.length
+          matches: serverData.matches.length,
+          attendance: serverData.attendance?.length || 0
         });
         setGlobalData(serverData);
         
@@ -60,6 +62,7 @@ export const useAppData = () => {
             setTeacher(savedState.teacher);
             setClasses(loginClasses);
             setMatches(loginMatches);
+            setAttendance(serverData.attendance || []);
             setIsLoggedIn(true);
             
             // Инициализируем prev refs для отслеживания удалений
@@ -100,11 +103,12 @@ export const useAppData = () => {
       teacher, 
       classes, 
       matches,
+      attendance,
       currentView,
       activeTab
     };
     saveAppState(state);
-  }, [teacher, classes, matches, isLoggedIn, isSyncing, showAdmin, showProfile, activeTab]);
+  }, [teacher, classes, matches, attendance, isLoggedIn, isSyncing, showAdmin, showProfile, activeTab]);
 
   useEffect(() => {
     if (!teacher || !isLoggedIn || isSyncing || isSyncInProgress) return;
@@ -193,6 +197,7 @@ export const useAppData = () => {
         syncToServer({
           classes: updatedGlobalClasses,
           matches: updatedGlobalMatches,
+          attendance: attendance,
           currentTeacher: teacher
         }).then(() => {
           console.log("✅ Auto-sync completed successfully");
@@ -226,7 +231,7 @@ export const useAppData = () => {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [teacher, classes, matches, isLoggedIn, isSyncing, isSyncInProgress, globalData.classes, globalData.matches, globalData.teachers]);
+  }, [teacher, classes, matches, attendance, isLoggedIn, isSyncing, isSyncInProgress, globalData.classes, globalData.matches, globalData.teachers]);
 
   const handleLogin = async (loggedInTeacher: Teacher) => {
     setTeacher(loggedInTeacher);
@@ -254,6 +259,7 @@ export const useAppData = () => {
       
       setClasses(loginClasses);
       setMatches(loginMatches);
+      setAttendance(serverData.attendance || []);
       
       // Инициализируем prev refs для отслеживания удалений
       prevClassesRef.current = [...loginClasses];
@@ -262,7 +268,8 @@ export const useAppData = () => {
       const state: AppState = {
         teacher: loggedInTeacher,
         classes: loginClasses,
-        matches: loginMatches
+        matches: loginMatches,
+        attendance: serverData.attendance || []
       };
       saveAppState(state);
       
@@ -365,6 +372,7 @@ export const useAppData = () => {
       await syncToServer({
         classes: updatedGlobalClasses,
         matches: globalData.matches,
+        attendance: attendance,
         currentTeacher: teacher
       });
       console.log("✅ DELETE: Class deletion synced");
@@ -447,6 +455,7 @@ export const useAppData = () => {
       await syncToServer({
         classes: updatedGlobalClasses,
         matches: globalData.matches,
+        attendance: attendance,
         currentTeacher: teacher
       });
       console.log("✅ DELETE: Student deletion synced");
@@ -498,6 +507,7 @@ export const useAppData = () => {
       
       setClasses(loginClasses);
       setMatches(loginMatches);
+      setAttendance(serverData.attendance || []);
       
       // Обновляем prev refs после принудительной синхронизации
       prevClassesRef.current = [...loginClasses];
@@ -506,7 +516,8 @@ export const useAppData = () => {
       const state: AppState = {
         teacher: teacher!,
         classes: loginClasses,
-        matches: loginMatches
+        matches: loginMatches,
+        attendance: serverData.attendance || []
       };
       saveAppState(state);
       
@@ -521,6 +532,7 @@ export const useAppData = () => {
     teacher,
     classes,
     matches,
+    attendance,
     globalData,
     activeTab,
     isLoggedIn,
@@ -528,6 +540,7 @@ export const useAppData = () => {
     showAdmin,
     setClasses,
     setMatches,
+    setAttendance,
     setActiveTab,
     setShowProfile,
     setShowAdmin,
