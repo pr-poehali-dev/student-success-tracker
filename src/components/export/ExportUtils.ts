@@ -23,6 +23,7 @@ const getGameTypeName = (gameType: string | undefined): string => {
     valheim: "Valheim",
     civilization: "Civilization",
     factorio: "Factorio",
+    simcity: "SimCity",
     sport: "Спорт",
     robo: "Робототехника"
   };
