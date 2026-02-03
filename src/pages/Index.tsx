@@ -32,6 +32,7 @@ const Index = () => {
     handleUpdateClass,
     handleCreateTeacher,
     handleForceSync,
+    handleSaveChanges,
   } = useAppData();
 
   if (!isLoggedIn || !teacher) {
@@ -77,6 +78,7 @@ const Index = () => {
           onDeleteStudent={handleDeleteStudent}
           onUpdateClass={handleUpdateClass}
           onCreateTeacher={handleCreateTeacher}
+          onSaveChanges={handleSaveChanges}
         />
       </div>
     </div>

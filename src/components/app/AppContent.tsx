@@ -41,6 +41,7 @@ interface AppContentProps {
   onDeleteStudent: (classId: string, studentId: string) => void;
   onUpdateClass: (updatedClass: ClassRoom) => void;
   onCreateTeacher: (teacher: Teacher) => void;
+  onSaveChanges: () => void;
 }
 
 export const AppContent = ({
@@ -68,6 +69,7 @@ export const AppContent = ({
   onDeleteStudent,
   onUpdateClass,
   onCreateTeacher,
+  onSaveChanges,
 }: AppContentProps) => {
   return (
     <>
@@ -154,6 +156,7 @@ export const AppContent = ({
                   setAttendance={setAttendance}
                   onDeleteStudent={onDeleteStudent}
                   onDeleteClass={onDeleteClass}
+                  onSaveChanges={onSaveChanges}
                 />
               </TabsContent>
 

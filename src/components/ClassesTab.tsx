@@ -18,9 +18,10 @@ interface ClassesTabProps {
   setAttendance: (attendance: AttendanceRecord[]) => void;
   onDeleteStudent?: (classId: string, studentId: string) => void;
   onDeleteClass?: (classId: string) => void;
+  onSaveChanges?: () => void;
 }
 
-export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, attendance, setAttendance, onDeleteStudent, onDeleteClass }: ClassesTabProps) => {
+export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, attendance, setAttendance, onDeleteStudent, onDeleteClass, onSaveChanges }: ClassesTabProps) => {
   const [newClassName, setNewClassName] = useState("");
   const [newStudentName, setNewStudentName] = useState("");
   const [selectedClassId, setSelectedClassId] = useState<string>("");
@@ -33,6 +34,7 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, attendan
   const [selectedStudentForAttendance, setSelectedStudentForAttendance] = useState<string>("");
   const [attendanceDate, setAttendanceDate] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const toggleGame = (game: "valheim" | "civilization" | "factorio" | "sport" | "robo" | "lumosity") => {
     setSelectedGames(prev => 
@@ -113,6 +115,36 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, attendan
     setNewStudentName("");
     setIsAddStudentOpen(false);
     toast.success(`Ученик "${newStudentName}" добавлен`);
+  };
+
+  const updateClassName = (classId: string, newName: string) => {
+    setClasses(classes.map(cls => 
+      cls.id === classId ? { ...cls, name: newName } : cls
+    ));
+    setHasUnsavedChanges(true);
+    toast.success("Название класса изменено. Не забудьте сохранить изменения!");
+  };
+
+  const updateStudentName = (classId: string, studentId: string, newName: string) => {
+    setClasses(classes.map(cls => 
+      cls.id === classId 
+        ? { 
+            ...cls, 
+            students: cls.students.map(s => 
+              s.id === studentId ? { ...s, name: newName } : s
+            ) 
+          }
+        : cls
+    ));
+    setHasUnsavedChanges(true);
+    toast.success("Имя ученика изменено. Не забудьте сохранить изменения!");
+  };
+
+  const handleSaveChanges = () => {
+    if (onSaveChanges) {
+      onSaveChanges();
+      setHasUnsavedChanges(false);
+    }
   };
 
   const deleteClass = (classId: string) => {
@@ -270,6 +302,21 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, attendan
 
   return (
     <div className="space-y-6">
+      {hasUnsavedChanges && onSaveChanges && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+            <Icon name="AlertTriangle" size={20} />
+            <span>У вас есть несохраненные изменения</span>
+          </div>
+          <Button 
+            onClick={handleSaveChanges}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Icon name="Save" size={16} className="mr-2" />
+            Сохранить изменения
+          </Button>
+        </div>
+      )}
       <div className="flex justify-between items-center flex-wrap gap-4">
         <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
           <Icon name="GraduationCap" size={28} />
@@ -323,6 +370,8 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, attendan
               newStudentName={newStudentName}
               setNewStudentName={setNewStudentName}
               onAddStudent={addStudent}
+              onUpdateClassName={updateClassName}
+              onUpdateStudentName={updateStudentName}
             />
           ))}
         </div>

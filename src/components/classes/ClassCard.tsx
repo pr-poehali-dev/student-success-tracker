@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
@@ -32,6 +32,8 @@ interface ClassCardProps {
   newStudentName: string;
   setNewStudentName: (name: string) => void;
   onAddStudent: () => void;
+  onUpdateClassName: (classId: string, newName: string) => void;
+  onUpdateStudentName: (classId: string, studentId: string, newName: string) => void;
 }
 
 export const ClassCard = ({
@@ -48,10 +50,21 @@ export const ClassCard = ({
   setSelectedClassId,
   newStudentName,
   setNewStudentName,
-  onAddStudent
+  onAddStudent,
+  onUpdateClassName,
+  onUpdateStudentName
 }: ClassCardProps) => {
   const [deleteStudentDialogOpen, setDeleteStudentDialogOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isEditingClassName, setIsEditingClassName] = useState(false);
+  const [editedClassName, setEditedClassName] = useState(classRoom.name);
+  const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
+  const [editedStudentName, setEditedStudentName] = useState("");
+
+  // Сбрасываем состояние редактирования при изменении класса
+  useEffect(() => {
+    setEditedClassName(classRoom.name);
+  }, [classRoom.name]);
 
   const handleDeleteClick = (studentId: string, studentName: string) => {
     setStudentToDelete({ id: studentId, name: studentName });
@@ -66,14 +79,73 @@ export const ClassCard = ({
     }
   };
 
+  const handleSaveClassName = () => {
+    if (editedClassName.trim() && editedClassName !== classRoom.name) {
+      onUpdateClassName(classRoom.id, editedClassName.trim());
+    }
+    setIsEditingClassName(false);
+  };
+
+  const handleStartEditStudent = (studentId: string, currentName: string) => {
+    setEditingStudentId(studentId);
+    setEditedStudentName(currentName);
+  };
+
+  const handleSaveStudentName = (studentId: string) => {
+    if (editedStudentName.trim()) {
+      onUpdateStudentName(classRoom.id, studentId, editedStudentName.trim());
+    }
+    setEditingStudentId(null);
+    setEditedStudentName("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingStudentId(null);
+    setEditedStudentName("");
+  };
+
+  const handleCancelClassNameEdit = () => {
+    setIsEditingClassName(false);
+    setEditedClassName(classRoom.name);
+  };
+
   return (
     <Card className="p-6 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
-            <Icon name="Users" size={24} className="text-primary" />
-            {classRoom.name}
-          </h3>
+        <div className="flex-1">
+          {isEditingClassName ? (
+            <div className="flex items-center gap-2 mb-2">
+              <Icon name="Users" size={24} className="text-primary" />
+              <Input
+                value={editedClassName}
+                onChange={(e) => setEditedClassName(e.target.value)}
+                className="max-w-xs"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') handleSaveClassName();
+                  if (e.key === 'Escape') handleCancelClassNameEdit();
+                }}
+                autoFocus
+              />
+              <Button size="sm" onClick={handleSaveClassName}>
+                <Icon name="Check" size={16} />
+              </Button>
+              <Button size="sm" variant="ghost" onClick={handleCancelClassNameEdit}>
+                <Icon name="X" size={16} />
+              </Button>
+            </div>
+          ) : (
+            <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <Icon name="Users" size={24} className="text-primary" />
+              {classRoom.name}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsEditingClassName(true)}
+              >
+                <Icon name="Pencil" size={14} />
+              </Button>
+            </h3>
+          )}
           <p className="text-muted-foreground">
             Учеников: {classRoom.students.length}
             {classRoom.responsibleTeacherId && (() => {
@@ -168,17 +240,47 @@ export const ClassCard = ({
               key={student.id}
               className="flex justify-between items-center p-3 bg-secondary/30 rounded-lg hover:bg-secondary/50 transition-colors"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-1">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                   <Icon name="User" size={20} className="text-primary" />
                 </div>
-                <div>
-                  <p className="font-medium">{student.name}</p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Icon name="Star" size={14} />
-                    <span>{student.points} баллов</span>
+                {editingStudentId === student.id ? (
+                  <div className="flex items-center gap-2 flex-1">
+                    <Input
+                      value={editedStudentName}
+                      onChange={(e) => setEditedStudentName(e.target.value)}
+                      className="max-w-xs"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') handleSaveStudentName(student.id);
+                        if (e.key === 'Escape') handleCancelEdit();
+                      }}
+                      autoFocus
+                    />
+                    <Button size="sm" onClick={() => handleSaveStudentName(student.id)}>
+                      <Icon name="Check" size={16} />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
+                      <Icon name="X" size={16} />
+                    </Button>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{student.name}</p>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleStartEditStudent(student.id, student.name)}
+                      >
+                        <Icon name="Pencil" size={12} />
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Icon name="Star" size={14} />
+                      <span>{student.points} баллов</span>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Button 

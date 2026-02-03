@@ -493,6 +493,65 @@ export const useAppData = () => {
     }
   };
 
+  const handleSaveChanges = async () => {
+    if (!teacher) {
+      toast.error("Ошибка: учитель не авторизован");
+      return;
+    }
+
+    try {
+      toast.loading("Сохранение изменений...", { id: 'save-toast' });
+      
+      let updatedGlobalClasses: ClassRoom[];
+      let updatedGlobalMatches: Match[];
+
+      if (teacher.role === "junior") {
+        const prevClassIds = prevClassesRef.current.map(c => c.id);
+        const currentClassIds = classes.map(c => c.id);
+        const deletedClassIds = prevClassIds.filter(id => !currentClassIds.includes(id));
+        
+        const prevMatchIds = prevMatchesRef.current.map(m => m.id);
+        const currentMatchIds = matches.map(m => m.id);
+        const deletedMatchIds = prevMatchIds.filter(id => !currentMatchIds.includes(id));
+        
+        const otherClasses = globalData.classes.filter(c => 
+          !currentClassIds.includes(c.id) && !deletedClassIds.includes(c.id)
+        );
+        updatedGlobalClasses = [...otherClasses, ...classes];
+
+        const otherMatches = globalData.matches.filter(m => 
+          !currentMatchIds.includes(m.id) && !deletedMatchIds.includes(m.id)
+        );
+        updatedGlobalMatches = [...otherMatches, ...matches];
+        
+        prevClassesRef.current = [...classes];
+        prevMatchesRef.current = [...matches];
+      } else {
+        updatedGlobalClasses = classes;
+        updatedGlobalMatches = matches;
+      }
+
+      await syncToServer({
+        classes: updatedGlobalClasses,
+        matches: updatedGlobalMatches,
+        attendance: attendance,
+        currentTeacher: teacher
+      });
+      
+      setGlobalData({
+        ...globalData,
+        classes: updatedGlobalClasses,
+        matches: updatedGlobalMatches,
+        attendance: attendance
+      });
+      
+      toast.success("Изменения успешно сохранены", { id: 'save-toast' });
+    } catch (error) {
+      console.error("Failed to save changes", error);
+      toast.error("Ошибка сохранения изменений", { id: 'save-toast' });
+    }
+  };
+
   const handleForceSync = async () => {
     try {
       toast.info("Синхронизация...");
@@ -563,5 +622,6 @@ export const useAppData = () => {
     handleUpdateClass,
     handleCreateTeacher,
     handleForceSync,
+    handleSaveChanges,
   };
 };
