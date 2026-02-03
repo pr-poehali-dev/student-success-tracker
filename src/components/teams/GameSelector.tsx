@@ -7,6 +7,7 @@ export const GAME_TYPES = [
   { id: "factorio", name: "Факторио", icon: "Factory", color: "bg-slate-100 text-slate-700" },
   { id: "sport", name: "Спорт", icon: "Trophy", color: "bg-orange-100 text-orange-700" },
   { id: "robo", name: "Робо", icon: "Bot", color: "bg-blue-100 text-blue-700" },
+  { id: "3dphysics", name: "3D физкультура", icon: "Box", color: "bg-purple-100 text-purple-700" },
 ];
 
 interface GameSelectorProps {
