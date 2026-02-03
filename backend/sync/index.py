@@ -200,7 +200,7 @@ def get_all_classes(cursor) -> List[Dict[str, Any]]:
 
 def get_all_matches(cursor) -> List[Dict[str, Any]]:
     cursor.execute('''
-        SELECT m.id, m.game_type, m.team1_id, m.team2_id, m.result, m.date, m.completed, m.created_by, m.created_at
+        SELECT m.id, m.game_type, m.team1_id, m.team2_id, m.result, m.date, m.completed, m.created_by, m.created_at, m.league
         FROM t_p91106428_student_success_trac.matches m
         ORDER BY m.created_at DESC
     ''')
@@ -250,7 +250,8 @@ def get_all_matches(cursor) -> List[Dict[str, Any]]:
             'completed': row[6],
             'createdBy': row[7],
             'createdAt': safe_date_to_string(row[8]),
-            'scheduledDates': dates_by_match.get(match_id, [])
+            'scheduledDates': dates_by_match.get(match_id, []),
+            'league': row[9]
         })
     
     return matches
@@ -368,14 +369,16 @@ def save_matches(cursor, matches: List[Dict[str, Any]], current_teacher: Dict[st
         date = escape_sql(match.get('date', ''))
         completed = escape_sql(match.get('completed', False))
         created_by = escape_sql(match.get('createdBy', ''))
+        league = escape_sql(match.get('league'))
         
         cursor.execute(f'''
-            INSERT INTO t_p91106428_student_success_trac.matches (id, game_type, team1_id, team2_id, result, date, completed, created_by, created_at)
-            VALUES ({mid}, {game_type}, {t1id}, {t2id}, {result}, {date}, {completed}, {created_by}, NOW())
+            INSERT INTO t_p91106428_student_success_trac.matches (id, game_type, team1_id, team2_id, result, date, completed, created_by, created_at, league)
+            VALUES ({mid}, {game_type}, {t1id}, {t2id}, {result}, {date}, {completed}, {created_by}, NOW(), {league})
             ON CONFLICT (id) DO UPDATE SET
                 game_type = EXCLUDED.game_type,
                 result = EXCLUDED.result,
-                completed = EXCLUDED.completed
+                completed = EXCLUDED.completed,
+                league = EXCLUDED.league
         ''')
         
         scheduled_dates = match.get('scheduledDates', [])
