@@ -280,14 +280,6 @@ def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[st
     if not classes:
         return
     
-    if current_teacher and current_teacher.get('role') == 'junior' and current_teacher.get('id'):
-        teacher_id = escape_sql(current_teacher['id'])
-        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.students WHERE class_id IN (SELECT id FROM t_p91106428_student_success_trac.classes WHERE responsible_teacher_id = {teacher_id})')
-        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.classes WHERE responsible_teacher_id = {teacher_id}')
-    else:
-        cursor.execute('DELETE FROM t_p91106428_student_success_trac.students')
-        cursor.execute('DELETE FROM t_p91106428_student_success_trac.classes')
-    
     for cls in classes:
         if not cls.get('id'):
             continue
@@ -338,18 +330,6 @@ def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[st
 
 
 def save_matches(cursor, matches: List[Dict[str, Any]], current_teacher: Dict[str, Any] = None) -> None:
-    if current_teacher and current_teacher.get('role') == 'junior' and current_teacher.get('name'):
-        teacher_name = escape_sql(current_teacher['name'])
-        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.scheduled_dates WHERE match_id IN (SELECT id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name})')
-        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name}')
-        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.team_members WHERE team_id IN (SELECT team1_id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name} UNION SELECT team2_id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name})')
-        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.teams WHERE id IN (SELECT team1_id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name} UNION SELECT team2_id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name})')
-    else:
-        cursor.execute('DELETE FROM t_p91106428_student_success_trac.scheduled_dates')
-        cursor.execute('DELETE FROM t_p91106428_student_success_trac.matches')
-        cursor.execute('DELETE FROM t_p91106428_student_success_trac.team_members')
-        cursor.execute('DELETE FROM t_p91106428_student_success_trac.teams')
-    
     for match in matches:
         if not match.get('id'):
             continue
@@ -458,8 +438,6 @@ def get_all_attendance(cursor) -> List[Dict[str, Any]]:
 def save_attendance(cursor, attendance_list: List[Dict[str, Any]]) -> None:
     if not attendance_list:
         return
-    
-    cursor.execute('DELETE FROM t_p91106428_student_success_trac.attendance')
     
     for att in attendance_list:
         if not att.get('id'):
