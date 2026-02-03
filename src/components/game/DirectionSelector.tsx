@@ -49,27 +49,38 @@ export const DirectionSelector = ({
           )}
           
           <div className="grid grid-cols-2 gap-3">
-            {ACHIEVEMENTS.map(achievement => (
-              <button
-                key={achievement.id}
-                className={`relative p-4 rounded-lg border-2 transition-all hover:scale-105 ${
-                  selectedDirection === achievement.id 
-                    ? 'border-primary bg-primary/10 shadow-lg' 
-                    : 'border-border hover:border-primary/50'
-                }`}
-                onClick={() => onSelectDirection(achievement.id)}
-              >
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <div className={`p-3 rounded-full ${achievement.color}`}>
-                    <Icon name={achievement.icon as any} size={24} />
-                  </div>
-                  <span className="text-sm font-medium">{achievement.name}</span>
-                  {selectedStudent?.achievements?.includes(achievement.id) && (
-                    <Badge variant="secondary" className="text-xs">✓</Badge>
+            {ACHIEVEMENTS.map(achievement => {
+              const isSelected = selectedDirection === achievement.id;
+              const hasAchievement = selectedStudent?.achievements?.includes(achievement.id);
+              
+              return (
+                <button
+                  key={achievement.id}
+                  className={`relative p-4 rounded-lg border-2 transition-all hover:scale-105 ${
+                    isSelected
+                      ? 'border-primary bg-primary/10 shadow-lg' 
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => onSelectDirection(achievement.id)}
+                >
+                  {hasAchievement && !isSelected && (
+                    <div className="absolute top-1 right-1">
+                      <div className="w-2 h-2 rounded-full bg-green-500" title="Уже получал"></div>
+                    </div>
                   )}
-                </div>
-              </button>
-            ))}
+                  
+                  <div className="flex flex-col items-center gap-2 text-center">
+                    <div className={`p-3 rounded-full ${achievement.color}`}>
+                      <Icon name={achievement.icon as any} size={24} />
+                    </div>
+                    <span className="text-sm font-medium">{achievement.name}</span>
+                    {isSelected && (
+                      <Badge variant="default" className="text-xs">Выбрано</Badge>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
