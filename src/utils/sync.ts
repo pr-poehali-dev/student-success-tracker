@@ -1,7 +1,6 @@
 import { GlobalData, Teacher, ClassRoom, Match, AttendanceRecord } from "@/types";
 
-// Use environment variable for API URL, fallback to local development
-const SYNC_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/sync";
+const SYNC_API_URL = "https://functions.poehali.dev/5f412d00-6e28-4197-9c9d-c71b82e72629";
 
 // Глобальный счетчик для мониторинга всех вызовов API
 const globalApiCounter = {
