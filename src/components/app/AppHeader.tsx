@@ -57,15 +57,6 @@ export const AppHeader = ({
             <Icon name="RefreshCw" size={16} className="mr-2" />
             Синхронизировать
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => {
-            const link = document.createElement('a');
-            link.href = '/import_example.xlsx';
-            link.download = 'import_example.xlsx';
-            link.click();
-          }}>
-            <Icon name="Download" size={16} className="mr-2" />
-            Скачать пример импорта
-          </DropdownMenuItem>
           <DropdownMenuItem onClick={onLogout}>
             <Icon name="LogOut" size={16} className="mr-2" />
             Выйти
