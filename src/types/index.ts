@@ -80,6 +80,7 @@ export interface Match {
   completed: boolean;
   createdBy: string;
   scheduledDates?: ScheduledDate[];
+  league?: "beginner" | "second" | "first" | "premiere";
 }
 
 export interface ScheduledDate {
