@@ -37,6 +37,8 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
   
   const [filterMatchCreator, setFilterMatchCreator] = useState<string>("all");
   const [filterMatchGame, setFilterMatchGame] = useState<string>("all");
+  const [filterMatchLeague, setFilterMatchLeague] = useState<string>("all");
+  const [selectedLeague, setSelectedLeague] = useState<string>("");
 
   const allStudents = classes.flatMap(cls => 
     cls.students.map(student => ({
@@ -161,7 +163,8 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
       scheduledDates,
       matches,
       allStudents,
-      teacher
+      teacher,
+      selectedLeague
     });
 
     if (newMatch) {
@@ -172,6 +175,7 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
       setTeam2Name("Команда 2");
       setSelectedGame("");
       setScheduledDates([]);
+      setSelectedLeague("");
     }
   };
 
@@ -256,13 +260,15 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
     return matches.filter(match => {
       const creatorMatch = filterMatchCreator === "all" || match.createdBy === filterMatchCreator;
       const gameMatch = filterMatchGame === "all" || match.gameType === filterMatchGame;
-      return creatorMatch && gameMatch;
+      const leagueMatch = filterMatchLeague === "all" || match.league === filterMatchLeague;
+      return creatorMatch && gameMatch && leagueMatch;
     });
-  }, [matches, filterMatchCreator, filterMatchGame]);
+  }, [matches, filterMatchCreator, filterMatchGame, filterMatchLeague]);
 
   const handleResetFilters = () => {
     setFilterMatchCreator("all");
     setFilterMatchGame("all");
+    setFilterMatchLeague("all");
   };
 
   return (
@@ -329,6 +335,52 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
 
           {selectedGame && team1Members.length > 0 && team2Members.length > 0 && (
             <>
+              <div>
+                <label className="block text-sm font-medium mb-2">Выберите лигу</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <button
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      selectedLeague === "beginner"
+                        ? "border-primary bg-primary/10 shadow-md"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setSelectedLeague("beginner")}
+                  >
+                    <span className="text-sm font-medium">Beginner League</span>
+                  </button>
+                  <button
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      selectedLeague === "second"
+                        ? "border-primary bg-primary/10 shadow-md"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setSelectedLeague("second")}
+                  >
+                    <span className="text-sm font-medium">Second League</span>
+                  </button>
+                  <button
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      selectedLeague === "first"
+                        ? "border-primary bg-primary/10 shadow-md"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setSelectedLeague("first")}
+                  >
+                    <span className="text-sm font-medium">First League</span>
+                  </button>
+                  <button
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      selectedLeague === "premiere"
+                        ? "border-primary bg-primary/10 shadow-md"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setSelectedLeague("premiere")}
+                  >
+                    <span className="text-sm font-medium">Premiere League</span>
+                  </button>
+                </div>
+              </div>
+
               <MatchScheduler 
                 scheduledDates={scheduledDates}
                 newDate={newDate}
@@ -343,7 +395,7 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
                 onClick={createMatch} 
                 className="w-full" 
                 size="lg"
-                disabled={scheduledDates.length === 0}
+                disabled={scheduledDates.length === 0 || !selectedLeague}
               >
                 <Icon name="Plus" size={18} className="mr-2" />
                 Создать матч
@@ -362,10 +414,12 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
         <MatchFilters 
           filterCreator={filterMatchCreator}
           filterGame={filterMatchGame}
+          filterLeague={filterMatchLeague}
           creators={uniqueCreators}
           games={GAME_TYPES}
           onFilterCreatorChange={setFilterMatchCreator}
           onFilterGameChange={setFilterMatchGame}
+          onFilterLeagueChange={setFilterMatchLeague}
           onReset={handleResetFilters}
         />
 

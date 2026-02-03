@@ -11,6 +11,7 @@ interface CreateMatchParams {
   matches: Match[];
   allStudents: Array<{ id: string; name: string }>;
   teacher: Teacher;
+  selectedLeague: string;
 }
 
 export const createMatchWithValidation = (params: CreateMatchParams): Match | null => {
@@ -23,7 +24,8 @@ export const createMatchWithValidation = (params: CreateMatchParams): Match | nu
     scheduledDates,
     matches,
     allStudents,
-    teacher
+    teacher,
+    selectedLeague
   } = params;
 
   if (!selectedGame) {
@@ -36,6 +38,10 @@ export const createMatchWithValidation = (params: CreateMatchParams): Match | nu
   }
   if (scheduledDates.length === 0) {
     toast.error("Добавьте хотя бы одну дату проведения матча");
+    return null;
+  }
+  if (!selectedLeague) {
+    toast.error("Выберите лигу");
     return null;
   }
 
@@ -90,7 +96,8 @@ export const createMatchWithValidation = (params: CreateMatchParams): Match | nu
     date: new Date().toISOString(),
     completed: false,
     createdBy: teacher.name,
-    scheduledDates: [...scheduledDates]
+    scheduledDates: [...scheduledDates],
+    league: selectedLeague as any
   };
 
   toast.success("Матч создан! Теперь можно назначить результат");

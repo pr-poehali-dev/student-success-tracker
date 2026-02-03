@@ -7,22 +7,33 @@ import { Button } from "@/components/ui/button";
 interface MatchFiltersProps {
   filterCreator: string;
   filterGame: string;
+  filterLeague: string;
   creators: string[];
   games: Array<{ id: string; name: string }>;
   onFilterCreatorChange: (value: string) => void;
   onFilterGameChange: (value: string) => void;
+  onFilterLeagueChange: (value: string) => void;
   onReset: () => void;
 }
 
 export const MatchFilters = ({
   filterCreator,
   filterGame,
+  filterLeague,
   creators,
   games,
   onFilterCreatorChange,
   onFilterGameChange,
+  onFilterLeagueChange,
   onReset
 }: MatchFiltersProps) => {
+  const leagues = [
+    { id: "beginner", name: "Beginner League" },
+    { id: "second", name: "Second League" },
+    { id: "first", name: "First League" },
+    { id: "premiere", name: "Premiere League" }
+  ];
+
   return (
     <Card className="p-4 mb-4">
       <div className="flex items-center gap-2 mb-3">
@@ -30,7 +41,7 @@ export const MatchFilters = ({
         <h4 className="font-semibold">Фильтры</h4>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <div>
           <Label className="text-xs mb-1 block">Создатель матча</Label>
           <Select value={filterCreator} onValueChange={onFilterCreatorChange}>
@@ -59,6 +70,23 @@ export const MatchFilters = ({
               {games.map(game => (
                 <SelectItem key={game.id} value={game.id}>
                   {game.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label className="text-xs mb-1 block">Лига</Label>
+          <Select value={filterLeague} onValueChange={onFilterLeagueChange}>
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Все" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все</SelectItem>
+              {leagues.map(league => (
+                <SelectItem key={league.id} value={league.id}>
+                  {league.name}
                 </SelectItem>
               ))}
             </SelectContent>

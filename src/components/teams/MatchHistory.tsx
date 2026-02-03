@@ -28,6 +28,16 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, teacher }: M
     setVisibleCount(prev => prev + 20);
   };
 
+  const getLeagueName = (league?: string) => {
+    const leagues: Record<string, string> = {
+      beginner: "Beginner League",
+      second: "Second League",
+      first: "First League",
+      premiere: "Premiere League"
+    };
+    return league ? leagues[league] : null;
+  };
+
   return (
     <>
       {matches.length === 0 ? (
@@ -51,6 +61,11 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, teacher }: M
                     </div>
                     <div>
                       <p className="font-semibold">{game?.name}</p>
+                      {match.league && (
+                        <p className="text-xs font-medium text-primary">
+                          {getLeagueName(match.league)}
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground">
                         Создан: {new Date(match.date).toLocaleString('ru-RU')}
                       </p>
