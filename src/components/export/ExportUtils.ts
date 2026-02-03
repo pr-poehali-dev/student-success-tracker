@@ -25,7 +25,8 @@ const getGameTypeName = (gameType: string | undefined): string => {
     factorio: "Factorio",
     simcity: "SimCity",
     sport: "Спорт",
-    robo: "Робототехника"
+    robo: "Робототехника",
+    "3dphysics": "3D физкультура"
   };
   return gameType ? gameLabels[gameType] || "-" : "-";
 };

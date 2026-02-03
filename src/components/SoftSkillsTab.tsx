@@ -18,7 +18,7 @@ export const SoftSkillsTab = ({ classes, matches, setClasses, teacher }: SoftSki
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
   const [selectedMatchId, setSelectedMatchId] = useState<string>("");
-  const [selectedGameType, setSelectedGameType] = useState<"valheim" | "civilization" | "factorio" | "sport" | "robo" | "lumosity" | "simcity" | "">("");
+  const [selectedGameType, setSelectedGameType] = useState<"valheim" | "civilization" | "factorio" | "sport" | "robo" | "lumosity" | "simcity" | "3dphysics" | "">("");
   const [ratings, setRatings] = useState<Omit<SoftSkillRating, 'date' | 'ratedBy'>>({
     leadership: 0,
     selfControl: 0,
@@ -202,7 +202,8 @@ export const SoftSkillsTab = ({ classes, matches, setClasses, teacher }: SoftSki
                   { value: "factorio", label: "Factorio", icon: "Factory" },
                   { value: "simcity", label: "SimCity", icon: "Building2" },
                   { value: "sport", label: "Спорт", icon: "Trophy" },
-                  { value: "robo", label: "Робо", icon: "Bot" }
+                  { value: "robo", label: "Робо", icon: "Bot" },
+                  { value: "3dphysics", label: "3D физкультура", icon: "Box" }
                 ].map(game => (
                   <Button
                     key={game.value}
