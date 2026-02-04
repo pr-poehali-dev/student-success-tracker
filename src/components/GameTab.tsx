@@ -63,24 +63,6 @@ export const GameTab = ({ classes, setClasses, teacher }: GameTabProps) => {
       return;
     }
 
-    setClasses(classes.map(cls => 
-      cls.id === selectedClassId 
-        ? {
-            ...cls,
-            students: cls.students.map(student =>
-              student.id === selectedStudentId
-                ? { 
-                    ...student, 
-                    achievements: (student.achievements || []).includes(achievementId)
-                      ? (student.achievements || [])
-                      : [...(student.achievements || []), achievementId]
-                  }
-                : student
-            )
-          }
-        : cls
-    ));
-
     const achievement = ACHIEVEMENTS.find(a => a.id === achievementId);
     setSelectedDirection(achievementId);
     toast.success(`Выбрано направление "${achievement?.name}" для ${selectedStudent?.name}`);
@@ -210,7 +192,10 @@ export const GameTab = ({ classes, setClasses, teacher }: GameTabProps) => {
                 ? { 
                     ...student, 
                     points: student.points + pointsToAdd,
-                    activities: [...(student.activities || []), activity]
+                    activities: [...(student.activities || []), activity],
+                    achievements: (student.achievements || []).includes(selectedDirection)
+                      ? (student.achievements || [])
+                      : [...(student.achievements || []), selectedDirection]
                   }
                 : student
             )
