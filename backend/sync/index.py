@@ -220,8 +220,8 @@ def get_all_matches(cursor) -> List[Dict[str, Any]]:
             'time': date_row[2]
         })
     
-    cursor.execute('SELECT id, name FROM t_p91106428_student_success_trac.teams')
-    teams_data = {row[0]: {'id': row[0], 'name': row[1], 'members': []} for row in cursor.fetchall()}
+    cursor.execute('SELECT id, name, background_color FROM t_p91106428_student_success_trac.teams')
+    teams_data = {row[0]: {'id': row[0], 'name': row[1], 'backgroundColor': row[2], 'members': []} for row in cursor.fetchall()}
     
     cursor.execute('SELECT team_id, student_id, student_name, class_name, role FROM t_p91106428_student_success_trac.team_members ORDER BY team_id, role DESC, student_name')
     for member_row in cursor.fetchall():
@@ -244,8 +244,8 @@ def get_all_matches(cursor) -> List[Dict[str, Any]]:
         matches.append({
             'id': match_id,
             'gameType': row[1],
-            'team1': teams_data.get(team1_id, {'id': team1_id, 'name': '', 'members': []}),
-            'team2': teams_data.get(team2_id, {'id': team2_id, 'name': '', 'members': []}),
+            'team1': teams_data.get(team1_id, {'id': team1_id, 'name': '', 'backgroundColor': '#FFFFFF', 'members': []}),
+            'team2': teams_data.get(team2_id, {'id': team2_id, 'name': '', 'backgroundColor': '#FFFFFF', 'members': []}),
             'result': row[4],
             'date': safe_date_to_string(row[5]),
             'completed': row[6],
@@ -420,11 +420,12 @@ def save_team(cursor, team: Dict[str, Any]) -> str:
     
     tid = escape_sql(team['id'])
     tname = escape_sql(team.get('name', ''))
+    tcolor = escape_sql(team.get('backgroundColor', '#FFFFFF'))
     
     cursor.execute(f'''
-        INSERT INTO t_p91106428_student_success_trac.teams (id, name, created_at)
-        VALUES ({tid}, {tname}, NOW())
-        ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name
+        INSERT INTO t_p91106428_student_success_trac.teams (id, name, background_color, created_at)
+        VALUES ({tid}, {tname}, {tcolor}, NOW())
+        ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, background_color = EXCLUDED.background_color
     ''')
     
     members = team.get('members', [])
