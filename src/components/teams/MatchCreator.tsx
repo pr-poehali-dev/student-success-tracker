@@ -7,6 +7,8 @@ interface CreateMatchParams {
   team2Members: TeamMember[];
   team1Name: string;
   team2Name: string;
+  team1Color: string;
+  team2Color: string;
   scheduledDates: ScheduledDate[];
   matches: Match[];
   allStudents: Array<{ id: string; name: string }>;
@@ -21,6 +23,8 @@ export const createMatchWithValidation = (params: CreateMatchParams): Match | nu
     team2Members,
     team1Name,
     team2Name,
+    team1Color,
+    team2Color,
     scheduledDates,
     matches,
     allStudents,
@@ -86,12 +90,14 @@ export const createMatchWithValidation = (params: CreateMatchParams): Match | nu
     team1: {
       id: Date.now().toString() + "-team1",
       name: team1Name,
-      members: team1Members
+      members: team1Members,
+      backgroundColor: team1Color
     },
     team2: {
       id: Date.now().toString() + "-team2",
       name: team2Name,
-      members: team2Members
+      members: team2Members,
+      backgroundColor: team2Color
     },
     date: new Date().toISOString(),
     completed: false,

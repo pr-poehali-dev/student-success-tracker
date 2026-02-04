@@ -68,6 +68,7 @@ export interface Team {
   id: string;
   name: string;
   members: TeamMember[];
+  backgroundColor?: string;
 }
 
 export interface DisciplineCounter {

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import Icon from "@/components/ui/icon";
 import { ClassRoom, TeamMember } from "@/types";
+import { TeamColorPicker } from "./TeamColorPicker";
 
 interface TeamBuilderProps {
   teamNumber: 1 | 2;
@@ -15,12 +16,14 @@ interface TeamBuilderProps {
   filterClass: string;
   availableStudents: Array<{ id: string; name: string; className: string; classId: string }>;
   classes: ClassRoom[];
+  teamColor: string;
   onTeamNameChange: (name: string) => void;
   onFilterClassChange: (className: string) => void;
   onStudentSelect: (studentId: string) => void;
   onAddStudent: () => void;
   onToggleRole: (studentId: string) => void;
   onRemoveStudent: (studentId: string) => void;
+  onTeamColorChange: (color: string) => void;
 }
 
 export const TeamBuilder = ({
@@ -31,12 +34,14 @@ export const TeamBuilder = ({
   filterClass,
   availableStudents,
   classes,
+  teamColor,
   onTeamNameChange,
   onFilterClassChange,
   onStudentSelect,
   onAddStudent,
   onToggleRole,
   onRemoveStudent,
+  onTeamColorChange,
 }: TeamBuilderProps) => {
   const borderColor = teamNumber === 1 ? "border-blue-200" : "border-red-200";
 
@@ -50,6 +55,12 @@ export const TeamBuilder = ({
           placeholder={`Команда ${teamNumber}`}
         />
       </div>
+
+      <TeamColorPicker 
+        selectedColor={teamColor}
+        onColorChange={onTeamColorChange}
+        teamNumber={teamNumber}
+      />
 
       <div className="mb-3">
         <Label>Фильтр по классу</Label>

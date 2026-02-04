@@ -126,7 +126,10 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, onUpdateCoun
                 )}
 
                 <div className="grid md:grid-cols-2 gap-4 mb-3">
-                  <div className={`p-3 rounded border-2 ${match.result === "team1" ? "border-green-500 bg-green-50" : "border-border"}`}>
+                  <div 
+                    className={`p-3 rounded border-2 ${match.result === "team1" ? "border-green-500" : "border-border"}`}
+                    style={{ backgroundColor: match.team1.backgroundColor || "transparent" }}
+                  >
                     <div className="flex items-center justify-between mb-2">
                       <p className="font-medium">{match.team1.name}</p>
                       <DisciplineHeader counters={match.disciplineCounters || []} />
@@ -169,7 +172,10 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, onUpdateCoun
                     </div>
                   </div>
 
-                  <div className={`p-3 rounded border-2 ${match.result === "team2" ? "border-green-500 bg-green-50" : "border-border"}`}>
+                  <div 
+                    className={`p-3 rounded border-2 ${match.result === "team2" ? "border-green-500" : "border-border"}`}
+                    style={{ backgroundColor: match.team2.backgroundColor || "transparent" }}
+                  >
                     <div className="flex items-center justify-between mb-2">
                       <p className="font-medium">{match.team2.name}</p>
                       <DisciplineHeader counters={match.disciplineCounters || []} />

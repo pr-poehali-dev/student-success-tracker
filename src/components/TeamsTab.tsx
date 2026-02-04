@@ -27,6 +27,8 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
   const [team2Members, setTeam2Members] = useState<TeamMember[]>([]);
   const [team1Name, setTeam1Name] = useState<string>("Команда 1");
   const [team2Name, setTeam2Name] = useState<string>("Команда 2");
+  const [team1Color, setTeam1Color] = useState<string>("#FFFFFF");
+  const [team2Color, setTeam2Color] = useState<string>("#FFFFFF");
   const [selectedStudentForTeam1, setSelectedStudentForTeam1] = useState<string>("");
   const [selectedStudentForTeam2, setSelectedStudentForTeam2] = useState<string>("");
   const [filterClassTeam1, setFilterClassTeam1] = useState<string>("all");
@@ -160,6 +162,8 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
       team2Members,
       team1Name,
       team2Name,
+      team1Color,
+      team2Color,
       scheduledDates,
       matches,
       allStudents,
@@ -173,6 +177,8 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
       setTeam2Members([]);
       setTeam1Name("Команда 1");
       setTeam2Name("Команда 2");
+      setTeam1Color("#FFFFFF");
+      setTeam2Color("#FFFFFF");
       setSelectedGame("");
       setScheduledDates([]);
       setSelectedLeague("");
@@ -317,12 +323,14 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
                 filterClass={filterClassTeam1}
                 availableStudents={availableStudentsTeam1}
                 classes={classes}
+                teamColor={team1Color}
                 onTeamNameChange={setTeam1Name}
                 onFilterClassChange={setFilterClassTeam1}
                 onStudentSelect={setSelectedStudentForTeam1}
                 onAddStudent={addToTeam1}
                 onToggleRole={toggleRoleTeam1}
                 onRemoveStudent={removeFromTeam1}
+                onTeamColorChange={setTeam1Color}
               />
 
               <TeamBuilder
@@ -333,12 +341,14 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
                 filterClass={filterClassTeam2}
                 availableStudents={availableStudentsTeam2}
                 classes={classes}
+                teamColor={team2Color}
                 onTeamNameChange={setTeam2Name}
                 onFilterClassChange={setFilterClassTeam2}
                 onStudentSelect={setSelectedStudentForTeam2}
                 onAddStudent={addToTeam2}
                 onToggleRole={toggleRoleTeam2}
                 onRemoveStudent={removeFromTeam2}
+                onTeamColorChange={setTeam2Color}
               />
             </div>
           )}
