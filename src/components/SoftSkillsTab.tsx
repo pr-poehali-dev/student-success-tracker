@@ -74,11 +74,6 @@ export const SoftSkillsTab = ({ classes, matches, setClasses, teacher }: SoftSki
       return;
     }
 
-    if (Object.values(ratings).some(r => r === 0)) {
-      toast.error("Оцените все критерии");
-      return;
-    }
-
     const newRating: SoftSkillRating = {
       ...ratings,
       matchId: selectedMatchId || undefined,
