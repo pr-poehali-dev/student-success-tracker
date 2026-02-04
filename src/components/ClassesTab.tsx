@@ -231,63 +231,52 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, attendan
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         
-        const classesSheet = workbook.Sheets['Классы'];
-        const studentsSheet = workbook.Sheets['Ученики'];
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const rawData = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
         
-        if (!classesSheet && !studentsSheet) {
-          toast.error("Файл должен содержать листы 'Классы' и/или 'Ученики'");
+        if (!rawData || rawData.length < 2) {
+          toast.error("Файл пустой или не содержит данных");
           return;
         }
 
         const importedClasses: ClassRoom[] = [...classes];
+        let addedStudents = 0;
+        let addedClasses = 0;
         
-        if (classesSheet) {
-          const classesData = XLSX.utils.sheet_to_json<{ Название: string }>(classesSheet);
-          classesData.forEach(row => {
-            if (row.Название && !importedClasses.find(c => c.name === row.Название)) {
-              importedClasses.push({
-                id: Date.now().toString() + Math.random(),
-                name: row.Название,
-                students: []
-              });
-            }
-          });
-        }
-
-        if (studentsSheet) {
-          const studentsData = XLSX.utils.sheet_to_json<{ 
-            ФИО: string; 
-            Класс: string;
-            Баллы?: number;
-          }>(studentsSheet);
+        for (let i = 1; i < rawData.length; i++) {
+          const row = rawData[i];
+          const className = row[0]?.toString().trim();
+          const studentName = row[1]?.toString().trim();
           
-          studentsData.forEach(row => {
-            if (!row.ФИО || !row.Класс) return;
-            
-            let targetClass = importedClasses.find(c => c.name === row.Класс);
-            
-            if (!targetClass) {
-              targetClass = {
-                id: Date.now().toString() + Math.random(),
-                name: row.Класс,
-                students: []
-              };
-              importedClasses.push(targetClass);
-            }
-            
-            if (!targetClass.students.find(s => s.name === row.ФИО)) {
-              targetClass.students.push({
-                id: Date.now().toString() + Math.random(),
-                name: row.ФИО,
-                points: row.Баллы || 0,
-                achievements: []
-              });
-            }
-          });
+          if (!className || !studentName) continue;
+          
+          let targetClass = importedClasses.find(c => c.name === className);
+          
+          if (!targetClass) {
+            targetClass = {
+              id: `class-${Date.now()}-${Math.random()}`,
+              name: className,
+              students: []
+            };
+            importedClasses.push(targetClass);
+            addedClasses++;
+          }
+          
+          if (!targetClass.students.find(s => s.name === studentName)) {
+            targetClass.students.push({
+              id: `student-${Date.now()}-${Math.random()}`,
+              name: studentName,
+              points: 0,
+              achievements: []
+            });
+            addedStudents++;
+          }
         }
 
         setClasses(importedClasses);
-        toast.success("Данные успешно импортированы из Excel");
+        toast.success(`Импортировано: ${addedClasses} классов, ${addedStudents} учеников`);
+        setHasUnsavedChanges(true);
       } catch (error) {
         console.error("Import error:", error);
         toast.error("Ошибка при импорте файла");
