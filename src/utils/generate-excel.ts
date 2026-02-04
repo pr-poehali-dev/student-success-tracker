@@ -38,12 +38,49 @@ export function generateExcelExample(): Blob {
   return new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }
 
+export function generateTeamsExcelExample(): Blob {
+  const data = [
+    ['Название команды', 'Имя участника'],
+    ['Команда Альфа', 'Иванов Иван'],
+    ['Команда Альфа', 'Петрова Мария'],
+    ['Команда Альфа', 'Сидоров Алексей'],
+    ['Команда Бета', 'Волкова Екатерина'],
+    ['Команда Бета', 'Зайцев Максим'],
+    ['Команда Бета', 'Соколова Ольга'],
+    ['Команда Гамма', 'Ковалёв Никита'],
+    ['Команда Гамма', 'Попова Софья'],
+    ['Команда Гамма', 'Павлов Егор'],
+    ['Команда Дельта', 'Виноградова Полина'],
+    ['Команда Дельта', 'Богданов Роман'],
+    ['Команда Дельта', 'Михайлова Кристина'],
+  ];
+
+  const worksheet = XLSX.utils.aoa_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Команды');
+
+  const wbout = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' });
+  return new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+
 export function downloadExcelExample() {
   const blob = generateExcelExample();
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = 'import-classes-example.xlsx';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+export function downloadTeamsExcelExample() {
+  const blob = generateTeamsExcelExample();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'import-teams-example.xlsx';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
