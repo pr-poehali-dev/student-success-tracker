@@ -108,10 +108,13 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, onUpdateCoun
 
                 {match.scheduledDates && match.scheduledDates.length > 0 && (
                   <div className="mb-3 p-3 bg-secondary/30 rounded">
-                    <p className="text-sm font-medium mb-2 flex items-center gap-2">
-                      <Icon name="Calendar" size={14} />
-                      Расписание:
-                    </p>
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="text-sm font-medium flex items-center gap-2">
+                        <Icon name="Calendar" size={14} />
+                        Расписание:
+                      </p>
+                      <DisciplineCounters match={match} onUpdateCounters={onUpdateCounters} compact />
+                    </div>
                     <div className="space-y-1">
                       {match.scheduledDates.map(schedule => (
                         <p key={schedule.id} className="text-xs text-muted-foreground">
@@ -234,8 +237,6 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, onUpdateCoun
                     </p>
                   </div>
                 )}
-
-                <DisciplineCounters match={match} onUpdateCounters={onUpdateCounters} />
               </Card>
             );
           })}
