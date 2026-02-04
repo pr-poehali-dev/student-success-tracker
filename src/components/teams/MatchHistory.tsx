@@ -6,7 +6,7 @@ import Icon from "@/components/ui/icon";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Match, Teacher, DisciplineCounter } from "@/types";
 import { GAME_TYPES } from "./GameSelector";
-import { DisciplineCounters } from "./DisciplineCounters";
+import { DisciplineCounters, DisciplineCountersRow, DisciplineHeader } from "./DisciplineCounters";
 
 interface MatchHistoryProps {
   matches: Match[];
@@ -124,30 +124,86 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, onUpdateCoun
 
                 <div className="grid md:grid-cols-2 gap-4 mb-3">
                   <div className={`p-3 rounded border-2 ${match.result === "team1" ? "border-green-500 bg-green-50" : "border-border"}`}>
-                    <p className="font-medium mb-2">{match.team1.name}</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-medium">{match.team1.name}</p>
+                      <DisciplineHeader counters={match.disciplineCounters || []} />
+                    </div>
                     <div className="space-y-1">
-                      {match.team1.members.map(member => (
-                        <div key={member.studentId} className="text-sm flex items-center gap-2">
-                          <span>{member.studentName}</span>
-                          {member.role === "captain" && (
-                            <Badge variant="secondary" className="text-xs">Капитан</Badge>
-                          )}
-                        </div>
-                      ))}
+                      {match.team1.members.map(member => {
+                        const updateScore = (disciplineIndex: number, studentId: string, delta: number) => {
+                          const counters = match.disciplineCounters || [];
+                          const updated = counters.map((counter, index) => {
+                            if (index !== disciplineIndex) return counter;
+                            const currentScore = counter.studentScores[studentId] || 0;
+                            return {
+                              ...counter,
+                              studentScores: {
+                                ...counter.studentScores,
+                                [studentId]: currentScore + delta
+                              }
+                            };
+                          });
+                          onUpdateCounters(match.id, updated);
+                        };
+
+                        return (
+                          <div key={member.studentId} className="text-sm flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span>{member.studentName}</span>
+                              {member.role === "captain" && (
+                                <Badge variant="secondary" className="text-xs">Капитан</Badge>
+                              )}
+                            </div>
+                            <DisciplineCountersRow 
+                              studentId={member.studentId}
+                              counters={match.disciplineCounters || []}
+                              onUpdateScore={updateScore}
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
                   <div className={`p-3 rounded border-2 ${match.result === "team2" ? "border-green-500 bg-green-50" : "border-border"}`}>
-                    <p className="font-medium mb-2">{match.team2.name}</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-medium">{match.team2.name}</p>
+                      <DisciplineHeader counters={match.disciplineCounters || []} />
+                    </div>
                     <div className="space-y-1">
-                      {match.team2.members.map(member => (
-                        <div key={member.studentId} className="text-sm flex items-center gap-2">
-                          <span>{member.studentName}</span>
-                          {member.role === "captain" && (
-                            <Badge variant="secondary" className="text-xs">Капитан</Badge>
-                          )}
-                        </div>
-                      ))}
+                      {match.team2.members.map(member => {
+                        const updateScore = (disciplineIndex: number, studentId: string, delta: number) => {
+                          const counters = match.disciplineCounters || [];
+                          const updated = counters.map((counter, index) => {
+                            if (index !== disciplineIndex) return counter;
+                            const currentScore = counter.studentScores[studentId] || 0;
+                            return {
+                              ...counter,
+                              studentScores: {
+                                ...counter.studentScores,
+                                [studentId]: currentScore + delta
+                              }
+                            };
+                          });
+                          onUpdateCounters(match.id, updated);
+                        };
+
+                        return (
+                          <div key={member.studentId} className="text-sm flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span>{member.studentName}</span>
+                              {member.role === "captain" && (
+                                <Badge variant="secondary" className="text-xs">Капитан</Badge>
+                              )}
+                            </div>
+                            <DisciplineCountersRow 
+                              studentId={member.studentId}
+                              counters={match.disciplineCounters || []}
+                              onUpdateScore={updateScore}
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

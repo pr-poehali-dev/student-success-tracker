@@ -11,6 +11,17 @@ interface DisciplineCountersProps {
   onUpdateCounters: (matchId: string, counters: DisciplineCounter[]) => void;
 }
 
+const DISCIPLINE_COLORS = [
+  { color: '#ef4444', label: 'red' },
+  { color: '#3b82f6', label: 'blue' },
+  { color: '#eab308', label: 'yellow' },
+  { color: '#22c55e', label: 'green' },
+  { color: '#a855f7', label: 'purple' },
+  { color: '#f97316', label: 'orange' },
+  { color: '#ec4899', label: 'pink' },
+  { color: '#06b6d4', label: 'cyan' },
+];
+
 export const DisciplineCounters = ({ match, onUpdateCounters }: DisciplineCountersProps) => {
   const [newDisciplineName, setNewDisciplineName] = useState("");
   const [isAddingDiscipline, setIsAddingDiscipline] = useState(false);
@@ -97,8 +108,8 @@ export const DisciplineCounters = ({ match, onUpdateCounters }: DisciplineCounte
               id="discipline-name"
               value={newDisciplineName}
               onChange={(e) => setNewDisciplineName(e.target.value)}
-              placeholder="Например: Активность, Тактика, Лидерство"
-              maxLength={50}
+              placeholder="Например: голы, пасы, активность"
+              maxLength={20}
             />
           </div>
           <div className="flex items-end gap-2">
@@ -125,96 +136,99 @@ export const DisciplineCounters = ({ match, onUpdateCounters }: DisciplineCounte
         </p>
       )}
 
-      {counters.map((counter, disciplineIndex) => (
-        <div key={disciplineIndex} className="p-3 bg-background rounded border space-y-3">
-          <div className="flex items-center justify-between">
-            <h5 className="font-medium">Дисциплина: {counter.disciplineName}</h5>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => removeDiscipline(disciplineIndex)}
-            >
-              <Icon name="Trash2" size={14} />
-            </Button>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm font-medium mb-2 text-muted-foreground">
-                {match.team1.name}
-              </p>
-              <div className="space-y-2">
-                {match.team1.members.map(member => {
-                  const score = counter.studentScores[member.studentId] || 0;
-                  return (
-                    <div key={member.studentId} className="flex items-center justify-between gap-2 p-2 rounded bg-secondary/30">
-                      <span className="text-sm flex-1">{member.studentName}</span>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateScore(disciplineIndex, member.studentId, -1)}
-                          className="h-7 w-7 p-0"
-                        >
-                          <Icon name="Minus" size={14} />
-                        </Button>
-                        <span className="text-sm font-semibold min-w-[2rem] text-center">
-                          {score}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateScore(disciplineIndex, member.studentId, 1)}
-                          className="h-7 w-7 p-0"
-                        >
-                          <Icon name="Plus" size={14} />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium mb-2 text-muted-foreground">
-                {match.team2.name}
-              </p>
-              <div className="space-y-2">
-                {match.team2.members.map(member => {
-                  const score = counter.studentScores[member.studentId] || 0;
-                  return (
-                    <div key={member.studentId} className="flex items-center justify-between gap-2 p-2 rounded bg-secondary/30">
-                      <span className="text-sm flex-1">{member.studentName}</span>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateScore(disciplineIndex, member.studentId, -1)}
-                          className="h-7 w-7 p-0"
-                        >
-                          <Icon name="Minus" size={14} />
-                        </Button>
-                        <span className="text-sm font-semibold min-w-[2rem] text-center">
-                          {score}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateScore(disciplineIndex, member.studentId, 1)}
-                          className="h-7 w-7 p-0"
-                        >
-                          <Icon name="Plus" size={14} />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+      {counters.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex gap-2 items-center">
+            <span className="text-xs font-medium text-muted-foreground">Управление дисциплинами:</span>
+            {counters.map((counter, index) => {
+              const colorConfig = DISCIPLINE_COLORS[index % DISCIPLINE_COLORS.length];
+              return (
+                <div key={index} className="flex items-center gap-1 px-2 py-1 rounded border" style={{ borderColor: colorConfig.color }}>
+                  <span className="text-xs font-medium" style={{ color: colorConfig.color }}>
+                    {counter.disciplineName}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => removeDiscipline(index)}
+                    className="h-4 w-4 p-0 hover:bg-destructive/20"
+                  >
+                    <Icon name="X" size={12} />
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         </div>
-      ))}
+      )}
+    </div>
+  );
+};
+
+export const DisciplineCountersRow = ({ 
+  studentId, 
+  counters, 
+  onUpdateScore 
+}: { 
+  studentId: string; 
+  counters: DisciplineCounter[]; 
+  onUpdateScore: (disciplineIndex: number, studentId: string, delta: number) => void;
+}) => {
+  if (counters.length === 0) return null;
+
+  return (
+    <div className="flex gap-2 ml-auto">
+      {counters.map((counter, disciplineIndex) => {
+        const colorConfig = DISCIPLINE_COLORS[disciplineIndex % DISCIPLINE_COLORS.length];
+        const score = counter.studentScores[studentId] || 0;
+        
+        return (
+          <div key={disciplineIndex} className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onUpdateScore(disciplineIndex, studentId, -1)}
+              className="h-6 w-6 p-0"
+              style={{ borderColor: colorConfig.color, color: colorConfig.color }}
+            >
+              <Icon name="Minus" size={12} />
+            </Button>
+            <span className="text-xs font-medium min-w-[1.5rem] text-center" style={{ color: colorConfig.color }}>
+              {score}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onUpdateScore(disciplineIndex, studentId, 1)}
+              className="h-6 w-6 p-0"
+              style={{ borderColor: colorConfig.color, color: colorConfig.color }}
+            >
+              <Icon name="Plus" size={12} />
+            </Button>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export const DisciplineHeader = ({ counters }: { counters: DisciplineCounter[] }) => {
+  if (counters.length === 0) return null;
+
+  return (
+    <div className="flex gap-2 ml-auto mb-2">
+      {counters.map((counter, index) => {
+        const colorConfig = DISCIPLINE_COLORS[index % DISCIPLINE_COLORS.length];
+        return (
+          <div 
+            key={index} 
+            className="text-xs font-bold text-center min-w-[4.5rem]"
+            style={{ color: colorConfig.color }}
+          >
+            {counter.disciplineName}
+          </div>
+        );
+      })}
     </div>
   );
 };
