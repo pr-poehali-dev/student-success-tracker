@@ -291,6 +291,9 @@ def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[st
         cursor.execute('DELETE FROM t_p91106428_student_success_trac.students')
         cursor.execute('DELETE FROM t_p91106428_student_success_trac.classes')
     
+    class_values = []
+    student_values = []
+    
     for cls in classes:
         if not cls.get('id'):
             continue
@@ -299,45 +302,52 @@ def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[st
         cname = escape_sql(cls.get('name', ''))
         teacher_id = escape_sql(cls.get('responsibleTeacherId'))
         
+        class_values.append(f"({cid}, {cname}, {teacher_id}, NOW())")
+        
+        students = cls.get('students', [])
+        for student in students:
+            if not student.get('id'):
+                continue
+                
+            sid = escape_sql(student['id'])
+            sname = escape_sql(student.get('name', ''))
+            spoints = escape_sql(student.get('points', 0))
+            
+            achievements_list = student.get('achievements', [])
+            if achievements_list:
+                sachievements = "ARRAY[" + ",".join([f"'{ach.replace(chr(39), chr(39)+chr(39))}'" for ach in achievements_list]) + "]"
+            else:
+                sachievements = "ARRAY[]::TEXT[]"
+            
+            sactivities = escape_sql(json.dumps(student.get('activities', [])))
+            ssoftskills = escape_sql(json.dumps(student.get('softSkills', [])))
+            
+            student_values.append(f"({sid}, {sname}, {cid}, {spoints}, {sachievements}, {sactivities}::jsonb, {ssoftskills}::jsonb)")
+    
+    if class_values:
         cursor.execute(f'''
             INSERT INTO t_p91106428_student_success_trac.classes (id, name, responsible_teacher_id, created_at)
-            VALUES ({cid}, {cname}, {teacher_id}, NOW())
+            VALUES {','.join(class_values)}
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
                 responsible_teacher_id = EXCLUDED.responsible_teacher_id
         ''')
-        
-        cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.students WHERE class_id = {cid}')
-        
-        students = cls.get('students', [])
-        for student in students:
-                if not student.get('id'):
-                    continue
-                    
-                sid = escape_sql(student['id'])
-                sname = escape_sql(student.get('name', ''))
-                spoints = escape_sql(student.get('points', 0))
-                
-                achievements_list = student.get('achievements', [])
-                if achievements_list:
-                    sachievements = "ARRAY[" + ",".join([f"'{ach.replace(chr(39), chr(39)+chr(39))}'" for ach in achievements_list]) + "]"
-                else:
-                    sachievements = "ARRAY[]::TEXT[]"
-                
-                sactivities = escape_sql(json.dumps(student.get('activities', [])))
-                ssoftskills = escape_sql(json.dumps(student.get('softSkills', [])))
-                
-                cursor.execute(f'''
-                    INSERT INTO t_p91106428_student_success_trac.students (id, name, class_id, points, achievements, activities, soft_skills)
-                    VALUES ({sid}, {sname}, {cid}, {spoints}, {sachievements}, {sactivities}::jsonb, {ssoftskills}::jsonb)
-                    ON CONFLICT (id) DO UPDATE SET
-                        name = EXCLUDED.name,
-                        class_id = EXCLUDED.class_id,
-                        points = EXCLUDED.points,
-                        achievements = EXCLUDED.achievements,
-                        activities = EXCLUDED.activities,
-                        soft_skills = EXCLUDED.soft_skills
-                ''')
+    
+    if student_values:
+        batch_size = 50
+        for i in range(0, len(student_values), batch_size):
+            batch = student_values[i:i+batch_size]
+            cursor.execute(f'''
+                INSERT INTO t_p91106428_student_success_trac.students (id, name, class_id, points, achievements, activities, soft_skills)
+                VALUES {','.join(batch)}
+                ON CONFLICT (id) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    class_id = EXCLUDED.class_id,
+                    points = EXCLUDED.points,
+                    achievements = EXCLUDED.achievements,
+                    activities = EXCLUDED.activities,
+                    soft_skills = EXCLUDED.soft_skills
+            ''')
 
 
 def save_matches(cursor, matches: List[Dict[str, Any]], current_teacher: Dict[str, Any] = None) -> None:
