@@ -226,28 +226,33 @@ export const DisciplineCountersRow = ({
         const score = counter.studentScores[studentId] || 0;
         
         return (
-          <div key={disciplineIndex} className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onUpdateScore(disciplineIndex, studentId, -1)}
-              className="h-8 w-8 p-0"
-              disabled={disabled}
-            >
-              <Icon name="Minus" size={14} />
-            </Button>
-            <span className="text-xs font-medium min-w-[1.5rem] text-center">
-              {score}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onUpdateScore(disciplineIndex, studentId, 1)}
-              className="h-8 w-8 p-0"
-              disabled={disabled}
-            >
-              <Icon name="Plus" size={14} />
-            </Button>
+          <div key={disciplineIndex} className="flex items-center gap-2">
+            {disciplineIndex > 0 && (
+              <div className="w-px h-8 bg-border" />
+            )}
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onUpdateScore(disciplineIndex, studentId, -1)}
+                className="h-8 w-8 p-0"
+                disabled={disabled}
+              >
+                <Icon name="Minus" size={14} />
+              </Button>
+              <span className="text-xs font-medium min-w-[1.5rem] text-center">
+                {score}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onUpdateScore(disciplineIndex, studentId, 1)}
+                className="h-8 w-8 p-0"
+                disabled={disabled}
+              >
+                <Icon name="Plus" size={14} />
+              </Button>
+            </div>
           </div>
         );
       })}
@@ -261,11 +266,13 @@ export const DisciplineHeader = ({ counters }: { counters: DisciplineCounter[] }
   return (
     <div className="flex gap-2 ml-auto mb-2">
       {counters.map((counter, index) => (
-        <div 
-          key={index} 
-          className="text-xs font-bold text-center min-w-[4.5rem]"
-        >
-          {counter.disciplineName}
+        <div key={index} className="flex items-center gap-2">
+          {index > 0 && (
+            <div className="w-px h-4 bg-border" />
+          )}
+          <div className="text-xs font-bold text-center min-w-[7rem]">
+            {counter.disciplineName}
+          </div>
         </div>
       ))}
     </div>
