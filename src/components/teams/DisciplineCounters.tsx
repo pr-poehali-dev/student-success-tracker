@@ -220,17 +220,17 @@ export const DisciplineCountersRow = ({
   if (counters.length === 0) return null;
 
   return (
-    <div className="flex gap-2 ml-auto">
+    <div className="flex ml-auto">
       {counters.map((counter, disciplineIndex) => {
         const colorConfig = DISCIPLINE_COLORS[disciplineIndex % DISCIPLINE_COLORS.length];
         const score = counter.studentScores[studentId] || 0;
         
         return (
-          <div key={disciplineIndex} className="flex items-center gap-2">
+          <div key={disciplineIndex} className="flex items-center">
             {disciplineIndex > 0 && (
-              <div className="w-px h-8 bg-border" />
+              <div className="w-px h-8 bg-border mx-2" />
             )}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 w-[7.5rem] justify-center">
               <Button
                 size="sm"
                 variant="outline"
@@ -264,13 +264,13 @@ export const DisciplineHeader = ({ counters }: { counters: DisciplineCounter[] }
   if (counters.length === 0) return null;
 
   return (
-    <div className="flex gap-2 ml-auto mb-2">
+    <div className="flex ml-auto mb-2">
       {counters.map((counter, index) => (
-        <div key={index} className="flex items-center gap-2">
+        <div key={index} className="flex items-center">
           {index > 0 && (
-            <div className="w-px h-4 bg-border" />
+            <div className="w-px h-4 bg-border mx-2" />
           )}
-          <div className="text-xs font-bold text-center min-w-[7rem]">
+          <div className="text-xs font-bold text-center w-[7.5rem]">
             {counter.disciplineName}
           </div>
         </div>
