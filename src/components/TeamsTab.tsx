@@ -185,48 +185,52 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
 
     const winningTeam = winner === "team1" ? match.team1 : match.team2;
     const losingTeam = winner === "team1" ? match.team2 : match.team1;
+    const matchName = `${match.team1.name} vs ${match.team2.name}`;
 
-    const updatedClasses = classes.map(cls => ({
-      ...cls,
-      students: cls.students.map(student => {
-        const isWinner = winningTeam.members.some(m => m.studentId === student.id);
-        const isLoser = losingTeam.members.some(m => m.studentId === student.id);
-        
-        if (!isWinner && !isLoser) return student;
+    if (!match.completed) {
+      const updatedClasses = classes.map(cls => ({
+        ...cls,
+        students: cls.students.map(student => {
+          const isWinner = winningTeam.members.some(m => m.studentId === student.id);
+          const isLoser = losingTeam.members.some(m => m.studentId === student.id);
+          
+          if (!isWinner && !isLoser) return student;
 
-        const teamMember = isWinner 
-          ? winningTeam.members.find(m => m.studentId === student.id)
-          : losingTeam.members.find(m => m.studentId === student.id);
+          const teamMember = isWinner 
+            ? winningTeam.members.find(m => m.studentId === student.id)
+            : losingTeam.members.find(m => m.studentId === student.id);
 
-        const playerTeam = isWinner ? winningTeam : losingTeam;
-        const opponentTeam = isWinner ? losingTeam : winningTeam;
-        const matchName = `${match.team1.name} vs ${match.team2.name}`;
+          const playerTeam = isWinner ? winningTeam : losingTeam;
+          const opponentTeam = isWinner ? losingTeam : winningTeam;
 
-        const newActivity = {
-          type: match.gameType,
-          date: match.date,
-          result: isWinner ? "win" : "loss",
-          role: teamMember?.role || "player",
-          gameStatus: "finished" as const,
-          matchName,
-          teamName: playerTeam.name,
-          opponentTeamName: opponentTeam.name
-        };
+          const newActivity = {
+            type: match.gameType,
+            date: match.date,
+            result: isWinner ? "win" : "loss",
+            role: teamMember?.role || "player",
+            gameStatus: "finished" as const,
+            matchName,
+            teamName: playerTeam.name,
+            opponentTeamName: opponentTeam.name
+          };
 
-        return {
-          ...student,
-          activities: [...(student.activities || []), newActivity]
-        };
-      })
-    }));
+          return {
+            ...student,
+            activities: [...(student.activities || []), newActivity]
+          };
+        })
+      }));
 
-    setClasses(updatedClasses);
+      setClasses(updatedClasses);
+    }
+
     setMatches(matches.map(m => 
       m.id === matchId ? { ...m, result: winner, completed: true } : m
     ));
     
     const winnerName = winner === "team1" ? match.team1.name : match.team2.name;
-    toast.success(`Победа ${winnerName}! Результаты сохранены`);
+    const message = match.completed ? `Победитель изменен: ${winnerName}` : `Победа ${winnerName}! Результаты сохранены`;
+    toast.success(message);
   };
 
   const deleteMatch = (matchId: string) => {

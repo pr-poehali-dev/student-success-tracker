@@ -26,6 +26,8 @@ const DISCIPLINE_COLORS = [
 export const DisciplineCounters = ({ match, onUpdateCounters, compact = false }: DisciplineCountersProps) => {
   const [newDisciplineName, setNewDisciplineName] = useState("");
   const [isAddingDiscipline, setIsAddingDiscipline] = useState(false);
+  const [editingDisciplineIndex, setEditingDisciplineIndex] = useState<number | null>(null);
+  const [editingDisciplineName, setEditingDisciplineName] = useState("");
 
   const counters = match.disciplineCounters || [];
   const allStudents = [...match.team1.members, ...match.team2.members];
@@ -63,6 +65,21 @@ export const DisciplineCounters = ({ match, onUpdateCounters, compact = false }:
     toast.success("Дисциплина удалена");
   };
 
+  const renameDiscipline = (index: number, newName: string) => {
+    if (!newName.trim()) {
+      toast.error("Введите название дисциплины");
+      return;
+    }
+
+    const updated = counters.map((counter, i) => 
+      i === index ? { ...counter, disciplineName: newName.trim() } : counter
+    );
+    onUpdateCounters(match.id, updated);
+    setEditingDisciplineIndex(null);
+    setEditingDisciplineName("");
+    toast.success("Название обновлено");
+  };
+
   const updateScore = (disciplineIndex: number, studentId: string, delta: number) => {
     const updated = counters.map((counter, index) => {
       if (index !== disciplineIndex) return counter;
@@ -85,7 +102,7 @@ export const DisciplineCounters = ({ match, onUpdateCounters, compact = false }:
   if (compact) {
     return (
       <div className="flex items-center gap-2">
-        {counters.length < 3 && !isAddingDiscipline && (
+        {counters.length < 3 && !isAddingDiscipline && !match.completed && (
           <Button
             size="sm"
             variant="outline"
@@ -124,17 +141,60 @@ export const DisciplineCounters = ({ match, onUpdateCounters, compact = false }:
           <div className="flex gap-1">
             {counters.map((counter, index) => (
               <div key={index} className="flex items-center gap-1 px-2 py-1 rounded border bg-background">
-                <span className="text-xs font-medium">
-                  {counter.disciplineName}
-                </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => removeDiscipline(index)}
-                  className="h-4 w-4 p-0 hover:bg-destructive/20"
-                >
-                  <Icon name="X" size={10} />
-                </Button>
+                {editingDisciplineIndex === index ? (
+                  <>
+                    <Input
+                      value={editingDisciplineName}
+                      onChange={(e) => setEditingDisciplineName(e.target.value)}
+                      className="h-6 text-xs w-24"
+                      maxLength={20}
+                      autoFocus
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => renameDiscipline(index, editingDisciplineName)}
+                      className="h-4 w-4 p-0"
+                    >
+                      <Icon name="Check" size={10} />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setEditingDisciplineIndex(null);
+                        setEditingDisciplineName("");
+                      }}
+                      className="h-4 w-4 p-0"
+                    >
+                      <Icon name="X" size={10} />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <span 
+                      className="text-xs font-medium cursor-pointer hover:underline"
+                      onClick={() => {
+                        if (!match.completed) {
+                          setEditingDisciplineIndex(index);
+                          setEditingDisciplineName(counter.disciplineName);
+                        }
+                      }}
+                    >
+                      {counter.disciplineName}
+                    </span>
+                    {!match.completed && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeDiscipline(index)}
+                        className="h-4 w-4 p-0 hover:bg-destructive/20"
+                      >
+                        <Icon name="X" size={10} />
+                      </Button>
+                    )}
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -149,11 +209,13 @@ export const DisciplineCounters = ({ match, onUpdateCounters, compact = false }:
 export const DisciplineCountersRow = ({ 
   studentId, 
   counters, 
-  onUpdateScore 
+  onUpdateScore,
+  disabled = false
 }: { 
   studentId: string; 
   counters: DisciplineCounter[]; 
   onUpdateScore: (disciplineIndex: number, studentId: string, delta: number) => void;
+  disabled?: boolean;
 }) => {
   if (counters.length === 0) return null;
 
@@ -169,7 +231,8 @@ export const DisciplineCountersRow = ({
               size="sm"
               variant="outline"
               onClick={() => onUpdateScore(disciplineIndex, studentId, -1)}
-              className="h-7 w-7 p-0"
+              className="h-8 w-8 p-0"
+              disabled={disabled}
             >
               <Icon name="Minus" size={14} />
             </Button>
@@ -180,7 +243,8 @@ export const DisciplineCountersRow = ({
               size="sm"
               variant="outline"
               onClick={() => onUpdateScore(disciplineIndex, studentId, 1)}
-              className="h-7 w-7 p-0"
+              className="h-8 w-8 p-0"
+              disabled={disabled}
             >
               <Icon name="Plus" size={14} />
             </Button>

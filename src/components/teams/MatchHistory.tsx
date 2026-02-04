@@ -161,6 +161,7 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, onUpdateCoun
                               studentId={member.studentId}
                               counters={match.disciplineCounters || []}
                               onUpdateScore={updateScore}
+                              disabled={match.completed}
                             />
                           </div>
                         );
@@ -203,6 +204,7 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, onUpdateCoun
                               studentId={member.studentId}
                               counters={match.disciplineCounters || []}
                               onUpdateScore={updateScore}
+                              disabled={match.completed}
                             />
                           </div>
                         );
@@ -211,32 +213,24 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, onUpdateCoun
                   </div>
                 </div>
 
-                {!match.completed && (
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => onSetResult(match.id, "team1")}
-                      className="flex-1"
-                      variant="outline"
-                    >
-                      Победа {match.team1.name}
-                    </Button>
-                    <Button
-                      onClick={() => onSetResult(match.id, "team2")}
-                      className="flex-1"
-                      variant="outline"
-                    >
-                      Победа {match.team2.name}
-                    </Button>
-                  </div>
-                )}
-
-                {match.completed && (
-                  <div className="text-center p-2 bg-green-100 rounded">
-                    <p className="text-sm font-medium text-green-700">
-                      ✓ Результаты сохранены
-                    </p>
-                  </div>
-                )}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => onSetResult(match.id, "team1")}
+                    className="flex-1"
+                    variant={match.result === "team1" ? "default" : "outline"}
+                  >
+                    {match.result === "team1" && "✓ "}
+                    Победа {match.team1.name}
+                  </Button>
+                  <Button
+                    onClick={() => onSetResult(match.id, "team2")}
+                    className="flex-1"
+                    variant={match.result === "team2" ? "default" : "outline"}
+                  >
+                    {match.result === "team2" && "✓ "}
+                    Победа {match.team2.name}
+                  </Button>
+                </div>
               </Card>
             );
           })}
