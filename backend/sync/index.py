@@ -200,7 +200,7 @@ def get_all_classes(cursor) -> List[Dict[str, Any]]:
 
 def get_all_matches(cursor) -> List[Dict[str, Any]]:
     cursor.execute('''
-        SELECT m.id, m.game_type, m.team1_id, m.team2_id, m.result, m.date, m.completed, m.created_by, m.created_at, m.league
+        SELECT m.id, m.game_type, m.team1_id, m.team2_id, m.result, m.date, m.completed, m.created_by, m.created_at, m.league, m.discipline_counters
         FROM t_p91106428_student_success_trac.matches m
         ORDER BY m.created_at DESC
     ''')
@@ -239,6 +239,7 @@ def get_all_matches(cursor) -> List[Dict[str, Any]]:
         match_id = row[0]
         team1_id = row[2]
         team2_id = row[3]
+        discipline_counters = row[10] if len(row) > 10 and row[10] else []
         
         matches.append({
             'id': match_id,
@@ -251,7 +252,8 @@ def get_all_matches(cursor) -> List[Dict[str, Any]]:
             'createdBy': row[7],
             'createdAt': safe_date_to_string(row[8]),
             'scheduledDates': dates_by_match.get(match_id, []),
-            'league': row[9]
+            'league': row[9],
+            'disciplineCounters': discipline_counters
         })
     
     return matches
@@ -370,15 +372,17 @@ def save_matches(cursor, matches: List[Dict[str, Any]], current_teacher: Dict[st
         completed = escape_sql(match.get('completed', False))
         created_by = escape_sql(match.get('createdBy', ''))
         league = escape_sql(match.get('league'))
+        discipline_counters = escape_sql(json.dumps(match.get('disciplineCounters', [])))
         
         cursor.execute(f'''
-            INSERT INTO t_p91106428_student_success_trac.matches (id, game_type, team1_id, team2_id, result, date, completed, created_by, created_at, league)
-            VALUES ({mid}, {game_type}, {t1id}, {t2id}, {result}, {date}, {completed}, {created_by}, NOW(), {league})
+            INSERT INTO t_p91106428_student_success_trac.matches (id, game_type, team1_id, team2_id, result, date, completed, created_by, created_at, league, discipline_counters)
+            VALUES ({mid}, {game_type}, {t1id}, {t2id}, {result}, {date}, {completed}, {created_by}, NOW(), {league}, {discipline_counters}::jsonb)
             ON CONFLICT (id) DO UPDATE SET
                 game_type = EXCLUDED.game_type,
                 result = EXCLUDED.result,
                 completed = EXCLUDED.completed,
-                league = EXCLUDED.league
+                league = EXCLUDED.league,
+                discipline_counters = EXCLUDED.discipline_counters
         ''')
         
         scheduled_dates = match.get('scheduledDates', [])

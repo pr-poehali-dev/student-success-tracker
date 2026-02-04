@@ -188,7 +188,7 @@ export const DisciplineCountersRow = ({
               size="sm"
               variant="outline"
               onClick={() => onUpdateScore(disciplineIndex, studentId, -1)}
-              className="h-7 w-7 p-0 aspect-square"
+              className="h-7 w-7 p-0 aspect-square !rounded-none"
               style={{ borderColor: colorConfig.color, color: colorConfig.color }}
             >
               <Icon name="Minus" size={14} />
@@ -200,7 +200,7 @@ export const DisciplineCountersRow = ({
               size="sm"
               variant="outline"
               onClick={() => onUpdateScore(disciplineIndex, studentId, 1)}
-              className="h-7 w-7 p-0 aspect-square"
+              className="h-7 w-7 p-0 aspect-square !rounded-none"
               style={{ borderColor: colorConfig.color, color: colorConfig.color }}
             >
               <Icon name="Plus" size={14} />
