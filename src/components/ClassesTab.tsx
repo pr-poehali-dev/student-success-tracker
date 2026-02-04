@@ -148,12 +148,19 @@ export const ClassesTab = ({ classes, setClasses, teacher, allTeachers, attendan
   };
 
   const deleteClass = (classId: string) => {
-    console.log("🚨 [ClassesTab] deleteClass called", { classId, hasCallback: !!onDeleteClass });
+    const className = classes.find(c => c.id === classId)?.name;
+    console.log("🗑️ [ClassesTab] deleteClass called", { 
+      classId, 
+      className,
+      hasCallback: !!onDeleteClass,
+      currentClassesCount: classes.length 
+    });
+    
     if (onDeleteClass) {
-      console.log("🚨 [ClassesTab] Calling onDeleteClass callback");
+      console.log("🗑️ [ClassesTab] Calling onDeleteClass callback for:", className);
       onDeleteClass(classId);
     } else {
-      const className = classes.find(c => c.id === classId)?.name;
+      console.log("🗑️ [ClassesTab] No callback, deleting locally");
       setClasses(classes.filter(cls => cls.id !== classId));
       toast.success(`Класс "${className}" удален`);
     }

@@ -55,6 +55,7 @@ export const ClassCard = ({
   onUpdateStudentName
 }: ClassCardProps) => {
   const [deleteStudentDialogOpen, setDeleteStudentDialogOpen] = useState(false);
+  const [deleteClassDialogOpen, setDeleteClassDialogOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<{ id: string; name: string } | null>(null);
   const [isEditingClassName, setIsEditingClassName] = useState(false);
   const [editedClassName, setEditedClassName] = useState(classRoom.name);
@@ -77,6 +78,12 @@ export const ClassCard = ({
       setDeleteStudentDialogOpen(false);
       setStudentToDelete(null);
     }
+  };
+
+  const confirmDeleteClass = () => {
+    console.log('🗑️ [ClassCard] Deleting class:', { id: classRoom.id, name: classRoom.name });
+    onDeleteClass(classRoom.id);
+    setDeleteClassDialogOpen(false);
   };
 
   const handleSaveClassName = () => {
@@ -201,7 +208,7 @@ export const ClassCard = ({
           <Button 
             variant="destructive" 
             size="sm"
-            onClick={() => onDeleteClass(classRoom.id)}
+            onClick={() => setDeleteClassDialogOpen(true)}
           >
             <Icon name="Trash2" size={16} />
           </Button>
@@ -318,6 +325,26 @@ export const ClassCard = ({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteClassDialogOpen} onOpenChange={setDeleteClassDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить класс?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Уверены, что хотите удалить класс "{classRoom.name}"? Все ученики этого класса ({classRoom.students.length}) также будут удалены. Это действие нельзя будет отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteClass}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Удалить класс
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
