@@ -12,14 +12,14 @@ interface DisciplineCountersProps {
 }
 
 const DISCIPLINE_COLORS = [
-  { color: '#ef4444', label: 'red' },
-  { color: '#3b82f6', label: 'blue' },
-  { color: '#eab308', label: 'yellow' },
-  { color: '#22c55e', label: 'green' },
-  { color: '#a855f7', label: 'purple' },
-  { color: '#f97316', label: 'orange' },
-  { color: '#ec4899', label: 'pink' },
-  { color: '#06b6d4', label: 'cyan' },
+  { color: 'hsl(var(--destructive))', label: 'destructive' },
+  { color: 'hsl(var(--primary))', label: 'primary' },
+  { color: 'hsl(var(--accent))', label: 'accent' },
+  { color: 'hsl(25 100% 50%)', label: 'orange' },
+  { color: 'hsl(280 70% 60%)', label: 'purple' },
+  { color: 'hsl(160 70% 45%)', label: 'green' },
+  { color: 'hsl(200 80% 55%)', label: 'blue' },
+  { color: 'hsl(340 75% 55%)', label: 'pink' },
 ];
 
 export const DisciplineCounters = ({ match, onUpdateCounters }: DisciplineCountersProps) => {
@@ -188,10 +188,10 @@ export const DisciplineCountersRow = ({
               size="sm"
               variant="outline"
               onClick={() => onUpdateScore(disciplineIndex, studentId, -1)}
-              className="h-6 w-6 p-0"
+              className="h-7 w-7 p-0 aspect-square"
               style={{ borderColor: colorConfig.color, color: colorConfig.color }}
             >
-              <Icon name="Minus" size={12} />
+              <Icon name="Minus" size={14} />
             </Button>
             <span className="text-xs font-medium min-w-[1.5rem] text-center" style={{ color: colorConfig.color }}>
               {score}
@@ -200,10 +200,10 @@ export const DisciplineCountersRow = ({
               size="sm"
               variant="outline"
               onClick={() => onUpdateScore(disciplineIndex, studentId, 1)}
-              className="h-6 w-6 p-0"
+              className="h-7 w-7 p-0 aspect-square"
               style={{ borderColor: colorConfig.color, color: colorConfig.color }}
             >
-              <Icon name="Plus" size={12} />
+              <Icon name="Plus" size={14} />
             </Button>
           </div>
         );
