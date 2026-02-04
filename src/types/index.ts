@@ -70,6 +70,13 @@ export interface Team {
   members: TeamMember[];
 }
 
+export interface DisciplineCounter {
+  disciplineName: string;
+  studentScores: {
+    [studentId: string]: number;
+  };
+}
+
 export interface Match {
   id: string;
   gameType: "valheim" | "civilization" | "factorio" | "sport" | "robo";
@@ -81,6 +88,7 @@ export interface Match {
   createdBy: string;
   scheduledDates?: ScheduledDate[];
   league?: "beginner" | "second" | "first" | "premiere";
+  disciplineCounters?: DisciplineCounter[];
 }
 
 export interface ScheduledDate {

@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
-import { ClassRoom, Match, TeamMember, Teacher, ScheduledDate } from "@/types";
+import { ClassRoom, Match, TeamMember, Teacher, ScheduledDate, DisciplineCounter } from "@/types";
 import { toast } from "sonner";
 import { GameSelector, GAME_TYPES } from "./teams/GameSelector";
 import { TeamBuilder } from "./teams/TeamBuilder";
@@ -235,6 +235,12 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
     onDeleteMatch(matchId);
   };
 
+  const updateMatchCounters = (matchId: string, counters: DisciplineCounter[]) => {
+    setMatches(matches.map(m => 
+      m.id === matchId ? { ...m, disciplineCounters: counters } : m
+    ));
+  };
+
   const handleImportComplete = (data: {
     team1Members: TeamMember[];
     team2Members: TeamMember[];
@@ -427,6 +433,7 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
           matches={filteredMatches}
           onSetResult={setMatchResult}
           onDeleteMatch={deleteMatch}
+          onUpdateCounters={updateMatchCounters}
           teacher={teacher}
         />
       </Card>

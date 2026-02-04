@@ -4,17 +4,19 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Icon from "@/components/ui/icon";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Match, Teacher } from "@/types";
+import { Match, Teacher, DisciplineCounter } from "@/types";
 import { GAME_TYPES } from "./GameSelector";
+import { DisciplineCounters } from "./DisciplineCounters";
 
 interface MatchHistoryProps {
   matches: Match[];
   onSetResult: (matchId: string, winner: "team1" | "team2") => void;
   onDeleteMatch: (matchId: string) => void;
+  onUpdateCounters: (matchId: string, counters: DisciplineCounter[]) => void;
   teacher: Teacher;
 }
 
-export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, teacher }: MatchHistoryProps) => {
+export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, onUpdateCounters, teacher }: MatchHistoryProps) => {
   const [visibleCount, setVisibleCount] = useState(20);
   
   const sortedMatches = [...matches].sort((a, b) => 
@@ -176,6 +178,8 @@ export const MatchHistory = ({ matches, onSetResult, onDeleteMatch, teacher }: M
                     </p>
                   </div>
                 )}
+
+                <DisciplineCounters match={match} onUpdateCounters={onUpdateCounters} />
               </Card>
             );
           })}

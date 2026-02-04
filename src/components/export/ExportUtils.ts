@@ -240,6 +240,32 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [],
     XLSX.utils.book_append_sheet(workbook, pe3dSheet, "3D Физкультура");
   }
 
+  const disciplineCountersData = matches.flatMap(match => {
+    if (!match.disciplineCounters || match.disciplineCounters.length === 0) return [];
+    
+    return match.disciplineCounters.flatMap(discipline => {
+      return Object.entries(discipline.studentScores).map(([studentId, score]) => {
+        const allStudents = classes.flatMap(cls => cls.students);
+        const student = allStudents.find(s => s.id === studentId);
+        const studentClass = classes.find(cls => cls.students.some(s => s.id === studentId));
+        
+        return {
+          "Матч": `${match.team1.name} vs ${match.team2.name}`,
+          "Дата": new Date(match.date).toLocaleString('ru-RU'),
+          "ФИО": student?.name || "Неизвестно",
+          "Класс": studentClass?.name || "-",
+          "Дисциплина": discipline.disciplineName,
+          "Оценка": score
+        };
+      });
+    });
+  });
+
+  if (disciplineCountersData.length > 0) {
+    const disciplineCountersSheet = XLSX.utils.json_to_sheet(disciplineCountersData);
+    XLSX.utils.book_append_sheet(workbook, disciplineCountersSheet, "Оценки по дисциплинам");
+  }
+
   const softSkillsData = classes.flatMap(cls =>
     cls.students.flatMap(student =>
       (student.softSkills || []).map(rating => ({
