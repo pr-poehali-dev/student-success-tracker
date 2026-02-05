@@ -275,6 +275,7 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [],
         
         return {
           "Матч": `${match.team1.name} vs ${match.team2.name}`,
+          "Игра": getGameTypeName(match.gameType),
           "Дата": new Date(match.date).toLocaleString('ru-RU'),
           "ФИО": student?.name || "Неизвестно",
           "Класс": studentClass?.name || "-",
