@@ -12,7 +12,10 @@ interface TeamImportProps {
     team2Members: TeamMember[];
     team1Name: string;
     team2Name: string;
+    team1Color: string;
+    team2Color: string;
     selectedGame: string;
+    selectedLeague: string;
     scheduledDates: ScheduledDate[];
   }) => void;
 }
@@ -38,24 +41,35 @@ export const TeamImport = ({ allStudents, onImportComplete }: TeamImportProps) =
         }
 
         const matchesData = XLSX.utils.sheet_to_json<{
-          'Тип игры': string;
+          'Игра': string;
           'Команда 1': string;
+          'Цвет команды 1': string;
+          'Класс команды 1': string;
+          'Ученики команды 1': string;
           'Команда 2': string;
-          'Участники команды 1': string;
-          'Участники команды 2': string;
-          'Даты проведения': string;
-          'Время проведения': string;
+          'Цвет команды 2': string;
+          'Класс команды 2': string;
+          'Ученики команды 2': string;
+          'Лига': string;
+          'Дата': string;
+          'Время': string;
         }>(matchesSheet);
 
         matchesData.forEach(row => {
-          if (!row['Тип игры'] || !row['Команда 1'] || !row['Команда 2']) return;
+          if (!row['Игра'] || !row['Команда 1'] || !row['Команда 2']) return;
 
-          const team1MembersNames = row['Участники команды 1']?.split(',').map(s => s.trim()) || [];
-          const team2MembersNames = row['Участники команды 2']?.split(',').map(s => s.trim()) || [];
+          const team1MembersNames = row['Ученики команды 1']?.split(',').map(s => s.trim()) || [];
+          const team2MembersNames = row['Ученики команды 2']?.split(',').map(s => s.trim()) || [];
+          
+          const team1ClassFilter = row['Класс команды 1']?.trim() || '';
+          const team2ClassFilter = row['Класс команды 2']?.trim() || '';
 
           const team1MembersList: TeamMember[] = team1MembersNames
             .map(name => {
-              const student = allStudents.find(s => s.name === name);
+              const student = allStudents.find(s => 
+                s.name === name && 
+                (!team1ClassFilter || s.className === team1ClassFilter)
+              );
               if (!student) return null;
               return {
                 studentId: student.id,
@@ -68,7 +82,10 @@ export const TeamImport = ({ allStudents, onImportComplete }: TeamImportProps) =
 
           const team2MembersList: TeamMember[] = team2MembersNames
             .map(name => {
-              const student = allStudents.find(s => s.name === name);
+              const student = allStudents.find(s => 
+                s.name === name && 
+                (!team2ClassFilter || s.className === team2ClassFilter)
+              );
               if (!student) return null;
               return {
                 studentId: student.id,
@@ -81,26 +98,28 @@ export const TeamImport = ({ allStudents, onImportComplete }: TeamImportProps) =
 
           if (team1MembersList.length === 0 || team2MembersList.length === 0) return;
 
-          const dates = row['Даты проведения']?.split(',').map(s => s.trim()) || [];
-          const times = row['Время проведения']?.split(',').map(s => s.trim()) || [];
-          
           const importedSchedules: ScheduledDate[] = [];
-          for (let i = 0; i < Math.max(dates.length, times.length); i++) {
-            if (dates[i] && times[i]) {
-              importedSchedules.push({
-                id: Date.now().toString() + i,
-                date: dates[i],
-                time: times[i]
-              });
-            }
+          if (row['Дата'] && row['Время']) {
+            importedSchedules.push({
+              id: Date.now().toString(),
+              date: row['Дата'],
+              time: row['Время']
+            });
           }
+          
+          const team1Color = row['Цвет команды 1'] || '#FFFFFF';
+          const team2Color = row['Цвет команды 2'] || '#FFFFFF';
+          const league = row['Лига'] || '';
 
           onImportComplete({
             team1Members: team1MembersList,
             team2Members: team2MembersList,
             team1Name: row['Команда 1'],
             team2Name: row['Команда 2'],
-            selectedGame: row['Тип игры'].toLowerCase(),
+            team1Color: team1Color,
+            team2Color: team2Color,
+            selectedGame: row['Игра'].toLowerCase(),
+            selectedLeague: league,
             scheduledDates: importedSchedules
           });
         });

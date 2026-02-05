@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import DownloadExample from "./pages/DownloadExample";
 import DownloadTeamsExample from "./pages/DownloadTeamsExample";
+import DownloadTeamsImportTemplate from "./pages/DownloadTeamsImportTemplate";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/download-example" element={<DownloadExample />} />
           <Route path="/download-teams-example" element={<DownloadTeamsExample />} />
+          <Route path="/download-teams-import-template" element={<DownloadTeamsImportTemplate />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -256,14 +256,20 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
     team2Members: TeamMember[];
     team1Name: string;
     team2Name: string;
+    team1Color: string;
+    team2Color: string;
     selectedGame: string;
+    selectedLeague: string;
     scheduledDates: ScheduledDate[];
   }) => {
     setTeam1Members(data.team1Members);
     setTeam2Members(data.team2Members);
     setTeam1Name(data.team1Name);
     setTeam2Name(data.team2Name);
+    setTeam1Color(data.team1Color);
+    setTeam2Color(data.team2Color);
     setSelectedGame(data.selectedGame);
+    setSelectedLeague(data.selectedLeague);
     setScheduledDates(data.scheduledDates);
   };
 
@@ -295,10 +301,19 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
           Управление командами
         </h2>
         
-        <TeamImport 
-          allStudents={allStudents}
-          onImportComplete={handleImportComplete}
-        />
+        <div className="flex gap-2">
+          <Button
+            onClick={() => window.open('/download-teams-import-template', '_blank')}
+            variant="outline"
+          >
+            <Icon name="FileDown" size={20} className="mr-2" />
+            Скачать шаблон
+          </Button>
+          <TeamImport 
+            allStudents={allStudents}
+            onImportComplete={handleImportComplete}
+          />
+        </div>
       </div>
 
       <Card className="p-6">
