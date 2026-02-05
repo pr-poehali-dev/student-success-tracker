@@ -9,6 +9,8 @@ interface AppHeaderProps {
   onShowProfile: () => void;
   onShowAdmin: () => void;
   onForceSync: () => void;
+  onCreateBackup: () => void;
+  onRestoreBackup: (file: File) => void;
   onLogout: () => void;
 }
 
@@ -17,9 +19,18 @@ export const AppHeader = ({
   isAdmin, 
   onShowProfile, 
   onShowAdmin, 
-  onForceSync, 
+  onForceSync,
+  onCreateBackup,
+  onRestoreBackup,
   onLogout 
 }: AppHeaderProps) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onRestoreBackup(file);
+      e.target.value = '';
+    }
+  };
   return (
     <header className="mb-8 flex items-center justify-between animate-fade-in">
       <div className="flex items-center gap-3">
@@ -57,6 +68,21 @@ export const AppHeader = ({
             <Icon name="RefreshCw" size={16} className="mr-2" />
             Синхронизировать
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={onCreateBackup}>
+            <Icon name="Download" size={16} className="mr-2" />
+            Скачать бекап
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => document.getElementById('backup-upload')?.click()}>
+            <Icon name="Upload" size={16} className="mr-2" />
+            Восстановить бекап
+          </DropdownMenuItem>
+          <input
+            id="backup-upload"
+            type="file"
+            accept=".json"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
           <DropdownMenuItem onClick={onLogout}>
             <Icon name="LogOut" size={16} className="mr-2" />
             Выйти

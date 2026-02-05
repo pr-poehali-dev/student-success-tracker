@@ -33,6 +33,8 @@ const Index = () => {
     handleCreateTeacher,
     handleForceSync,
     handleSaveChanges,
+    handleCreateBackup,
+    handleRestoreBackup,
   } = useAppData();
 
   if (!isLoggedIn || !teacher) {
@@ -50,6 +52,8 @@ const Index = () => {
           onShowProfile={() => { setShowProfile(true); setShowAdmin(false); }}
           onShowAdmin={() => { setShowAdmin(true); setShowProfile(false); }}
           onForceSync={handleForceSync}
+          onCreateBackup={handleCreateBackup}
+          onRestoreBackup={handleRestoreBackup}
           onLogout={handleLogout}
         />
 

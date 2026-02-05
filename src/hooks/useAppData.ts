@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ClassRoom, Teacher, Match, AppState, GlobalData, AttendanceRecord } from "@/types";
-import { saveAppState, loadAppState, clearAppState } from "@/utils/storage";
+import { saveAppState, loadAppState, clearAppState, createBackup, restoreFromBackup } from "@/utils/storage";
 import { syncFromServer, syncToServer, deleteTeacherFromServer } from "@/utils/sync";
 import { toast } from "sonner";
 
@@ -594,6 +594,52 @@ export const useAppData = () => {
     }
   };
 
+  const handleCreateBackup = () => {
+    if (!teacher || !isLoggedIn) {
+      toast.error("Войдите в систему для создания бекапа");
+      return;
+    }
+    
+    try {
+      const state: AppState = {
+        teacher,
+        classes,
+        matches,
+        attendance,
+        currentView: showAdmin ? 'admin' : showProfile ? 'profile' : 'main',
+        activeTab
+      };
+      createBackup(state);
+      toast.success("Бекап создан и скачан!");
+    } catch (error) {
+      console.error("Backup creation failed:", error);
+      toast.error("Ошибка при создании бекапа");
+    }
+  };
+
+  const handleRestoreBackup = async (file: File) => {
+    if (!teacher || !isLoggedIn) {
+      toast.error("Войдите в систему для восстановления бекапа");
+      return;
+    }
+
+    try {
+      const restoredState = await restoreFromBackup(file);
+      
+      setClasses(restoredState.classes);
+      setMatches(restoredState.matches);
+      setAttendance(restoredState.attendance || []);
+      
+      prevClassesRef.current = [...restoredState.classes];
+      prevMatchesRef.current = [...restoredState.matches];
+      
+      toast.success("Данные восстановлены из бекапа!");
+    } catch (error) {
+      console.error("Backup restore failed:", error);
+      toast.error("Ошибка при восстановлении бекапа");
+    }
+  };
+
   return {
     teacher,
     classes,
@@ -623,5 +669,8 @@ export const useAppData = () => {
     handleCreateTeacher,
     handleForceSync,
     handleSaveChanges,
+    handleCreateBackup,
+    handleRestoreBackup,
+    handleRestoreBackup,
   };
 };
