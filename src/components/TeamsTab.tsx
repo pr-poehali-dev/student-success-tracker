@@ -251,26 +251,8 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
     ));
   };
 
-  const handleImportComplete = (data: {
-    team1Members: TeamMember[];
-    team2Members: TeamMember[];
-    team1Name: string;
-    team2Name: string;
-    team1Color: string;
-    team2Color: string;
-    selectedGame: string;
-    selectedLeague: string;
-    scheduledDates: ScheduledDate[];
-  }) => {
-    setTeam1Members(data.team1Members);
-    setTeam2Members(data.team2Members);
-    setTeam1Name(data.team1Name);
-    setTeam2Name(data.team2Name);
-    setTeam1Color(data.team1Color);
-    setTeam2Color(data.team2Color);
-    setSelectedGame(data.selectedGame);
-    setSelectedLeague(data.selectedLeague);
-    setScheduledDates(data.scheduledDates);
+  const handleMatchesCreated = (newMatches: Match[]) => {
+    setMatches([...matches, ...newMatches]);
   };
 
   const uniqueCreators = useMemo(() => {
@@ -311,7 +293,9 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
           </Button>
           <TeamImport 
             allStudents={allStudents}
-            onImportComplete={handleImportComplete}
+            matches={matches}
+            teacher={teacher}
+            onMatchesCreated={handleMatchesCreated}
           />
         </div>
       </div>

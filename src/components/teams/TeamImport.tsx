@@ -1,26 +1,19 @@
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import Icon from "@/components/ui/icon";
-import { TeamMember, ScheduledDate } from "@/types";
+import { TeamMember, ScheduledDate, Match, Teacher } from "@/types";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { createMatchWithValidation } from "./MatchCreator";
 
 interface TeamImportProps {
   allStudents: Array<{ id: string; name: string; className: string }>;
-  onImportComplete: (data: {
-    team1Members: TeamMember[];
-    team2Members: TeamMember[];
-    team1Name: string;
-    team2Name: string;
-    team1Color: string;
-    team2Color: string;
-    selectedGame: string;
-    selectedLeague: string;
-    scheduledDates: ScheduledDate[];
-  }) => void;
+  matches: Match[];
+  teacher: Teacher;
+  onMatchesCreated: (matches: Match[]) => void;
 }
 
-export const TeamImport = ({ allStudents, onImportComplete }: TeamImportProps) => {
+export const TeamImport = ({ allStudents, matches, teacher, onMatchesCreated }: TeamImportProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,6 +47,8 @@ export const TeamImport = ({ allStudents, onImportComplete }: TeamImportProps) =
           'Дата': string;
           'Время': string;
         }>(matchesSheet);
+
+        const createdMatches: Match[] = [];
 
         matchesData.forEach(row => {
           if (!row['Игра'] || !row['Команда 1'] || !row['Команда 2']) return;
@@ -111,20 +106,32 @@ export const TeamImport = ({ allStudents, onImportComplete }: TeamImportProps) =
           const team2Color = row['Цвет команды 2'] || '#FFFFFF';
           const league = row['Лига'] || '';
 
-          onImportComplete({
+          const newMatch = createMatchWithValidation({
+            selectedGame: row['Игра'].toLowerCase(),
             team1Members: team1MembersList,
             team2Members: team2MembersList,
             team1Name: row['Команда 1'],
             team2Name: row['Команда 2'],
             team1Color: team1Color,
             team2Color: team2Color,
-            selectedGame: row['Игра'].toLowerCase(),
-            selectedLeague: league,
-            scheduledDates: importedSchedules
+            scheduledDates: importedSchedules,
+            matches: [...matches, ...createdMatches],
+            allStudents,
+            teacher,
+            selectedLeague: league
           });
+
+          if (newMatch) {
+            createdMatches.push(newMatch);
+          }
         });
 
-        toast.success("Команды и расписание загружены! Теперь создайте матч");
+        if (createdMatches.length > 0) {
+          onMatchesCreated(createdMatches);
+          toast.success(`Создано матчей: ${createdMatches.length}`);
+        } else {
+          toast.error("Не удалось создать ни одного матча");
+        }
       } catch (error) {
         console.error(error);
         toast.error("Ошибка при импорте файла");
