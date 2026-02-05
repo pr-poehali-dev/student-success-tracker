@@ -127,6 +127,28 @@ export default function DownloadTeamsImportTemplate() {
       ];
       XLSX.utils.book_append_sheet(workbook, instructionsSheet, "Инструкция");
 
+      const colorsData = [
+        { "Название": "Белый", "Код цвета": "#FFFFFF" },
+        { "Название": "Розовый", "Код цвета": "#FDE2E4" },
+        { "Название": "Персиковый", "Код цвета": "#FFE5D9" },
+        { "Название": "Желтый", "Код цвета": "#FFF4CC" },
+        { "Название": "Зеленый", "Код цвета": "#D4F1D4" },
+        { "Название": "Голубой", "Код цвета": "#D9E7FF" },
+        { "Название": "Фиолетовый", "Код цвета": "#E8DAFF" },
+        { "Название": "Серый", "Код цвета": "#F3F4F6" },
+        { "Название": "Красный", "Код цвета": "#FECACA" },
+        { "Название": "Оранжевый", "Код цвета": "#FED7AA" },
+        { "Название": "Лаймовый", "Код цвета": "#D9F99D" },
+        { "Название": "Бирюзовый", "Код цвета": "#A5F3FC" }
+      ];
+
+      const colorsSheet = XLSX.utils.json_to_sheet(colorsData);
+      colorsSheet['!cols'] = [
+        { wch: 20 },
+        { wch: 15 }
+      ];
+      XLSX.utils.book_append_sheet(workbook, colorsSheet, "Доступные цвета");
+
       XLSX.writeFile(workbook, 'Шаблон_импорта_команд.xlsx');
     };
 
