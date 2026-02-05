@@ -20,6 +20,7 @@ const getMatchName = (matchId: string | undefined, matches: Match[]): string => 
 const getGameTypeName = (gameType: string | undefined): string => {
   const gameLabels: Record<string, string> = {
     lumosity: "Люмосити",
+    lumocity: "Lumocity",
     valheim: "Valheim",
     civilization: "Civilization",
     factorio: "Factorio",
@@ -238,6 +239,29 @@ export const createExcelWorkbook = (classes: ClassRoom[], matches: Match[] = [],
   if (pe3dData.length > 0) {
     const pe3dSheet = XLSX.utils.json_to_sheet(pe3dData);
     XLSX.utils.book_append_sheet(workbook, pe3dSheet, "3D Физкультура");
+  }
+
+  const lumocityData = classes.flatMap(cls =>
+    cls.students.flatMap(student =>
+      (student.activities || [])
+        .filter(a => a.type === "lumocity")
+        .map(activity => ({
+          "ФИО": student.name,
+          "Класс": cls.name,
+          "Дата": new Date(activity.date).toLocaleString('ru-RU'),
+          "Название матча": activity.matchName || "-",
+          "Команда": activity.teamName || "-",
+          "Противник": activity.opponentTeamName || "-",
+          "Роль": activity.role === "captain" ? "Капитан" : "Игрок",
+          "Результат": activity.result === "win" ? "Победа" : activity.result === "loss" ? "Поражение" : "-",
+          "Статус игры": activity.gameStatus === "finished" ? "Закончена" : activity.gameStatus === "ongoing" ? "Идет игра" : "-",
+          "Оценил": activity.ratedBy || "-"
+        }))
+    )
+  );
+  if (lumocityData.length > 0) {
+    const lumocitySheet = XLSX.utils.json_to_sheet(lumocityData);
+    XLSX.utils.book_append_sheet(workbook, lumocitySheet, "Lumocity");
   }
 
   const disciplineCountersData = matches.flatMap(match => {

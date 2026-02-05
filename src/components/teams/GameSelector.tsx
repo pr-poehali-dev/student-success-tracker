@@ -8,6 +8,7 @@ export const GAME_TYPES = [
   { id: "sport", name: "Спорт", icon: "Trophy", color: "bg-orange-100 text-orange-700" },
   { id: "robo", name: "Робо", icon: "Bot", color: "bg-blue-100 text-blue-700" },
   { id: "3dphysics", name: "3D физкультура", icon: "Box", color: "bg-purple-100 text-purple-700" },
+  { id: "lumocity", name: "Lumocity", icon: "Brain", color: "bg-pink-100 text-pink-700" },
 ];
 
 interface GameSelectorProps {
