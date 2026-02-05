@@ -1,5 +1,6 @@
 import { Match, TeamMember, ScheduledDate, Teacher } from "@/types";
 import { toast } from "sonner";
+import { generateUniqueId } from "@/utils/generateUniqueId";
 
 interface CreateMatchParams {
   selectedGame: string;
@@ -84,17 +85,24 @@ export const createMatchWithValidation = (params: CreateMatchParams): Match | nu
     }
   }
 
+  const existingMatchIds = matches.map(m => m.id);
+  const existingTeamIds = matches.flatMap(m => [m.team1.id, m.team2.id]);
+  
+  const matchId = generateUniqueId(existingMatchIds);
+  const team1Id = generateUniqueId(existingTeamIds);
+  const team2Id = generateUniqueId([...existingTeamIds, team1Id]);
+
   const newMatch: Match = {
-    id: Date.now().toString(),
+    id: matchId,
     gameType: selectedGame as any,
     team1: {
-      id: Date.now().toString() + "-team1",
+      id: team1Id,
       name: team1Name,
       members: team1Members,
       backgroundColor: team1Color
     },
     team2: {
-      id: Date.now().toString() + "-team2",
+      id: team2Id,
       name: team2Name,
       members: team2Members,
       backgroundColor: team2Color

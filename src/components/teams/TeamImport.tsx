@@ -5,6 +5,7 @@ import { TeamMember, ScheduledDate, Match, Teacher } from "@/types";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { createMatchWithValidation } from "./MatchCreator";
+import { generateUniqueId } from "@/utils/generateUniqueId";
 
 interface TeamImportProps {
   allStudents: Array<{ id: string; name: string; className: string }>;
@@ -93,10 +94,14 @@ export const TeamImport = ({ allStudents, matches, teacher, onMatchesCreated }: 
 
           if (team1MembersList.length === 0 || team2MembersList.length === 0) return;
 
+          const existingScheduleIds = matches.flatMap(m => 
+            m.scheduledDates?.map(sd => sd.id) || []
+          );
+          
           const importedSchedules: ScheduledDate[] = [];
           if (row['Дата'] && row['Время']) {
             importedSchedules.push({
-              id: Date.now().toString(),
+              id: generateUniqueId(existingScheduleIds),
               date: row['Дата'],
               time: row['Время']
             });

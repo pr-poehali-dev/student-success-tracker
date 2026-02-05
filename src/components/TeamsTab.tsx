@@ -11,6 +11,7 @@ import { MatchScheduler } from "./teams/MatchScheduler";
 import { TeamImport } from "./teams/TeamImport";
 import { MatchFilters } from "./teams/MatchFilters";
 import { createMatchWithValidation } from "./teams/MatchCreator";
+import { generateUniqueId } from "@/utils/generateUniqueId";
 
 interface TeamsTabProps {
   classes: ClassRoom[];
@@ -139,8 +140,13 @@ export const TeamsTab = ({ classes, setClasses, matches, setMatches, teacher, on
       return;
     }
 
+    const existingScheduleIds = [
+      ...scheduledDates.map(sd => sd.id),
+      ...matches.flatMap(m => m.scheduledDates?.map(sd => sd.id) || [])
+    ];
+
     const newSchedule: ScheduledDate = {
-      id: Date.now().toString(),
+      id: generateUniqueId(existingScheduleIds),
       date: newDate,
       time: newTime
     };
