@@ -6,17 +6,64 @@ export default function DownloadTeamsImportTemplate() {
     const createTemplate = () => {
       const workbook = XLSX.utils.book_new();
 
-      const templateData = [
+      const teamsData = [
+        {
+          "Команда": "Викинги",
+          "Ученик": "Иван Иванов",
+          "Класс": "Grade 5А"
+        },
+        {
+          "Команда": "Викинги",
+          "Ученик": "Петр Петров",
+          "Класс": "Grade 5А"
+        },
+        {
+          "Команда": "Берсерки",
+          "Ученик": "Анна Сидорова",
+          "Класс": "Grade 5Б"
+        },
+        {
+          "Команда": "Берсерки",
+          "Ученик": "Мария Козлова",
+          "Класс": "Grade 5Б"
+        },
+        {
+          "Команда": "Римляне",
+          "Ученик": "Сергей Смирнов",
+          "Класс": "Grade 6А"
+        },
+        {
+          "Команда": "Римляне",
+          "Ученик": "Ольга Новикова",
+          "Класс": "Grade 6А"
+        },
+        {
+          "Команда": "Греки",
+          "Ученик": "Дмитрий Федоров",
+          "Класс": "Grade 6Б"
+        },
+        {
+          "Команда": "Греки",
+          "Ученик": "Елена Морозова",
+          "Класс": "Grade 6Б"
+        }
+      ];
+
+      const teamsSheet = XLSX.utils.json_to_sheet(teamsData);
+      teamsSheet['!cols'] = [
+        { wch: 20 },
+        { wch: 25 },
+        { wch: 15 }
+      ];
+      XLSX.utils.book_append_sheet(workbook, teamsSheet, "Команды");
+
+      const matchesData = [
         {
           "Игра": "valheim",
           "Команда 1": "Викинги",
           "Цвет команды 1": "#FDE2E4",
-          "Класс команды 1": "5А",
-          "Ученики команды 1": "Иван Иванов, Петр Петров",
           "Команда 2": "Берсерки",
           "Цвет команды 2": "#D9E7FF",
-          "Класс команды 2": "5Б",
-          "Ученики команды 2": "Анна Сидорова, Мария Козлова",
           "Лига": "premiere",
           "Дата": "2024-03-15",
           "Время": "14:00"
@@ -25,38 +72,54 @@ export default function DownloadTeamsImportTemplate() {
           "Игра": "civilization",
           "Команда 1": "Римляне",
           "Цвет команды 1": "#FFF4CC",
-          "Класс команды 1": "6А",
-          "Ученики команды 1": "Сергей Смирнов, Ольга Новикова",
           "Команда 2": "Греки",
           "Цвет команды 2": "#D4F1D4",
-          "Класс команды 2": "6Б",
-          "Ученики команды 2": "Дмитрий Федоров, Елена Морозова",
           "Лига": "beginner",
           "Дата": "2024-03-16",
           "Время": "15:00"
         }
       ];
 
-      const worksheet = XLSX.utils.json_to_sheet(templateData);
-
-      worksheet['!cols'] = [
+      const matchesSheet = XLSX.utils.json_to_sheet(matchesData);
+      matchesSheet['!cols'] = [
         { wch: 12 },
         { wch: 15 },
         { wch: 18 },
-        { wch: 18 },
-        { wch: 30 },
         { wch: 15 },
         { wch: 18 },
-        { wch: 18 },
-        { wch: 30 },
         { wch: 15 },
         { wch: 12 },
         { wch: 10 }
       ];
+      XLSX.utils.book_append_sheet(workbook, matchesSheet, "Матчи");
 
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Матчи");
+      const teamsInstructionsData = [
+        {
+          "Поле": "Команда",
+          "Описание": "Уникальное название команды. Используйте это же название в листе 'Матчи'",
+          "Пример": "Викинги"
+        },
+        {
+          "Поле": "Ученик",
+          "Описание": "ФИО ученика ТОЧНО как в базе данных",
+          "Пример": "Иван Иванов"
+        },
+        {
+          "Поле": "Класс",
+          "Описание": "Название класса ученика ТОЧНО как в базе (для различения учеников с одинаковыми именами)",
+          "Пример": "Grade 5А"
+        }
+      ];
 
-      const instructionsData = [
+      const teamsInstructionsSheet = XLSX.utils.json_to_sheet(teamsInstructionsData);
+      teamsInstructionsSheet['!cols'] = [
+        { wch: 15 },
+        { wch: 70 },
+        { wch: 25 }
+      ];
+      XLSX.utils.book_append_sheet(workbook, teamsInstructionsSheet, "Инструкция: Команды");
+
+      const matchesInstructionsData = [
         {
           "Поле": "Игра",
           "Описание": "Тип игры (valheim, civilization, factorio, sport, robo, 3dphysics, lumocity)",
@@ -64,48 +127,28 @@ export default function DownloadTeamsImportTemplate() {
         },
         {
           "Поле": "Команда 1",
-          "Описание": "Название первой команды",
+          "Описание": "Название команды из листа 'Команды'",
           "Пример": "Викинги"
         },
         {
           "Поле": "Цвет команды 1",
-          "Описание": "HEX цвет карточки команды 1",
-          "Пример": "#FF5733"
-        },
-        {
-          "Поле": "Класс команды 1",
-          "Описание": "Название класса для фильтрации учеников (необязательно)",
-          "Пример": "5А"
-        },
-        {
-          "Поле": "Ученики команды 1",
-          "Описание": "ФИО учеников через запятую",
-          "Пример": "Иван Иванов, Петр Петров"
+          "Описание": "HEX цвет карточки команды 1 (см. лист 'Доступные цвета')",
+          "Пример": "#FDE2E4"
         },
         {
           "Поле": "Команда 2",
-          "Описание": "Название второй команды",
+          "Описание": "Название команды из листа 'Команды'",
           "Пример": "Берсерки"
         },
         {
           "Поле": "Цвет команды 2",
-          "Описание": "HEX цвет карточки команды 2",
-          "Пример": "#33C1FF"
-        },
-        {
-          "Поле": "Класс команды 2",
-          "Описание": "Название класса для фильтрации учеников (необязательно)",
-          "Пример": "5Б"
-        },
-        {
-          "Поле": "Ученики команды 2",
-          "Описание": "ФИО учеников через запятую",
-          "Пример": "Анна Сидорова, Мария Козлова"
+          "Описание": "HEX цвет карточки команды 2 (см. лист 'Доступные цвета')",
+          "Пример": "#D9E7FF"
         },
         {
           "Поле": "Лига",
-          "Описание": "Название лиги: beginner, second, first, premiere",
-          "Пример": "beginner"
+          "Описание": "Код лиги: beginner, second, first, premiere (см. лист 'Доступные лиги')",
+          "Пример": "premiere"
         },
         {
           "Поле": "Дата",
@@ -119,13 +162,13 @@ export default function DownloadTeamsImportTemplate() {
         }
       ];
 
-      const instructionsSheet = XLSX.utils.json_to_sheet(instructionsData);
-      instructionsSheet['!cols'] = [
+      const matchesInstructionsSheet = XLSX.utils.json_to_sheet(matchesInstructionsData);
+      matchesInstructionsSheet['!cols'] = [
         { wch: 20 },
-        { wch: 60 },
+        { wch: 70 },
         { wch: 25 }
       ];
-      XLSX.utils.book_append_sheet(workbook, instructionsSheet, "Инструкция");
+      XLSX.utils.book_append_sheet(workbook, matchesInstructionsSheet, "Инструкция: Матчи");
 
       const colorsData = [
         { "Название": "Белый", "Код цвета": "#FFFFFF" },
