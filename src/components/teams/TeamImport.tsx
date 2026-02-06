@@ -50,15 +50,26 @@ export const TeamImport = ({ allStudents, matches, teacher, onMatchesCreated }: 
         }>(matchesSheet);
 
         const createdMatches: Match[] = [];
+        console.log('📊 [TeamImport] Всего строк в Excel:', matchesData.length);
 
-        matchesData.forEach(row => {
-          if (!row['Игра'] || !row['Команда 1'] || !row['Команда 2']) return;
+        matchesData.forEach((row, index) => {
+          console.log(`\n🔍 [TeamImport] Обработка строки ${index + 1}:`, row);
+          if (!row['Игра'] || !row['Команда 1'] || !row['Команда 2']) {
+            console.log(`❌ [TeamImport] Строка ${index + 1} пропущена: отсутствуют обязательные колонки`, {
+              game: row['Игра'],
+              team1: row['Команда 1'],
+              team2: row['Команда 2']
+            });
+            return;
+          }
 
           const team1MembersNames = row['Ученики команды 1']?.split(',').map(s => s.trim()) || [];
           const team2MembersNames = row['Ученики команды 2']?.split(',').map(s => s.trim()) || [];
           
           const team1ClassFilter = row['Класс команды 1']?.trim() || '';
           const team2ClassFilter = row['Класс команды 2']?.trim() || '';
+          console.log(`👥 [TeamImport] Строка ${index + 1} - Ученики команды 1:`, team1MembersNames);
+          console.log(`👥 [TeamImport] Строка ${index + 1} - Ученики команды 2:`, team2MembersNames);
 
           const team1MembersList: TeamMember[] = team1MembersNames
             .map(name => {
@@ -82,7 +93,10 @@ export const TeamImport = ({ allStudents, matches, teacher, onMatchesCreated }: 
                 s.name === name && 
                 (!team2ClassFilter || s.className === team2ClassFilter)
               );
-              if (!student) return null;
+              if (!student) {
+                console.log(`⚠️ [TeamImport] Строка ${index + 1} - Ученик "${name}" не найден в команде 2`);
+                return null;
+              }
               return {
                 studentId: student.id,
                 studentName: student.name,
@@ -92,7 +106,13 @@ export const TeamImport = ({ allStudents, matches, teacher, onMatchesCreated }: 
             })
             .filter(m => m !== null) as TeamMember[];
 
-          if (team1MembersList.length === 0 || team2MembersList.length === 0) return;
+          if (team1MembersList.length === 0 || team2MembersList.length === 0) {
+            console.log(`❌ [TeamImport] Строка ${index + 1} пропущена: пустые команды`, {
+              team1Count: team1MembersList.length,
+              team2Count: team2MembersList.length
+            });
+            return;
+          }
 
           const existingScheduleIds = matches.flatMap(m => 
             m.scheduledDates?.map(sd => sd.id) || []
@@ -106,10 +126,24 @@ export const TeamImport = ({ allStudents, matches, teacher, onMatchesCreated }: 
               time: row['Время']
             });
           }
+          console.log(`📅 [TeamImport] Строка ${index + 1} - Расписание:`, {
+            date: row['Дата'],
+            time: row['Время'],
+            scheduleCount: importedSchedules.length
+          });
           
           const team1Color = row['Цвет команды 1'] || '#FFFFFF';
           const team2Color = row['Цвет команды 2'] || '#FFFFFF';
           const league = row['Лига'] || '';
+          
+          console.log(`🎮 [TeamImport] Строка ${index + 1} - Параметры матча:`, {
+            game: row['Игра'],
+            gameLowerCase: row['Игра'].toLowerCase(),
+            league: league,
+            leagueEmpty: league === '',
+            team1Name: row['Команда 1'],
+            team2Name: row['Команда 2']
+          });
 
           const newMatch = createMatchWithValidation({
             selectedGame: row['Игра'].toLowerCase(),
@@ -127,8 +161,16 @@ export const TeamImport = ({ allStudents, matches, teacher, onMatchesCreated }: 
           });
 
           if (newMatch) {
+            console.log(`✅ [TeamImport] Строка ${index + 1} - Матч создан успешно!`);
             createdMatches.push(newMatch);
+          } else {
+            console.log(`❌ [TeamImport] Строка ${index + 1} - Матч НЕ создан (валидация не прошла)`);
           }
+        });
+
+        console.log(`\n📊 [TeamImport] Итог импорта:`, {
+          totalRows: matchesData.length,
+          createdMatches: createdMatches.length
         });
 
         if (createdMatches.length > 0) {

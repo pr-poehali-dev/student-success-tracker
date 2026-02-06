@@ -33,19 +33,37 @@ export const createMatchWithValidation = (params: CreateMatchParams): Match | nu
     selectedLeague
   } = params;
 
+  console.log(`\n🔍 [MatchCreator] Начало валидации матча:`, {
+    selectedGame,
+    team1Name,
+    team2Name,
+    team1Size: team1Members.length,
+    team2Size: team2Members.length,
+    scheduleDatesCount: scheduledDates.length,
+    selectedLeague,
+    leagueEmpty: !selectedLeague
+  });
+
   if (!selectedGame) {
+    console.log(`❌ [MatchCreator] Валидация не прошла: пустая игра`);
     toast.error("Выберите игру");
     return null;
   }
   if (team1Members.length === 0 || team2Members.length === 0) {
+    console.log(`❌ [MatchCreator] Валидация не прошла: пустые команды`, {
+      team1: team1Members.length,
+      team2: team2Members.length
+    });
     toast.error("Обе команды должны содержать хотя бы одного ученика");
     return null;
   }
   if (scheduledDates.length === 0) {
+    console.log(`❌ [MatchCreator] Валидация не прошла: пустое расписание`);
     toast.error("Добавьте хотя бы одну дату проведения матча");
     return null;
   }
   if (!selectedLeague) {
+    console.log(`❌ [MatchCreator] Валидация не прошла: пустая лига`, { selectedLeague });
     toast.error("Выберите лигу");
     return null;
   }
@@ -73,6 +91,13 @@ export const createMatchWithValidation = (params: CreateMatchParams): Match | nu
               .map(id => allStudents.find(s => s.id === id)?.name || "")
               .filter(n => n)
               .join(", ");
+            
+            console.log(`❌ [MatchCreator] Валидация не прошла: конфликт расписания`, {
+              conflictNames,
+              date: existingDate.date,
+              time: existingDate.time,
+              existingMatch: `${existingMatch.team1.name} vs ${existingMatch.team2.name}`
+            });
             
             toast.error(
               `Конфликт расписания! Ученики ${conflictNames} заняты в матче "${existingMatch.team1.name} vs ${existingMatch.team2.name}" (${existingDate.date} ${existingDate.time}). Создатель матча: ${existingMatch.createdBy}`,
@@ -114,6 +139,11 @@ export const createMatchWithValidation = (params: CreateMatchParams): Match | nu
     league: selectedLeague as any
   };
 
+  console.log(`✅ [MatchCreator] Матч успешно создан!`, {
+    matchId: newMatch.id,
+    gameType: newMatch.gameType,
+    league: newMatch.league
+  });
   toast.success("Матч создан! Теперь можно назначить результат");
   return newMatch;
 };
