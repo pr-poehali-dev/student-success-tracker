@@ -26,6 +26,9 @@ export const useAppData = () => {
   const prevClassesRef = useRef<ClassRoom[]>([]);
   const prevMatchesRef = useRef<Match[]>([]);
   
+  // Флаг: пропустить следующую автосинхронизацию (используется при получении WS изменений)
+  const skipNextAutoSyncRef = useRef(false);
+  
   // WebSocket клиент
   const wsClientRef = useRef(createWSClient());
 
@@ -119,6 +122,10 @@ export const useAppData = () => {
         if (change.type === 'data_updated') {
           // Полное обновление данных - перезагружаем с сервера
           syncFromServer().then(serverData => {
+            // КРИТИЧНО: устанавливаем флаг чтобы НЕ делать POST /sync после обновления данных
+            // Данные уже синхронизированы другим пользователем, не нужно дублировать запрос
+            skipNextAutoSyncRef.current = true;
+            
             setGlobalData(serverData);
             
             // Для admin/teacher - получаем все данные
@@ -155,6 +162,8 @@ export const useAppData = () => {
             }
             
             setAttendance(serverData.attendance || []);
+            
+            console.log("✅ [WS] Data updated from server (skipping auto-sync POST)");
           }).catch(err => {
             console.error("❌ [WS] Failed to sync after change:", err);
           });
@@ -195,8 +204,14 @@ export const useAppData = () => {
       clearTimeout(debounceTimerRef.current);
     }
 
-    // Откладываем синхронизацию на 3 секунды
+    // Откладываем синхронизацию на 10 секунд (было 3, увеличено для снижения нагрузки)
     debounceTimerRef.current = setTimeout(() => {
+      // Проверяем флаг: если нужно пропустить автосинхронизацию (данные пришли через WS)
+      if (skipNextAutoSyncRef.current) {
+        console.log("⏭️ [SKIP] Skipping auto-sync (data received via WebSocket)");
+        skipNextAutoSyncRef.current = false; // Сбрасываем флаг
+        return;
+      }
       let updatedGlobalClasses: ClassRoom[];
       let updatedGlobalMatches: Match[];
 
@@ -238,7 +253,7 @@ export const useAppData = () => {
         updatedGlobalMatches = [...otherMatches, ...matches];
       }
       
-      // Обновляем prev refs для следующего сравнения
+      // Обновляем prev refs для следующего сравнения (нужно делать ДО проверки изменений!)
       prevClassesRef.current = [...classes];
       prevMatchesRef.current = [...matches];
 
@@ -328,7 +343,7 @@ export const useAppData = () => {
           setIsSyncInProgress(false);
         });
       }
-    }, 3000); // Debounce 3 секунды
+    }, 10000); // Debounce 10 секунд (было 3, увеличено для снижения нагрузки на DB)
 
     // Cleanup функция для очистки таймера
     return () => {

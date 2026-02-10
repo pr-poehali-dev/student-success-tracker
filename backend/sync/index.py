@@ -283,21 +283,12 @@ def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[st
     if not classes:
         return
     
+    # Junior учителя: полная перезапись ТОЛЬКО своих классов (как раньше)
     if current_teacher and current_teacher.get('role') == 'junior' and current_teacher.get('id'):
         teacher_id = escape_sql(current_teacher['id'])
         cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.students WHERE class_id IN (SELECT id FROM t_p91106428_student_success_trac.classes WHERE responsible_teacher_id = {teacher_id})')
         cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.classes WHERE responsible_teacher_id = {teacher_id}')
-    else:
-        # INCREMENTAL UPDATE: удаляем только те классы, которых нет в incoming данных
-        cursor.execute('SELECT id FROM t_p91106428_student_success_trac.classes')
-        existing_class_ids = {row[0] for row in cursor.fetchall()}
-        incoming_class_ids = {cls['id'] for cls in classes if cls.get('id')}
-        class_ids_to_delete = existing_class_ids - incoming_class_ids
-        
-        if class_ids_to_delete:
-            class_ids_str = ','.join([escape_sql(cid) for cid in class_ids_to_delete])
-            cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.students WHERE class_id IN ({class_ids_str})')
-            cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.classes WHERE id IN ({class_ids_str})')
+    # Admin/Teacher: НЕ делаем SELECT/DELETE - только UPSERT (ON CONFLICT) ниже
     
     class_values = []
     student_values = []
@@ -359,38 +350,14 @@ def save_classes(cursor, classes: List[Dict[str, Any]], current_teacher: Dict[st
 
 
 def save_matches(cursor, matches: List[Dict[str, Any]], current_teacher: Dict[str, Any] = None) -> None:
+    # Junior учителя: полная перезапись ТОЛЬКО своих матчей (как раньше)
     if current_teacher and current_teacher.get('role') == 'junior' and current_teacher.get('name'):
         teacher_name = escape_sql(current_teacher['name'])
         cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.scheduled_dates WHERE match_id IN (SELECT id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name})')
         cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name}')
         cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.team_members WHERE team_id IN (SELECT team1_id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name} UNION SELECT team2_id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name})')
         cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.teams WHERE id IN (SELECT team1_id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name} UNION SELECT team2_id FROM t_p91106428_student_success_trac.matches WHERE created_by = {teacher_name})')
-    else:
-        # INCREMENTAL UPDATE: удаляем только те матчи, которых нет в incoming данных
-        cursor.execute('SELECT id FROM t_p91106428_student_success_trac.matches')
-        existing_match_ids = {row[0] for row in cursor.fetchall()}
-        incoming_match_ids = {m['id'] for m in matches if m.get('id')}
-        match_ids_to_delete = existing_match_ids - incoming_match_ids
-        
-        if match_ids_to_delete:
-            match_ids_str = ','.join([escape_sql(mid) for mid in match_ids_to_delete])
-            # Сначала получаем team_id матчей которые удаляем
-            cursor.execute(f'SELECT team1_id, team2_id FROM t_p91106428_student_success_trac.matches WHERE id IN ({match_ids_str})')
-            team_ids_to_delete = set()
-            for row in cursor.fetchall():
-                team_ids_to_delete.add(row[0])
-                team_ids_to_delete.add(row[1])
-            
-            # Удаляем scheduled_dates
-            cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.scheduled_dates WHERE match_id IN ({match_ids_str})')
-            # Удаляем матчи
-            cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.matches WHERE id IN ({match_ids_str})')
-            
-            # Удаляем команды и их участников
-            if team_ids_to_delete:
-                team_ids_str = ','.join([escape_sql(tid) for tid in team_ids_to_delete])
-                cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.team_members WHERE team_id IN ({team_ids_str})')
-                cursor.execute(f'DELETE FROM t_p91106428_student_success_trac.teams WHERE id IN ({team_ids_str})')
+    # Admin/Teacher: НЕ делаем SELECT/DELETE - только UPSERT (ON CONFLICT) ниже
     
     for match in matches:
         if not match.get('id'):
@@ -506,8 +473,7 @@ def save_attendance(cursor, attendance_list: List[Dict[str, Any]]) -> None:
     if not attendance_list:
         return
     
-    cursor.execute('DELETE FROM t_p91106428_student_success_trac.attendance')
-    
+    # UPSERT подход: НЕ делаем DELETE всех записей, только ON CONFLICT
     for att in attendance_list:
         if not att.get('id'):
             continue
