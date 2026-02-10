@@ -1,4 +1,5 @@
 {
+  "websocket": "https://functions.poehali.dev/b13884b0-1b22-4c1c-a17d-4be8f6c23604",
   "get-db-url": "https://functions.poehali.dev/95771238-384e-4476-8118-2dd2d9d77287",
   "sync": "https://functions.poehali.dev/5f412d00-6e28-4197-9c9d-c71b82e72629"
 }

@@ -1,0 +1,33 @@
+{
+  "tests": [
+    {
+      "name": "Get changes with no timestamp",
+      "method": "GET",
+      "path": "/?since=0",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "changes": "array",
+        "timestamp": "number"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Post a change",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "type": "class_added",
+        "data": {
+          "id": "test-123",
+          "name": "Test Class"
+        },
+        "author": "Test User"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

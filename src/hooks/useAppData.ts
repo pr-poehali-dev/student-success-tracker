@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ClassRoom, Teacher, Match, AppState, GlobalData, AttendanceRecord } from "@/types";
 import { saveAppState, loadAppState, clearAppState, createBackup, restoreFromBackup } from "@/utils/storage";
 import { syncFromServer, syncToServer, deleteTeacherFromServer } from "@/utils/sync";
+import { createWSClient, WSChange } from "@/utils/websocket";
 import { toast } from "sonner";
 
 export const useAppData = () => {
@@ -24,6 +25,9 @@ export const useAppData = () => {
   // Отслеживание предыдущего состояния для определения удалений
   const prevClassesRef = useRef<ClassRoom[]>([]);
   const prevMatchesRef = useRef<Match[]>([]);
+  
+  // WebSocket клиент
+  const wsClientRef = useRef(createWSClient());
 
   useEffect(() => {
     const loadData = async () => {
@@ -95,97 +99,76 @@ export const useAppData = () => {
     loadData();
   }, []);
 
-  // Периодический опрос сервера для синхронизации globalData
-  // Оптимизация: опрашиваем только когда вкладка активна + увеличенный интервал
+  // WebSocket real-time синхронизация
   useEffect(() => {
     if (!isLoggedIn || !teacher) return;
 
-    let pollInterval: NodeJS.Timeout | null = null;
-    let isVisible = !document.hidden;
-
-    const poll = async () => {
-      if (!isVisible) return; // Не опрашиваем если вкладка неактивна
+    const wsClient = wsClientRef.current;
+    
+    // Обработчик входящих изменений от других пользователей
+    wsClient.onChanges((changes: WSChange[]) => {
+      console.log(`📥 [WS] Processing ${changes.length} changes`);
       
-      try {
-        console.log("🔄 [POLLING] Fetching latest data from server...");
-        const serverData = await syncFromServer();
+      changes.forEach((change) => {
+        // Игнорируем свои собственные изменения
+        if (change.author === teacher.name) return;
         
-        // Обновляем globalData
-        setGlobalData(serverData);
+        console.log(`🔄 [WS] Applying change: ${change.type} from ${change.author}`);
         
-        // Для admin/teacher обновляем локальные данные
-        if (teacher.role === "admin" || teacher.role === "teacher") {
-          // Мерджим с текущими изменениями пользователя
-          const currentClassIds = classes.map(c => c.id);
-          const currentMatchIds = matches.map(m => m.id);
-          
-          // Берем новые данные с сервера которых нет у пользователя
-          const newClasses = serverData.classes.filter(c => !currentClassIds.includes(c.id));
-          const newMatches = serverData.matches.filter(m => !currentMatchIds.includes(m.id));
-          
-          if (newClasses.length > 0) {
-            console.log(`📥 [POLLING] Found ${newClasses.length} new classes from server`);
-            setClasses([...classes, ...newClasses]);
-            prevClassesRef.current = [...classes, ...newClasses];
-          }
-          
-          if (newMatches.length > 0) {
-            console.log(`📥 [POLLING] Found ${newMatches.length} new matches from server`);
-            setMatches([...matches, ...newMatches]);
-            prevMatchesRef.current = [...matches, ...newMatches];
-          }
-        } else if (teacher.role === "junior") {
-          // Junior: фильтруем классы и матчи
-          const juniorClasses = serverData.classes.filter(
-            cls => cls.responsibleTeacherId === teacher.id
-          );
-          const juniorMatches = serverData.matches.filter(m => m.createdBy === teacher.name);
-          
-          setClasses(juniorClasses);
-          setMatches(juniorMatches);
-          prevClassesRef.current = [...juniorClasses];
-          prevMatchesRef.current = [...juniorMatches];
+        // Обрабатываем разные типы изменений
+        if (change.type === 'data_updated') {
+          // Полное обновление данных - перезагружаем с сервера
+          syncFromServer().then(serverData => {
+            setGlobalData(serverData);
+            
+            // Для admin/teacher - получаем все данные
+            if (teacher.role === "admin" || teacher.role === "teacher") {
+              const currentClassIds = classes.map(c => c.id);
+              const currentMatchIds = matches.map(m => m.id);
+              
+              // Берем новые данные с сервера которых нет локально
+              const newClasses = serverData.classes.filter(c => !currentClassIds.includes(c.id));
+              const newMatches = serverData.matches.filter(m => !currentMatchIds.includes(m.id));
+              
+              if (newClasses.length > 0) {
+                console.log(`📥 [WS] Adding ${newClasses.length} new classes`);
+                setClasses(prev => [...prev, ...newClasses]);
+                prevClassesRef.current = [...classes, ...newClasses];
+              }
+              
+              if (newMatches.length > 0) {
+                console.log(`📥 [WS] Adding ${newMatches.length} new matches`);
+                setMatches(prev => [...prev, ...newMatches]);
+                prevMatchesRef.current = [...matches, ...newMatches];
+              }
+            } else if (teacher.role === "junior") {
+              // Junior - фильтруем только свои данные
+              const juniorClasses = serverData.classes.filter(
+                cls => cls.responsibleTeacherId === teacher.id
+              );
+              const juniorMatches = serverData.matches.filter(m => m.createdBy === teacher.name);
+              
+              setClasses(juniorClasses);
+              setMatches(juniorMatches);
+              prevClassesRef.current = [...juniorClasses];
+              prevMatchesRef.current = [...juniorMatches];
+            }
+            
+            setAttendance(serverData.attendance || []);
+          }).catch(err => {
+            console.error("❌ [WS] Failed to sync after change:", err);
+          });
         }
-        
-        // Обновляем attendance для всех
-        setAttendance(serverData.attendance || []);
-        
-      } catch (error) {
-        console.error("❌ [POLLING] Failed to fetch data:", error);
-      }
-    };
-
-    // Обработчик смены видимости вкладки
-    const handleVisibilityChange = () => {
-      isVisible = !document.hidden;
-      
-      if (isVisible) {
-        // Вкладка стала активной - сразу опрашиваем + запускаем интервал
-        console.log("👁️ [POLLING] Tab became visible, fetching data...");
-        poll();
-        if (!pollInterval) {
-          pollInterval = setInterval(poll, 30000); // 30 секунд вместо 15
-        }
-      } else {
-        // Вкладка неактивна - останавливаем опрос
-        console.log("🔕 [POLLING] Tab hidden, pausing polling");
-        if (pollInterval) {
-          clearInterval(pollInterval);
-          pollInterval = null;
-        }
-      }
-    };
-
-    // Запускаем если вкладка активна
-    if (isVisible) {
-      pollInterval = setInterval(poll, 30000);
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
+      });
+    });
+    
+    // Подключаемся к WebSocket
+    wsClient.connect();
+    console.log("🔌 [WS] Connected to real-time sync");
+    
     return () => {
-      if (pollInterval) clearInterval(pollInterval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      wsClient.disconnect();
+      console.log("🔌 [WS] Disconnected");
     };
   }, [isLoggedIn, teacher, classes, matches]);
 
@@ -326,6 +309,16 @@ export const useAppData = () => {
             attendance: attendance
           };
           setGlobalData(newGlobalData);
+          
+          // Отправляем уведомление через WebSocket о том что данные обновлены
+          const wsClient = wsClientRef.current;
+          wsClient.sendChange('data_updated', {
+            classes: updatedGlobalClasses.length,
+            matches: updatedGlobalMatches.length,
+            attendance: attendance.length
+          }, teacher.name).catch(err => {
+            console.error("❌ [WS] Failed to broadcast change:", err);
+          });
           
           toast.success("Данные сохранены", { id: 'sync-toast' });
         }).catch(error => {
