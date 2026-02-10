@@ -13,10 +13,6 @@ from typing import Dict, List, Any, Optional
 CHANGES_STORE: Dict[str, List[Dict[str, Any]]] = {}
 CLEANUP_INTERVAL = 300  # Очищаем старые изменения каждые 5 минут
 
-# Отслеживание онлайн пользователей: {teacher_id: last_seen_timestamp}
-ONLINE_USERS: Dict[str, float] = {}
-ONLINE_TIMEOUT = 10  # Считаем офлайн если не было активности 10 секунд
-
 def cleanup_old_changes():
     """Удаляем изменения старше 1 часа"""
     current_time = time.time()
@@ -58,32 +54,6 @@ def get_changes_since(since_timestamp: float) -> List[Dict[str, Any]]:
         if change.get('timestamp', 0) > since_timestamp
     ]
 
-def update_user_online(user_id: str, user_name: str):
-    """Обновляет последнюю активность пользователя"""
-    ONLINE_USERS[user_id] = {
-        'name': user_name,
-        'last_seen': time.time()
-    }
-
-def get_online_users() -> List[Dict[str, Any]]:
-    """Возвращает список онлайн пользователей"""
-    current_time = time.time()
-    online = []
-    
-    # Очищаем неактивных пользователей
-    for user_id in list(ONLINE_USERS.keys()):
-        user_data = ONLINE_USERS[user_id]
-        if current_time - user_data['last_seen'] > ONLINE_TIMEOUT:
-            del ONLINE_USERS[user_id]
-        else:
-            online.append({
-                'id': user_id,
-                'name': user_data['name'],
-                'last_seen': user_data['last_seen']
-            })
-    
-    return online
-
 def handler(event: dict, context) -> dict:
     """
     Обрабатывает запросы для WebSocket-like синхронизации.
@@ -115,23 +85,14 @@ def handler(event: dict, context) -> dict:
         try:
             query_params = event.get('queryStringParameters', {}) or {}
             since_str = query_params.get('since', '0')
-            user_id = query_params.get('userId', '')
-            user_name = query_params.get('userName', 'Unknown')
             
             try:
                 since_timestamp = float(since_str)
             except (ValueError, TypeError):
                 since_timestamp = 0
             
-            # Обновляем онлайн статус пользователя
-            if user_id:
-                update_user_online(user_id, user_name)
-            
             # Получаем изменения
             changes = get_changes_since(since_timestamp)
-            
-            # Получаем список онлайн пользователей
-            online_users = get_online_users()
             
             # Периодически чистим старые изменения
             if time.time() % CLEANUP_INTERVAL < 1:
@@ -140,11 +101,10 @@ def handler(event: dict, context) -> dict:
             response_data = {
                 'changes': changes,
                 'timestamp': time.time(),
-                'count': len(changes),
-                'online_users': online_users
+                'count': len(changes)
             }
             
-            print(f"📥 [GET] Returning {len(changes)} changes since {since_timestamp}, {len(online_users)} users online")
+            print(f"📥 [GET] Returning {len(changes)} changes since {since_timestamp}")
             
             return {
                 'statusCode': 200,

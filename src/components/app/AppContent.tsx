@@ -10,7 +10,6 @@ import { SoftSkillsTab } from "@/components/SoftSkillsTab";
 import { TeacherProfile } from "@/components/TeacherProfile";
 import { AdminPanel } from "@/components/AdminPanel";
 import { ClassRoom, Teacher, Match, AttendanceRecord } from "@/types";
-import { OnlineUser } from "@/utils/websocket";
 
 interface AppContentProps {
   teacher: Teacher;
@@ -27,7 +26,6 @@ interface AppContentProps {
   showProfile: boolean;
   showAdmin: boolean;
   isAdmin: boolean;
-  onlineUsers?: OnlineUser[];
   setClasses: (classes: ClassRoom[]) => void;
   setMatches: (matches: Match[]) => void;
   setAttendance: (attendance: AttendanceRecord[]) => void;
@@ -56,7 +54,6 @@ export const AppContent = ({
   showProfile,
   showAdmin,
   isAdmin,
-  onlineUsers = [],
   setClasses,
   setMatches,
   setAttendance,
@@ -112,7 +109,6 @@ export const AppContent = ({
             teachers={globalData.teachers}
             classes={globalData.classes}
             matches={globalData.matches}
-            onlineUsers={onlineUsers}
             onUpdateTeacher={onUpdateTeacher}
             onDeleteTeacher={onDeleteTeacher}
             onDeleteClass={onDeleteClass}

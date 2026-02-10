@@ -12,18 +12,11 @@ export interface WSChange {
   timestamp: number;
 }
 
-export interface OnlineUser {
-  id: string;
-  name: string;
-  last_seen: number;
-}
-
 export interface WSClient {
-  connect: (userId: string, userName: string) => void;
+  connect: () => void;
   disconnect: () => void;
   sendChange: (type: string, data: unknown, author: string) => Promise<void>;
   onChanges: (callback: (changes: WSChange[]) => void) => void;
-  onOnlineUsers: (callback: (users: OnlineUser[]) => void) => void;
   isConnected: () => boolean;
 }
 
@@ -31,16 +24,13 @@ export const createWSClient = (): WSClient => {
   let pollInterval: NodeJS.Timeout | null = null;
   let lastTimestamp = 0;
   let isActive = false;
-  let currentUserId = '';
-  let currentUserName = '';
   let changeCallback: ((changes: WSChange[]) => void) | null = null;
-  const onlineUsersCallback: ((users: OnlineUser[]) => void) | null = null;
   
   const poll = async () => {
     if (!isActive) return;
     
     try {
-      const response = await fetch(`${WS_URL}?since=${lastTimestamp}&userId=${currentUserId}&userName=${encodeURIComponent(currentUserName)}`, {
+      const response = await fetch(`${WS_URL}?since=${lastTimestamp}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -65,24 +55,16 @@ export const createWSClient = (): WSClient => {
           changeCallback(data.changes);
         }
       }
-      
-      // Обновляем список онлайн пользователей
-      if (data.online_users && onlineUsersCallback) {
-        onlineUsersCallback(data.online_users);
-      }
     } catch (error) {
       console.error("❌ [WS] Poll error:", error);
     }
   };
   
   return {
-    connect: (userId: string, userName: string) => {
+    connect: () => {
       if (isActive) return;
       
-      currentUserId = userId;
-      currentUserName = userName;
-      
-      console.log("🔌 [WS] Connecting...", { userId, userName });
+      console.log("🔌 [WS] Connecting...");
       isActive = true;
       lastTimestamp = Date.now() / 1000; // Начинаем с текущего времени
       
@@ -130,10 +112,6 @@ export const createWSClient = (): WSClient => {
     
     onChanges: (callback: (changes: WSChange[]) => void) => {
       changeCallback = callback;
-    },
-    
-    onOnlineUsers: (callback: (users: OnlineUser[]) => void) => {
-      onlineUsersCallback = callback;
     },
     
     isConnected: () => isActive
