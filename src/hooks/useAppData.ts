@@ -95,6 +95,63 @@ export const useAppData = () => {
     loadData();
   }, []);
 
+  // Периодический опрос сервера для синхронизации globalData
+  useEffect(() => {
+    if (!isLoggedIn || !teacher) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        console.log("🔄 [POLLING] Fetching latest data from server...");
+        const serverData = await syncFromServer();
+        
+        // Обновляем globalData
+        setGlobalData(serverData);
+        
+        // Для admin/teacher обновляем локальные данные
+        if (teacher.role === "admin" || teacher.role === "teacher") {
+          // Мерджим с текущими изменениями пользователя
+          const currentClassIds = classes.map(c => c.id);
+          const currentMatchIds = matches.map(m => m.id);
+          
+          // Берем новые данные с сервера которых нет у пользователя
+          const newClasses = serverData.classes.filter(c => !currentClassIds.includes(c.id));
+          const newMatches = serverData.matches.filter(m => !currentMatchIds.includes(m.id));
+          
+          if (newClasses.length > 0) {
+            console.log(`📥 [POLLING] Found ${newClasses.length} new classes from server`);
+            setClasses([...classes, ...newClasses]);
+            prevClassesRef.current = [...classes, ...newClasses];
+          }
+          
+          if (newMatches.length > 0) {
+            console.log(`📥 [POLLING] Found ${newMatches.length} new matches from server`);
+            setMatches([...matches, ...newMatches]);
+            prevMatchesRef.current = [...matches, ...newMatches];
+          }
+        } else if (teacher.role === "junior") {
+          // Junior: фильтруем классы и матчи
+          const juniorClasses = serverData.classes.filter(
+            cls => cls.responsibleTeacherId === teacher.id
+          );
+          const juniorMatches = serverData.matches.filter(m => m.createdBy === teacher.name);
+          
+          setClasses(juniorClasses);
+          setMatches(juniorMatches);
+          prevClassesRef.current = [...juniorClasses];
+          prevMatchesRef.current = [...juniorMatches];
+        }
+        
+        // Обновляем attendance для всех
+        setAttendance(serverData.attendance || []);
+        
+      } catch (error) {
+        console.error("❌ [POLLING] Failed to fetch data:", error);
+      }
+    }, 15000); // Каждые 15 секунд
+
+    return () => clearInterval(pollInterval);
+  }, [isLoggedIn, teacher, classes, matches]);
+
   useEffect(() => {
     if (!teacher || !isLoggedIn || isSyncing) return;
 
@@ -123,18 +180,19 @@ export const useAppData = () => {
       let updatedGlobalClasses: ClassRoom[];
       let updatedGlobalMatches: Match[];
 
+      // INCREMENTAL UPDATE для ВСЕХ ролей (admin, teacher, junior)
+      // Определяем удаленные классы (были в prev, нет в current)
+      const prevClassIds = prevClassesRef.current.map(c => c.id);
+      const currentClassIds = classes.map(c => c.id);
+      const deletedClassIds = prevClassIds.filter(id => !currentClassIds.includes(id));
+      
+      // Определяем удаленные матчи
+      const prevMatchIds = prevMatchesRef.current.map(m => m.id);
+      const currentMatchIds = matches.map(m => m.id);
+      const deletedMatchIds = prevMatchIds.filter(id => !currentMatchIds.includes(id));
+      
       if (teacher.role === "junior") {
-        // Определяем удаленные классы (были в prev, нет в current)
-        const prevClassIds = prevClassesRef.current.map(c => c.id);
-        const currentClassIds = classes.map(c => c.id);
-        const deletedClassIds = prevClassIds.filter(id => !currentClassIds.includes(id));
-        
-        // Определяем удаленные матчи
-        const prevMatchIds = prevMatchesRef.current.map(m => m.id);
-        const currentMatchIds = matches.map(m => m.id);
-        const deletedMatchIds = prevMatchIds.filter(id => !currentMatchIds.includes(id));
-        
-        // Берем классы других учителей И удаляем те, что junior удалил
+        // Junior: берем классы других учителей И удаляем те, что junior удалил
         const otherClasses = globalData.classes.filter(c => 
           !currentClassIds.includes(c.id) && !deletedClassIds.includes(c.id)
         );
@@ -145,14 +203,24 @@ export const useAppData = () => {
           !currentMatchIds.includes(m.id) && !deletedMatchIds.includes(m.id)
         );
         updatedGlobalMatches = [...otherMatches, ...matches];
-        
-        // Обновляем prev refs для следующего сравнения
-        prevClassesRef.current = [...classes];
-        prevMatchesRef.current = [...matches];
       } else {
-        updatedGlobalClasses = classes;
-        updatedGlobalMatches = matches;
+        // Admin/Teacher: мерджим с существующими данными из globalData
+        // Берем классы которые НЕ в current (другие учителя создали) И НЕ удалены текущим пользователем
+        const otherClasses = globalData.classes.filter(c => 
+          !currentClassIds.includes(c.id) && !deletedClassIds.includes(c.id)
+        );
+        updatedGlobalClasses = [...otherClasses, ...classes];
+
+        // Берем матчи которые НЕ в current (другие учителя создали) И НЕ удалены текущим пользователем
+        const otherMatches = globalData.matches.filter(m => 
+          !currentMatchIds.includes(m.id) && !deletedMatchIds.includes(m.id)
+        );
+        updatedGlobalMatches = [...otherMatches, ...matches];
       }
+      
+      // Обновляем prev refs для следующего сравнения
+      prevClassesRef.current = [...classes];
+      prevMatchesRef.current = [...matches];
 
       const hasClassChanges = JSON.stringify(globalData.classes) !== JSON.stringify(updatedGlobalClasses);
       const hasMatchChanges = JSON.stringify(globalData.matches) !== JSON.stringify(updatedGlobalMatches);
