@@ -96,10 +96,16 @@ export const useAppData = () => {
   }, []);
 
   // Периодический опрос сервера для синхронизации globalData
+  // Оптимизация: опрашиваем только когда вкладка активна + увеличенный интервал
   useEffect(() => {
     if (!isLoggedIn || !teacher) return;
 
-    const pollInterval = setInterval(async () => {
+    let pollInterval: NodeJS.Timeout | null = null;
+    let isVisible = !document.hidden;
+
+    const poll = async () => {
+      if (!isVisible) return; // Не опрашиваем если вкладка неактивна
+      
       try {
         console.log("🔄 [POLLING] Fetching latest data from server...");
         const serverData = await syncFromServer();
@@ -147,9 +153,40 @@ export const useAppData = () => {
       } catch (error) {
         console.error("❌ [POLLING] Failed to fetch data:", error);
       }
-    }, 15000); // Каждые 15 секунд
+    };
 
-    return () => clearInterval(pollInterval);
+    // Обработчик смены видимости вкладки
+    const handleVisibilityChange = () => {
+      isVisible = !document.hidden;
+      
+      if (isVisible) {
+        // Вкладка стала активной - сразу опрашиваем + запускаем интервал
+        console.log("👁️ [POLLING] Tab became visible, fetching data...");
+        poll();
+        if (!pollInterval) {
+          pollInterval = setInterval(poll, 30000); // 30 секунд вместо 15
+        }
+      } else {
+        // Вкладка неактивна - останавливаем опрос
+        console.log("🔕 [POLLING] Tab hidden, pausing polling");
+        if (pollInterval) {
+          clearInterval(pollInterval);
+          pollInterval = null;
+        }
+      }
+    };
+
+    // Запускаем если вкладка активна
+    if (isVisible) {
+      pollInterval = setInterval(poll, 30000);
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [isLoggedIn, teacher, classes, matches]);
 
   useEffect(() => {
