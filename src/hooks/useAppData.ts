@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ClassRoom, Teacher, Match, AppState, GlobalData, AttendanceRecord } from "@/types";
 import { saveAppState, loadAppState, clearAppState, createBackup, restoreFromBackup } from "@/utils/storage";
 import { syncFromServer, syncToServer, deleteTeacherFromServer } from "@/utils/sync";
-import { createWSClient, WSChange } from "@/utils/websocket";
+import { createWSClient, WSChange, OnlineUser } from "@/utils/websocket";
 import { toast } from "sonner";
 
 export const useAppData = () => {
@@ -17,6 +17,7 @@ export const useAppData = () => {
   const [isSyncInProgress, setIsSyncInProgress] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   
   // Счетчик вызовов для мониторинга
   const syncCounterRef = useRef({ get: 0, post: 0, delete: 0, lastReset: Date.now() });
@@ -105,6 +106,11 @@ export const useAppData = () => {
 
     const wsClient = wsClientRef.current;
     
+    // Обработчик онлайн пользователей
+    wsClient.onOnlineUsers((users: OnlineUser[]) => {
+      setOnlineUsers(users);
+    });
+    
     // Обработчик входящих изменений от других пользователей
     wsClient.onChanges((changes: WSChange[]) => {
       console.log(`📥 [WS] Processing ${changes.length} changes`);
@@ -162,9 +168,9 @@ export const useAppData = () => {
       });
     });
     
-    // Подключаемся к WebSocket
-    wsClient.connect();
-    console.log("🔌 [WS] Connected to real-time sync");
+    // Подключаемся к WebSocket с информацией о пользователе
+    wsClient.connect(teacher.id, teacher.name);
+    console.log("🔌 [WS] Connected to real-time sync", { id: teacher.id, name: teacher.name });
     
     return () => {
       wsClient.disconnect();
@@ -748,6 +754,7 @@ export const useAppData = () => {
     isLoggedIn,
     showProfile,
     showAdmin,
+    onlineUsers,
     setClasses,
     setMatches,
     setAttendance,

@@ -1,6 +1,7 @@
 import Icon from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Teacher, ClassRoom, Match } from "@/types";
+import { OnlineUser } from "@/utils/websocket";
 import { AdminStatsCards } from "./admin/AdminStatsCards";
 import { TeachersManagement } from "./admin/TeachersManagement";
 import { ClassesManagement } from "./admin/ClassesManagement";
@@ -12,6 +13,7 @@ interface AdminPanelProps {
   teachers: Teacher[];
   classes: ClassRoom[];
   matches: Match[];
+  onlineUsers?: OnlineUser[];
   onUpdateTeacher: (teacher: Teacher) => void;
   onDeleteTeacher: (teacherId: string) => void;
   onDeleteClass: (classId: string) => void;
@@ -23,7 +25,8 @@ interface AdminPanelProps {
 export const AdminPanel = ({ 
   teachers, 
   classes, 
-  matches, 
+  matches,
+  onlineUsers = [],
   onUpdateTeacher, 
   onDeleteTeacher,
   onDeleteClass,
@@ -58,6 +61,7 @@ export const AdminPanel = ({
 
       <TeachersManagement 
         teachers={teachers}
+        onlineUsers={onlineUsers}
         onUpdateTeacher={onUpdateTeacher}
         onDeleteTeacher={onDeleteTeacher}
         onCreateTeacher={onCreateTeacher}

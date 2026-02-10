@@ -14,6 +14,7 @@ const Index = () => {
     isLoggedIn,
     showProfile,
     showAdmin,
+    onlineUsers,
     setClasses,
     setMatches,
     setAttendance,
@@ -67,6 +68,7 @@ const Index = () => {
           showProfile={showProfile}
           showAdmin={showAdmin}
           isAdmin={isAdmin}
+          onlineUsers={onlineUsers}
           setClasses={setClasses}
           setMatches={setMatches}
           setAttendance={setAttendance}

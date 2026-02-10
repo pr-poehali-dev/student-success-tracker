@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Icon from "@/components/ui/icon";
 import { Teacher } from "@/types";
+import { OnlineUser } from "@/utils/websocket";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface TeachersManagementProps {
   teachers: Teacher[];
+  onlineUsers?: OnlineUser[];
   onUpdateTeacher: (teacher: Teacher) => void;
   onDeleteTeacher: (teacherId: string) => void;
   onCreateTeacher?: (teacher: Teacher) => void;
@@ -29,6 +31,7 @@ interface TeachersManagementProps {
 
 export const TeachersManagement = ({ 
   teachers, 
+  onlineUsers = [],
   onUpdateTeacher, 
   onDeleteTeacher,
   onCreateTeacher
@@ -273,15 +276,27 @@ export const TeachersManagement = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {teachers.map((teacher) => (
-                <TableRow key={teacher.id}>
-                  <TableCell className="font-medium">{teacher.name}</TableCell>
-                  <TableCell>{teacher.email || "-"}</TableCell>
-                  <TableCell>
-                    <Badge variant={teacher.role === "admin" ? "default" : "secondary"}>
-                      {ROLE_LABELS[teacher.role] || teacher.role}
-                    </Badge>
-                  </TableCell>
+              {teachers.map((teacher) => {
+                const isOnline = onlineUsers.some(u => u.id === teacher.id);
+                return (
+                  <TableRow key={teacher.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {isOnline && (
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                          </span>
+                        )}
+                        {teacher.name}
+                      </div>
+                    </TableCell>
+                    <TableCell>{teacher.email || "-"}</TableCell>
+                    <TableCell>
+                      <Badge variant={teacher.role === "admin" ? "default" : "secondary"}>
+                        {ROLE_LABELS[teacher.role] || teacher.role}
+                      </Badge>
+                    </TableCell>
                   <TableCell>
                     <code className="text-xs bg-muted px-2 py-1 rounded">{teacher.password || "-"}</code>
                   </TableCell>
@@ -374,7 +389,8 @@ export const TeachersManagement = ({
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </div>
