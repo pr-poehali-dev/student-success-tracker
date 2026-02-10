@@ -68,8 +68,8 @@ export const createWSClient = (): WSClient => {
       isActive = true;
       lastTimestamp = Date.now() / 1000; // Начинаем с текущего времени
       
-      // Опрашиваем каждые 3 секунды (быстрее чем 30 сек polling)
-      pollInterval = setInterval(poll, 3000);
+      // Опрашиваем каждые 10 секунд (синхронно с debounce сохранений)
+      pollInterval = setInterval(poll, 10000);
       
       // Сразу делаем первый запрос
       poll();

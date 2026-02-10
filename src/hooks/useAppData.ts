@@ -120,53 +120,66 @@ export const useAppData = () => {
         
         // Обрабатываем разные типы изменений
         if (change.type === 'data_updated') {
-          // Полное обновление данных - перезагружаем с сервера
-          syncFromServer().then(serverData => {
-            // КРИТИЧНО: устанавливаем флаг чтобы НЕ делать POST /sync после обновления данных
-            // Данные уже синхронизированы другим пользователем, не нужно дублировать запрос
-            skipNextAutoSyncRef.current = true;
+          // ОПТИМИЗАЦИЯ: используем данные ИЗ WebSocket, БЕЗ дополнительного GET запроса!
+          // Данные уже пришли в change.data, не нужно делать syncFromServer()
+          
+          // КРИТИЧНО: устанавливаем флаг чтобы НЕ делать POST /sync после обновления данных
+          skipNextAutoSyncRef.current = true;
+          
+          const wsData = change.data as { classes?: ClassRoom[], matches?: Match[], attendance?: AttendanceRecord[] };
+          
+          if (!wsData || typeof wsData !== 'object') {
+            console.error("❌ [WS] Invalid data format:", change.data);
+            return;
+          }
+          
+          // Обновляем globalData с данными из WebSocket
+          const updatedGlobalData = {
+            teachers: globalData.teachers,
+            classes: wsData.classes || globalData.classes,
+            matches: wsData.matches || globalData.matches,
+            attendance: wsData.attendance || globalData.attendance
+          };
+          setGlobalData(updatedGlobalData);
+          
+          // Для admin/teacher - получаем все данные
+          if (teacher.role === "admin" || teacher.role === "teacher") {
+            const currentClassIds = classes.map(c => c.id);
+            const currentMatchIds = matches.map(m => m.id);
             
-            setGlobalData(serverData);
+            // Берем новые данные из WS которых нет локально
+            const newClasses = (wsData.classes || []).filter(c => !currentClassIds.includes(c.id));
+            const newMatches = (wsData.matches || []).filter(m => !currentMatchIds.includes(m.id));
             
-            // Для admin/teacher - получаем все данные
-            if (teacher.role === "admin" || teacher.role === "teacher") {
-              const currentClassIds = classes.map(c => c.id);
-              const currentMatchIds = matches.map(m => m.id);
-              
-              // Берем новые данные с сервера которых нет локально
-              const newClasses = serverData.classes.filter(c => !currentClassIds.includes(c.id));
-              const newMatches = serverData.matches.filter(m => !currentMatchIds.includes(m.id));
-              
-              if (newClasses.length > 0) {
-                console.log(`📥 [WS] Adding ${newClasses.length} new classes`);
-                setClasses(prev => [...prev, ...newClasses]);
-                prevClassesRef.current = [...classes, ...newClasses];
-              }
-              
-              if (newMatches.length > 0) {
-                console.log(`📥 [WS] Adding ${newMatches.length} new matches`);
-                setMatches(prev => [...prev, ...newMatches]);
-                prevMatchesRef.current = [...matches, ...newMatches];
-              }
-            } else if (teacher.role === "junior") {
-              // Junior - фильтруем только свои данные
-              const juniorClasses = serverData.classes.filter(
-                cls => cls.responsibleTeacherId === teacher.id
-              );
-              const juniorMatches = serverData.matches.filter(m => m.createdBy === teacher.name);
-              
-              setClasses(juniorClasses);
-              setMatches(juniorMatches);
-              prevClassesRef.current = [...juniorClasses];
-              prevMatchesRef.current = [...juniorMatches];
+            if (newClasses.length > 0) {
+              console.log(`📥 [WS] Adding ${newClasses.length} new classes`);
+              setClasses(prev => [...prev, ...newClasses]);
+              prevClassesRef.current = [...classes, ...newClasses];
             }
             
-            setAttendance(serverData.attendance || []);
+            if (newMatches.length > 0) {
+              console.log(`📥 [WS] Adding ${newMatches.length} new matches`);
+              setMatches(prev => [...prev, ...newMatches]);
+              prevMatchesRef.current = [...matches, ...newMatches];
+            }
+          } else if (teacher.role === "junior") {
+            // Junior - фильтруем только свои данные
+            const juniorClasses = (wsData.classes || []).filter(
+              cls => cls.responsibleTeacherId === teacher.id
+            );
+            const juniorMatches = (wsData.matches || []).filter(m => m.createdBy === teacher.name);
             
-            console.log("✅ [WS] Data updated from server (skipping auto-sync POST)");
-          }).catch(err => {
-            console.error("❌ [WS] Failed to sync after change:", err);
-          });
+            setClasses(juniorClasses);
+            setMatches(juniorMatches);
+            prevClassesRef.current = [...juniorClasses];
+            prevMatchesRef.current = [...juniorMatches];
+          }
+          
+          if (wsData.attendance) {
+            setAttendance(wsData.attendance);
+          }
+          
+          console.log("✅ [WS] Data updated from WebSocket (NO GET request, skipping auto-sync POST)");
         }
       });
     });
@@ -326,11 +339,12 @@ export const useAppData = () => {
           setGlobalData(newGlobalData);
           
           // Отправляем уведомление через WebSocket о том что данные обновлены
+          // ОПТИМИЗАЦИЯ: отправляем ПОЛНЫЕ данные, чтобы другие клиенты НЕ делали GET запрос
           const wsClient = wsClientRef.current;
           wsClient.sendChange('data_updated', {
-            classes: updatedGlobalClasses.length,
-            matches: updatedGlobalMatches.length,
-            attendance: attendance.length
+            classes: updatedGlobalClasses,
+            matches: updatedGlobalMatches,
+            attendance: attendance
           }, teacher.name).catch(err => {
             console.error("❌ [WS] Failed to broadcast change:", err);
           });
